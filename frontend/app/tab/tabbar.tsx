@@ -210,7 +210,6 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         const rightContainerWidth = rightContainerRef.current?.getBoundingClientRect().width ?? 0;
         const addBtnWidth = getOuterWidth(addBtnRef.current);
         const appMenuButtonWidth = appMenuButtonRef.current?.getBoundingClientRect().width ?? 0;
-        const workspaceSwitcherWidth = workspaceSwitcherRef.current?.getBoundingClientRect().width ?? 0;
         const waveAIButtonWidth =
             !hideAiButton && waveAIButtonRef.current != null ? getOuterWidth(waveAIButtonRef.current) : 0;
 
@@ -219,7 +218,6 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
             rightContainerWidth +
             addBtnWidth +
             appMenuButtonWidth +
-            workspaceSwitcherWidth +
             waveAIButtonWidth;
         const spaceForTabs = tabbarWrapperWidth - nonTabElementsWidth;
 
@@ -608,8 +606,8 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         }
     }
 
-    // Calculate window drag right width
-    let windowDragRightWidth = 12;
+    // Keep right-edge controls flush on macOS/Linux; Windows needs caption button spacing.
+    let windowDragRightWidth = 0;
     if (env.isWindows()) {
         if (zoomFactor > 0) {
             windowDragRightWidth = 139 / zoomFactor;
@@ -636,15 +634,6 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                 </div>
             )}
             <WaveAIButton divRef={waveAIButtonRef} />
-            <Tooltip
-                content="Workspace Switcher"
-                placement="bottom"
-                hideOnClick
-                divRef={workspaceSwitcherRef}
-                divClassName="flex items-center"
-            >
-                <WorkspaceSwitcher />
-            </Tooltip>
             <div className="tab-bar" ref={tabBarRef} data-overlayscrollbars-initialize>
                 <div
                     className="tabs-wrapper"
@@ -689,6 +678,15 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
             <div className="flex-1" />
             <div ref={rightContainerRef} className="flex flex-row gap-1 items-end">
                 <UpdateStatusBanner />
+                <Tooltip
+                    content="Workspace Switcher"
+                    placement="bottom"
+                    hideOnClick
+                    divRef={workspaceSwitcherRef}
+                    divClassName="flex items-center"
+                >
+                    <WorkspaceSwitcher />
+                </Tooltip>
                 <div
                     className="h-full shrink-0 z-window-drag"
                     style={{ width: windowDragRightWidth, WebkitAppRegion: "drag" } as any}
