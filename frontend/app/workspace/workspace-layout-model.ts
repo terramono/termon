@@ -435,6 +435,16 @@ class WorkspaceLayoutModel {
         }
     }
 
+    togglePanelMode(mode: "ai" | "ssh"): void {
+        const panelOpen = globalStore.get(this.panelVisibleAtom);
+        const currentMode = globalStore.get(this.panelModeAtom);
+        if (panelOpen && currentMode === mode) {
+            this.setAIPanelVisible(false);
+            return;
+        }
+        this.setPanelMode(mode);
+    }
+
     setShowLeftTabBar(showLeftTabBar: boolean): void {
         if (this.vtabVisible === showLeftTabBar) return;
         this.vtabVisible = showLeftTabBar;

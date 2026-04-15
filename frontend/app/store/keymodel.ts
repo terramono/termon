@@ -740,6 +740,10 @@ function registerGlobalKeys() {
         WorkspaceLayoutModel.getInstance().setAIPanelVisible(!currentVisible);
         return true;
     });
+    globalKeyMap.set("Cmd:b", () => {
+        WorkspaceLayoutModel.getInstance().togglePanelMode("ssh");
+        return true;
+    });
     const allKeys = Array.from(globalKeyMap.keys());
     // special case keys, handled by web view
     allKeys.push("Cmd:l", "Cmd:r", "Cmd:ArrowRight", "Cmd:ArrowLeft", "Cmd:o");

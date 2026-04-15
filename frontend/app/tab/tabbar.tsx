@@ -13,7 +13,6 @@ import { OverlayScrollbars } from "overlayscrollbars";
 import { createRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { debounce } from "throttle-debounce";
 import PixelatedTechnologyIcon from "../asset/pixelated-technology.svg";
-import SparklesIcon from "../asset/sparkles.svg";
 import { Tab } from "./tab";
 import "./tabbar.scss";
 import { TabBarEnv } from "./tabbarenv";
@@ -48,46 +47,20 @@ interface TabBarProps {
 }
 
 const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
-    const env = useWaveEnv<TabBarEnv>();
     const layoutModel = WorkspaceLayoutModel.getInstance();
     const panelOpen = useAtomValue(layoutModel.panelVisibleAtom);
     const panelMode = useAtomValue(layoutModel.panelModeAtom);
-    const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
-
-    const handleTabClick = (mode: "ai" | "ssh") => {
-        if (panelOpen && panelMode === mode) {
-            layoutModel.setAIPanelVisible(false);
-        } else {
-            layoutModel.setPanelMode(mode);
-        }
-    };
-
-    if (hideAiButton) {
-        return null;
-    }
-
-    const aiActive = panelOpen && panelMode === "ai";
     const sshActive = panelOpen && panelMode === "ssh";
 
     return (
         <div
             ref={divRef}
-            className="flex h-[22px] mb-1 items-center rounded-md mr-1 overflow-hidden border border-transparent"
+            className="flex h-[22px] mb-1 items-center rounded-md mr-1 overflow-hidden"
             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
-            <Tooltip content="Toggle Wave AI Panel" placement="bottom" hideOnClick>
-                <button
-                    onClick={() => handleTabClick("ai")}
-                    className={`flex items-center gap-1 h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${aiActive ? "text-accent" : "text-secondary"}`}
-                >
-                    <SparklesIcon className="w-3.5 h-3.5" />
-                    <span>AI</span>
-                </button>
-            </Tooltip>
-            <div className="w-px h-3.5 bg-gray-600 shrink-0" />
             <Tooltip content="Toggle SSH Connections" placement="bottom" hideOnClick>
                 <button
-                    onClick={() => handleTabClick("ssh")}
+                    onClick={() => layoutModel.togglePanelMode("ssh")}
                     className={`flex items-center gap-1 h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${sshActive ? "text-accent" : "text-secondary"}`}
                 >
                     <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
@@ -156,7 +129,6 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const zoomFactor = useAtomValue(env.atoms.zoomFactorAtom);
     const showMenuBar = useAtomValue(env.getSettingsKeyAtom("window:showmenubar"));
     const confirmClose = useAtomValue(env.getSettingsKeyAtom("tab:confirmclose")) ?? false;
-    const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
     const appUpdateStatus = useAtomValue(env.atoms.updaterStatusAtom);
 
     let prevDelta: number;
@@ -212,8 +184,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         const rightContainerWidth = rightContainerRef.current?.getBoundingClientRect().width ?? 0;
         const addBtnWidth = getOuterWidth(addBtnRef.current);
         const appMenuButtonWidth = appMenuButtonRef.current?.getBoundingClientRect().width ?? 0;
-        const waveAIButtonWidth =
-            !hideAiButton && waveAIButtonRef.current != null ? getOuterWidth(waveAIButtonRef.current) : 0;
+        const waveAIButtonWidth = waveAIButtonRef.current != null ? getOuterWidth(waveAIButtonRef.current) : 0;
 
         const nonTabElementsWidth =
             windowDragLeftWidth +
@@ -294,7 +265,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         };
     }, [handleResizeTabs]);
 
-    // update layout on changed tabIds, tabsLoaded, newTabId, hideAiButton, appUpdateStatus, or zoomFactor
+    // update layout on changed tabIds, tabsLoaded, newTabId, appUpdateStatus, or zoomFactor
     useEffect(() => {
         // Check if all tabs are loaded
         const allLoaded = tabIds.length > 0 && tabIds.every((id) => tabsLoaded[id]);
@@ -310,7 +281,6 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         tabsLoaded,
         newTabId,
         saveTabsPosition,
-        hideAiButton,
         appUpdateStatus,
         zoomFactor,
         showMenuBar,
