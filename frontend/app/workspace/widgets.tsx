@@ -136,7 +136,7 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
             placement="left"
             disable={isBlank(displayDescription)}
             divClassName={clsx(
-                "flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer",
+                "flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer",
                 mode === "supercompact" ? "text-sm" : "text-lg",
                 widget["display:hidden"] && "hidden"
             )}
@@ -710,7 +710,7 @@ const Widgets = memo(() => {
                             {env.isDev() || featureWaveAppBuilder ? (
                                 <div
                                     ref={appsButtonRef}
-                                    className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
+                                    className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                     onClick={() => setIsAppsOpen(!isAppsOpen)}
                                 >
                                     <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
@@ -722,7 +722,7 @@ const Widgets = memo(() => {
                             ) : null}
                             <div
                                 ref={settingsButtonRef}
-                                className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
+                                className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                             >
                                 <Tooltip
@@ -749,7 +749,7 @@ const Widgets = memo(() => {
                         {env.isDev() || featureWaveAppBuilder ? (
                             <div
                                 ref={appsButtonRef}
-                                className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
+                                className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
                                 <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
@@ -761,7 +761,7 @@ const Widgets = memo(() => {
                         ) : null}
                         <div
                             ref={settingsButtonRef}
-                            className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
+                            className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                         >
                             <Tooltip
@@ -820,13 +820,13 @@ const Widgets = memo(() => {
                     <Widget key={`measurement-widget-${idx}`} widget={data} mode="normal" env={env} />
                 ))}
                 <div className="flex-grow" />
-                <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
+                <div className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-lg">
                     <div>
                         <CogSolidIcon className="w-[1em] h-[1em]" />
                     </div>
                 </div>
                 {env.isDev() ? (
-                    <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
+                    <div className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-lg">
                         <div>
                             <i className={makeIconClass("cube", true)}></i>
                         </div>

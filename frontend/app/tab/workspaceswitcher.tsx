@@ -92,7 +92,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
 
     const isActiveWorkspaceSaved = !!(activeWorkspace.name && activeWorkspace.icon);
 
-    const workspaceIcon = <PixelIconLibraryGridIcon className="w-[15px] h-[15px]" />;
+    const workspaceIcon = <PixelIconLibraryGridIcon className="w-[15px] h-[15px] text-[#2eff6a]" />;
 
     const saveWorkspace = () => {
         fireAndForget(async () => {
