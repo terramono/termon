@@ -6,23 +6,7 @@ env:
     NODE_VERSION: 22
 
 on:
-    push:
-        branches:
-            - main
     workflow_dispatch:
-    # Also run any time a PR is opened targeting the docs
-    pull_request:
-        branches:
-            - main
-        types:
-            - opened
-            - synchronize
-            - reopened
-            - ready_for_review
-        paths:
-            - "docs/**"
-            - ".github/workflows/deploy-docsite.yml"
-            - "Taskfile.yml"
 
 jobs:
     build:

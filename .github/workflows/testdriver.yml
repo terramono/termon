@@ -1,10 +1,7 @@
 name: TestDriver.ai Run
 
 on:
-    workflow_run:
-        workflows: ["TestDriver.ai Build"]
-        types:
-            - completed
+    workflow_dispatch:
 
 env:
     GO_VERSION: "1.25.6"

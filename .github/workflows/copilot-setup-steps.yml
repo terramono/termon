@@ -2,10 +2,6 @@ name: Copilot Setup Steps
 
 on:
     workflow_dispatch:
-    push:
-        paths: [.github/workflows/copilot-setup-steps.yml]
-    pull_request:
-        paths: [.github/workflows/copilot-setup-steps.yml]
 
 # Note: global env vars are NOT used here — they are not reliable in all
 # GitHub Actions contexts (e.g. Copilot setup steps). Values are inlined

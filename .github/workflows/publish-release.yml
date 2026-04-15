@@ -3,8 +3,7 @@
 name: Publish Release
 run-name: Publish ${{ github.ref_name }}
 on:
-    release:
-        types: [published]
+    workflow_dispatch:
 jobs:
     publish-s3:
         name: Publish to Releases
