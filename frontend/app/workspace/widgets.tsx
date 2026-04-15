@@ -19,6 +19,10 @@ import {
 import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import AnthropicIcon from "../asset/claude-color.svg";
+import CogSolidIcon from "../asset/cog-solid.svg";
+import PerplexityIcon from "../asset/perplexity.svg";
+import PixelIconLibraryIcon from "../asset/pixel-icon-library.svg";
 
 export type WidgetsEnv = WaveEnvSubset<{
     isDev: WaveEnv["isDev"];
@@ -53,6 +57,7 @@ type WidgetPropsType = {
     widget: WidgetConfigType;
     mode: "normal" | "compact" | "supercompact";
     env: WidgetsEnv;
+    onSelect?: (widget: WidgetConfigType) => void;
 };
 
 async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
@@ -60,7 +65,61 @@ async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
     env.createBlock(blockDef, widget.magnified);
 }
 
-const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
+const CLAUDE_RECENTS_KEY = "waveterm:claude-launcher-recents";
+const MAX_CLAUDE_RECENTS = 8;
+
+function isClaudeLauncherWidget(widget: WidgetConfigType): boolean {
+    const meta = widget?.blockdef?.meta ?? {};
+    return meta["claude:launcher"] === true;
+}
+
+function isTerminalWidget(widget: WidgetConfigType): boolean {
+    const meta = widget?.blockdef?.meta ?? {};
+    const widgetLabel = (widget?.label ?? "").toLowerCase().trim();
+    const widgetIcon = (widget?.icon ?? "").toLowerCase().trim();
+    const controller = (meta.controller ?? "").toLowerCase();
+    return (
+        meta.view === "term" ||
+        controller === "shell" ||
+        controller === "cmd" ||
+        widgetLabel === "terminal" ||
+        widgetLabel === "term" ||
+        widgetIcon.includes("terminal")
+    );
+}
+
+function loadClaudeRecents(): string[] {
+    const raw = localStorage.getItem(CLAUDE_RECENTS_KEY);
+    if (raw == null) {
+        return [];
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+        return parsed.filter((entry) => typeof entry === "string" && !isBlank(entry));
+    } catch {
+        return [];
+    }
+}
+
+function saveClaudeRecents(recents: string[]) {
+    localStorage.setItem(CLAUDE_RECENTS_KEY, JSON.stringify(recents.slice(0, MAX_CLAUDE_RECENTS)));
+}
+
+function updateClaudeRecents(dir: string): string[] {
+    const trimmedDir = dir.trim();
+    if (isBlank(trimmedDir)) {
+        return loadClaudeRecents();
+    }
+    const existing = loadClaudeRecents().filter((entry) => entry !== trimmedDir);
+    const next = [trimmedDir, ...existing].slice(0, MAX_CLAUDE_RECENTS);
+    saveClaudeRecents(next);
+    return next;
+}
+
+const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     const [isTruncated, setIsTruncated] = useState(false);
     const labelRef = useRef<HTMLDivElement>(null);
 
@@ -72,10 +131,16 @@ const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
     }, [mode, widget.label]);
 
     const shouldDisableTooltip = mode !== "normal" ? false : !isTruncated;
+    const widgetMeta = widget?.blockdef?.meta ?? {};
+    const isClaudeWidget = isClaudeLauncherWidget(widget) || isTerminalWidget(widget);
+    const isFilesWidget = widgetMeta.view === "preview" && widgetMeta.file === "~";
+    const isBrowserWidget = widgetMeta.view === "web";
+    const displayLabel = isClaudeWidget ? "claude" : widget.label;
+    const displayDescription = isClaudeWidget ? "Open Claude Code" : widget.description || widget.label;
 
     return (
         <Tooltip
-            content={widget.description || widget.label}
+            content={displayDescription}
             placement="left"
             disable={shouldDisableTooltip}
             divClassName={clsx(
@@ -83,20 +148,195 @@ const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
                 mode === "supercompact" ? "text-sm" : "text-lg",
                 widget["display:hidden"] && "hidden"
             )}
-            divOnClick={() => handleWidgetSelect(widget, env)}
+            divOnClick={() => (onSelect ? onSelect(widget) : handleWidgetSelect(widget, env))}
         >
             <div style={{ color: widget.color }}>
-                <i className={makeIconClass(widget.icon, true, { defaultIcon: "browser" })}></i>
+                {isClaudeWidget ? (
+                    <AnthropicIcon className="w-[1em] h-[1em]" />
+                ) : isFilesWidget ? (
+                    <PixelIconLibraryIcon className="w-[1em] h-[1em]" />
+                ) : isBrowserWidget ? (
+                    <PerplexityIcon className="w-[1em] h-[1em]" />
+                ) : (
+                    <i className={makeIconClass(widget.icon, true, { defaultIcon: "browser" })}></i>
+                )}
             </div>
-            {mode === "normal" && !isBlank(widget.label) ? (
+            {mode === "normal" && !isBlank(displayLabel) ? (
                 <div
                     ref={labelRef}
                     className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis"
                 >
-                    {widget.label}
+                    {displayLabel}
                 </div>
             ) : null}
         </Tooltip>
+    );
+});
+
+type ClaudeLauncherFloatingWindowProps = {
+    isOpen: boolean;
+    onClose: () => void;
+};
+
+const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFloatingWindowProps) => {
+    const env = useWaveEnv<WidgetsEnv>();
+    const [recents, setRecents] = useState<string[]>([]);
+    const [customPath, setCustomPath] = useState("");
+    const folderInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        setRecents(loadClaudeRecents());
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                onClose();
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [isOpen, onClose]);
+
+    const launchClaudeForDir = useCallback(
+        (dir: string) => {
+            const targetDir = dir.trim();
+            if (isBlank(targetDir)) {
+                return;
+            }
+            const blockDef: BlockDef = {
+                meta: {
+                    view: "term",
+                    controller: "cmd",
+                    cmd: "claude",
+                    "cmd:interactive": true,
+                    "cmd:cwd": targetDir,
+                },
+            };
+            env.createBlock(blockDef, true);
+            setRecents(updateClaudeRecents(targetDir));
+            setCustomPath("");
+            onClose();
+        },
+        [env, onClose]
+    );
+
+    const handleBrowseFolder = useCallback(() => {
+        folderInputRef.current?.click();
+    }, []);
+
+    const handleFolderPicked = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const files = event.target.files;
+            if (files == null || files.length === 0) {
+                return;
+            }
+            const firstFilePath = env.electron.getPathForFile(files[0]);
+            if (isBlank(firstFilePath)) {
+                return;
+            }
+            const normalizedPath = firstFilePath.replace(/\\/g, "/");
+            const parentDir = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
+            if (!isBlank(parentDir)) {
+                launchClaudeForDir(parentDir);
+            }
+            event.target.value = "";
+        },
+        [env, launchClaudeForDir]
+    );
+
+    if (!isOpen) {
+        return null;
+    }
+
+    return (
+        <FloatingPortal>
+            <div
+                className="fixed inset-0 z-[80] flex items-center justify-center bg-black/35"
+                onClick={onClose}
+            >
+                <div
+                    className="bg-modalbg border border-border rounded-xl shadow-xl p-3 w-[380px]"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="flex items-center justify-between gap-2 text-primary mb-2">
+                        <div className="flex items-center gap-2">
+                            <AnthropicIcon className="w-4 h-4" />
+                            <div className="font-medium text-sm">Open Claude Code</div>
+                        </div>
+                        <button type="button" className="text-secondary hover:text-primary text-sm px-1" onClick={onClose}>
+                            <i className="fa fa-solid fa-xmark" />
+                        </button>
+                    </div>
+                    <div className="text-xs text-secondary mb-3">Choose a recent folder, browse, or paste a path.</div>
+
+                    <div className="max-h-48 overflow-auto mb-3 border border-border rounded-lg">
+                        {recents.length === 0 ? (
+                            <div className="px-3 py-3 text-xs text-secondary">No recent folders yet.</div>
+                        ) : (
+                            recents.map((dir) => (
+                                <button
+                                    key={dir}
+                                    type="button"
+                                    onClick={() => launchClaudeForDir(dir)}
+                                    className="w-full text-left px-3 py-2.5 hover:bg-hoverbg transition-colors border-b border-border last:border-b-0"
+                                >
+                                    <div className="text-[11px] text-secondary">Recent</div>
+                                    <div className="text-xs text-primary truncate">{dir}</div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-2">
+                        <button
+                            type="button"
+                            onClick={handleBrowseFolder}
+                            className="px-3 py-2 text-xs rounded-md border border-border bg-transparent hover:bg-hoverbg text-primary"
+                        >
+                            Browse Folder
+                        </button>
+                        <input
+                            ref={folderInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFolderPicked}
+                            {...({ webkitdirectory: "", directory: "" } as any)}
+                        />
+                        <div className="text-[11px] text-secondary">Use manual path for empty folders.</div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={customPath}
+                            placeholder="~/projects/my-repo"
+                            onChange={(e) => setCustomPath(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    launchClaudeForDir(customPath);
+                                }
+                            }}
+                            className="flex-1 h-8 px-2.5 rounded-md bg-[var(--app-bg-color)] border border-border text-xs text-primary placeholder:text-secondary outline-none focus:border-accent"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => launchClaudeForDir(customPath)}
+                            className="px-3 py-2 text-xs rounded-md bg-accent text-black hover:brightness-95 disabled:opacity-50"
+                            disabled={isBlank(customPath.trim())}
+                        >
+                            Open
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </FloatingPortal>
     );
 });
 
@@ -388,6 +628,7 @@ const Widgets = memo(() => {
     const appsButtonRef = useRef<HTMLDivElement>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const settingsButtonRef = useRef<HTMLDivElement>(null);
+    const [isClaudeLauncherOpen, setIsClaudeLauncherOpen] = useState(false);
 
     const checkModeNeeded = useCallback(() => {
         if (!containerRef.current || !measurementRef.current) return;
@@ -455,6 +696,17 @@ const Widgets = memo(() => {
         env.showContextMenu(menu, e);
     };
 
+    const handleWidgetPress = useCallback(
+        (widget: WidgetConfigType) => {
+            if (isClaudeLauncherWidget(widget) || isTerminalWidget(widget)) {
+                setIsClaudeLauncherOpen(true);
+                return;
+            }
+            handleWidgetSelect(widget, env);
+        },
+        [env]
+    );
+
     return (
         <>
             <div
@@ -466,7 +718,7 @@ const Widgets = memo(() => {
                     <>
                         <div className="grid grid-cols-2 gap-0 w-full">
                             {widgets?.map((data, idx) => (
-                                <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
+                                <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} onSelect={handleWidgetPress} />
                             ))}
                         </div>
                         <div className="flex-grow" />
@@ -495,7 +747,7 @@ const Widgets = memo(() => {
                                     disable={isSettingsOpen}
                                 >
                                     <div className="relative">
-                                        <i className={makeIconClass("gear", true)}></i>
+                                        <CogSolidIcon className="w-[1em] h-[1em]" />
                                         {hasConfigErrors && (
                                             <i className="fa fa-solid fa-circle-exclamation text-error absolute top-0 right-0 text-[10px] pointer-events-none"></i>
                                         )}
@@ -507,7 +759,7 @@ const Widgets = memo(() => {
                 ) : (
                     <>
                         {widgets?.map((data, idx) => (
-                            <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
+                            <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} onSelect={handleWidgetPress} />
                         ))}
                         <div className="flex-grow" />
                         {env.isDev() || featureWaveAppBuilder ? (
@@ -542,7 +794,7 @@ const Widgets = memo(() => {
                             >
                                 <div className="flex flex-col items-center w-full">
                                     <div className="relative">
-                                        <i className={makeIconClass("gear", true)}></i>
+                                        <CogSolidIcon className="w-[1em] h-[1em]" />
                                         {hasConfigErrors && (
                                             <i
                                                 className={`fa fa-solid fa-circle-exclamation text-error absolute top-0 right-[-4px] pointer-events-none ${mode === "normal" ? "text-[14px]" : "text-[12px]"}`}
@@ -583,6 +835,12 @@ const Widgets = memo(() => {
                     hasConfigErrors={hasConfigErrors}
                 />
             )}
+            {isClaudeLauncherOpen && (
+                <ClaudeLauncherFloatingWindow
+                    isOpen={isClaudeLauncherOpen}
+                    onClose={() => setIsClaudeLauncherOpen(false)}
+                />
+            )}
 
             <div
                 ref={measurementRef}
@@ -594,7 +852,7 @@ const Widgets = memo(() => {
                 <div className="flex-grow" />
                 <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
                     <div>
-                        <i className={makeIconClass("gear", true)}></i>
+                        <CogSolidIcon className="w-[1em] h-[1em]" />
                     </div>
                     <div className="text-xxs mt-0.5 w-full px-0.5 text-center">settings</div>
                 </div>

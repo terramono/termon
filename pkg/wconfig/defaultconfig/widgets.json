@@ -1,12 +1,16 @@
 {
     "defwidget@terminal": {
         "display:order": -5,
-        "icon": "square-terminal",
-        "label": "terminal",
+        "icon": "brands@anthropic",
+        "label": "claude",
+        "description": "Launch Claude Code",
         "blockdef": {
             "meta": {
                 "view": "term",
-                "controller": "shell"
+                "controller": "cmd",
+                "cmd": "claude",
+                "cmd:interactive": true,
+                "claude:launcher": true
             }
         }
     },

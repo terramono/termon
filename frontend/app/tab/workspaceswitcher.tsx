@@ -17,13 +17,13 @@ import { atom, PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { splitAtom } from "jotai/utils";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { CSSProperties, forwardRef, useCallback, useEffect } from "react";
-import WorkspaceSVG from "../asset/workspace.svg";
 import { IconButton } from "../element/iconbutton";
 import { globalStore } from "@/app/store/jotaiStore";
 import { makeORef } from "../store/wos";
 import { waveEventSubscribeSingle } from "../store/wps";
 import { WorkspaceEditor } from "./workspaceeditor";
 import "./workspaceswitcher.scss";
+import PixelIconLibraryGridIcon from "../asset/pixel-icon-library-grid.svg";
 
 export type WorkspaceSwitcherEnv = WaveEnvSubset<{
     electron: {
@@ -92,11 +92,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
 
     const isActiveWorkspaceSaved = !!(activeWorkspace.name && activeWorkspace.icon);
 
-    const workspaceIcon = isActiveWorkspaceSaved ? (
-        <i className={makeIconClass(activeWorkspace.icon, false)} style={{ color: activeWorkspace.color }}></i>
-    ) : (
-        <WorkspaceSVG />
-    );
+    const workspaceIcon = <PixelIconLibraryGridIcon className="w-[15px] h-[15px]" />;
 
     const saveWorkspace = () => {
         fireAndForget(async () => {

@@ -12,6 +12,8 @@ import { useAtomValue } from "jotai";
 import { OverlayScrollbars } from "overlayscrollbars";
 import { createRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { debounce } from "throttle-debounce";
+import PixelatedTechnologyIcon from "../asset/pixelated-technology.svg";
+import SparklesIcon from "../asset/sparkles.svg";
 import { Tab } from "./tab";
 import "./tabbar.scss";
 import { TabBarEnv } from "./tabbarenv";
@@ -78,7 +80,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
                     onClick={() => handleTabClick("ai")}
                     className={`flex items-center gap-1 h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${aiActive ? "text-accent" : "text-secondary"}`}
                 >
-                    <i className="fa fa-sparkles" />
+                    <SparklesIcon className="w-3.5 h-3.5" />
                     <span>AI</span>
                 </button>
             </Tooltip>
@@ -88,7 +90,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
                     onClick={() => handleTabClick("ssh")}
                     className={`flex items-center gap-1 h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${sshActive ? "text-accent" : "text-secondary"}`}
                 >
-                    <i className="fa fa-server" />
+                    <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
                     <span>SSH</span>
                 </button>
             </Tooltip>
