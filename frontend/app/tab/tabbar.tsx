@@ -48,9 +48,6 @@ interface TabBarProps {
 
 const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
     const layoutModel = WorkspaceLayoutModel.getInstance();
-    const panelOpen = useAtomValue(layoutModel.panelVisibleAtom);
-    const panelMode = useAtomValue(layoutModel.panelModeAtom);
-    const sshActive = panelOpen && panelMode === "ssh";
 
     return (
         <div
@@ -61,10 +58,9 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
             <Tooltip content="Toggle SSH Connections" placement="bottom" hideOnClick>
                 <button
                     onClick={() => layoutModel.togglePanelMode("ssh")}
-                    className={`flex items-center gap-1 h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${sshActive ? "text-accent" : "text-secondary"}`}
+                    className="flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg text-[#2eff6a]"
                 >
                     <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
-                    <span>SSH</span>
                 </button>
             </Tooltip>
         </div>

@@ -53,7 +53,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
     },
     "defwidget@web": {
         icon: "globe",
-        color: "#f472b6",
+        color: "#2eff6a",
         label: "Web",
         description: "Open a web browser",
         "display:order": 2,
@@ -61,7 +61,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
     },
     "defwidget@files": {
         icon: "folder",
-        color: "#fbbf24",
+        color: "#2eff6a",
         label: "Files",
         description: "Open file browser",
         "display:order": 3,
@@ -69,7 +69,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
     },
     "defwidget@sysinfo": {
         icon: "chart-line",
-        color: "#34d399",
+        color: "#2eff6a",
         label: "Sysinfo",
         description: "Open system info",
         "display:order": 4,

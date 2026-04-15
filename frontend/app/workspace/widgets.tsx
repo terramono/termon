@@ -120,29 +120,21 @@ function updateClaudeRecents(dir: string): string[] {
 }
 
 const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
-    const [isTruncated, setIsTruncated] = useState(false);
-    const labelRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (mode === "normal" && labelRef.current) {
-            const element = labelRef.current;
-            setIsTruncated(element.scrollWidth > element.clientWidth);
-        }
-    }, [mode, widget.label]);
-
-    const shouldDisableTooltip = mode !== "normal" ? false : !isTruncated;
     const widgetMeta = widget?.blockdef?.meta ?? {};
     const isClaudeWidget = isClaudeLauncherWidget(widget) || isTerminalWidget(widget);
     const isFilesWidget = widgetMeta.view === "preview" && widgetMeta.file === "~";
     const isBrowserWidget = widgetMeta.view === "web";
-    const displayLabel = isClaudeWidget ? "claude" : widget.label;
-    const displayDescription = isClaudeWidget ? "Open Claude Code" : widget.description || widget.label;
+    const isSysinfoWidget = widgetMeta.view === "sysinfo";
+    const fallbackWidgetColor =
+        isFilesWidget || isBrowserWidget || isSysinfoWidget ? "#2eff6a" : undefined;
+    const widgetColor = !isBlank(widget.color) ? widget.color : fallbackWidgetColor;
+    const displayDescription = isClaudeWidget ? "Open Claude Code" : widget.description;
 
     return (
         <Tooltip
             content={displayDescription}
             placement="left"
-            disable={shouldDisableTooltip}
+            disable={isBlank(displayDescription)}
             divClassName={clsx(
                 "flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer",
                 mode === "supercompact" ? "text-sm" : "text-lg",
@@ -150,7 +142,7 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
             )}
             divOnClick={() => (onSelect ? onSelect(widget) : handleWidgetSelect(widget, env))}
         >
-            <div style={{ color: widget.color }}>
+            <div style={{ color: widgetColor }}>
                 {isClaudeWidget ? (
                     <AnthropicIcon className="w-[1em] h-[1em]" />
                 ) : isFilesWidget ? (
@@ -161,14 +153,6 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
                     <i className={makeIconClass(widget.icon, true, { defaultIcon: "browser" })}></i>
                 )}
             </div>
-            {mode === "normal" && !isBlank(displayLabel) ? (
-                <div
-                    ref={labelRef}
-                    className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis"
-                >
-                    {displayLabel}
-                </div>
-            ) : null}
         </Tooltip>
     );
 });
@@ -769,15 +753,8 @@ const Widgets = memo(() => {
                                 onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
                                 <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
-                                    <div className="flex flex-col items-center w-full">
-                                        <div>
-                                            <i className={makeIconClass("cube", true)}></i>
-                                        </div>
-                                        {mode === "normal" && (
-                                            <div className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis">
-                                                apps
-                                            </div>
-                                        )}
+                                    <div>
+                                        <i className={makeIconClass("cube", true)}></i>
                                     </div>
                                 </Tooltip>
                             </div>
@@ -792,7 +769,6 @@ const Widgets = memo(() => {
                                 placement="left"
                                 disable={isSettingsOpen}
                             >
-                                <div className="flex flex-col items-center w-full">
                                     <div className="relative">
                                         <CogSolidIcon className="w-[1em] h-[1em]" />
                                         {hasConfigErrors && (
@@ -800,12 +776,6 @@ const Widgets = memo(() => {
                                                 className={`fa fa-solid fa-circle-exclamation text-error absolute top-0 right-[-4px] pointer-events-none ${mode === "normal" ? "text-[14px]" : "text-[12px]"}`}
                                             ></i>
                                         )}
-                                    </div>
-                                    {mode === "normal" && (
-                                        <div className="text-xxs mt-0.5 w-full px-0.5 text-center whitespace-nowrap overflow-hidden text-ellipsis">
-                                            settings
-                                        </div>
-                                    )}
                                 </div>
                             </Tooltip>
                         </div>
@@ -854,14 +824,12 @@ const Widgets = memo(() => {
                     <div>
                         <CogSolidIcon className="w-[1em] h-[1em]" />
                     </div>
-                    <div className="text-xxs mt-0.5 w-full px-0.5 text-center">settings</div>
                 </div>
                 {env.isDev() ? (
                     <div className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-lg">
                         <div>
                             <i className={makeIconClass("cube", true)}></i>
                         </div>
-                        <div className="text-xxs mt-0.5 w-full px-0.5 text-center">apps</div>
                     </div>
                 ) : null}
                 {env.isDev() ? (

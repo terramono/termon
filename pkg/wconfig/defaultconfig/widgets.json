@@ -17,6 +17,7 @@
     "defwidget@files": {
         "display:order": -4,
         "icon": "folder",
+        "color": "#2eff6a",
         "label": "files",
         "blockdef": {
             "meta": {
@@ -28,6 +29,7 @@
     "defwidget@web": {
         "display:order": -3,
         "icon": "globe",
+        "color": "#2eff6a",
         "label": "web",
         "blockdef": {
             "meta": {
@@ -38,6 +40,7 @@
     "defwidget@sysinfo": {
         "display:order": -2,
         "icon": "chart-line",
+        "color": "#2eff6a",
         "label": "sysinfo",
         "blockdef": {
             "meta": {

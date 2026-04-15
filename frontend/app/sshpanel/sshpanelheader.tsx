@@ -15,8 +15,7 @@ export const SSHPanelHeader = memo(() => {
     return (
         <div className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-gray-600 flex items-center justify-between min-w-0 shrink-0">
             <h2 className="text-white text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-                <PixelatedTechnologyIcon className="w-4 h-4 @xs:w-[18px] @xs:h-[18px] text-accent" />
-                SSH Connections
+                <PixelatedTechnologyIcon className="w-4 h-4 @xs:w-[18px] @xs:h-[18px] text-[#2eff6a]" />
             </h2>
             <button
                 onClick={handleRefresh}
