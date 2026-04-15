@@ -11,6 +11,7 @@ import {
 import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useEffect, useState } from "react";
+import PixelatedTechnologyIcon from "../asset/pixelated-technology.svg";
 import type { SshHostGroup } from "./sshpanel-model";
 import { SSHPanelModel } from "./sshpanel-model";
 import { SSHPanelHeader } from "./sshpanelheader";
@@ -155,7 +156,7 @@ const SSHPanelInner = memo(({ roundTopLeft }: SSHPanelInnerProps) => {
 
                 {!loading && !error && groups.length === 0 && (
                     <div className="px-3 py-8 text-center text-gray-500 text-sm">
-                        <i className="fa fa-server mb-2 block text-2xl opacity-30" />
+                        <PixelatedTechnologyIcon className="w-6 h-6 mb-2 mx-auto block opacity-30" />
                         <p>No hosts found in ~/.ssh/config</p>
                     </div>
                 )}
