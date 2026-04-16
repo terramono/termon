@@ -23,7 +23,10 @@ import { delay, ensureBoundsAreVisible, waveKeyToElectronKey } from "./emain-uti
 import { ElectronWshClient } from "./emain-wsh";
 import { updater } from "./updater";
 
-const DevInitTimeoutMs = 5000;
+// In dev we may need to wait for Vite dependency re-optimization and for the renderer
+// to send the `set-window-init-status` IPC "ready" signal. Keep this comfortably
+// above 5s to avoid false timeouts on first run after dependency changes.
+const DevInitTimeoutMs = 15000;
 
 export type WindowOpts = {
     unamePlatform: NodeJS.Platform;
