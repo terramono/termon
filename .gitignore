@@ -46,5 +46,6 @@ docs/superpowers
 .cursor/hooks/state
 test-electron-apis/*
 
-# Termon local config directory (generated during development)
+# Termon local config/data directories (generated at runtime)
 .termon/
+.termon-dev/
