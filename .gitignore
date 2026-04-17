@@ -45,3 +45,6 @@ docs/superpowers
 .claude
 .cursor/hooks/state
 test-electron-apis/*
+
+# Termon local config directory (generated during development)
+.termon/
