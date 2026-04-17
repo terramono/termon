@@ -3,7 +3,6 @@
 
 import { fireAndForget } from "@/util/util";
 import { app, dialog, ipcMain, shell } from "electron";
-import envPaths from "env-paths";
 import { existsSync, mkdirSync } from "fs";
 import os from "os";
 import path from "path";
@@ -11,10 +10,10 @@ import { WaveDevVarName, WaveDevViteVarName } from "../frontend/util/isdev";
 import * as keyutil from "../frontend/util/keyutil";
 
 // This is a little trick to ensure that Electron puts all its runtime data into a subdirectory to avoid conflicts with our own data.
-// On macOS, it will store to ~/Library/Application \Support/waveterm/electron
-// On Linux, it will store to ~/.config/waveterm/electron
-// On Windows, it will store to %LOCALAPPDATA%/waveterm/electron
-app.setName("waveterm/electron");
+// On macOS, it will store to ~/Library/Application \Support/Termon/electron
+// On Linux, it will store to ~/.config/Termon/electron
+// On Windows, it will store to %LOCALAPPDATA%/Termon/electron
+app.setName("Termon/electron");
 
 const isDev = !app.isPackaged;
 const isDevVite = isDev && process.env.ELECTRON_RENDERER_URL;
@@ -26,13 +25,15 @@ if (isDevVite) {
     process.env[WaveDevViteVarName] = "1";
 }
 
-const waveDirNamePrefix = "waveterm";
-const waveDirNameSuffix = isDev ? "dev" : "";
-const waveDirName = `${waveDirNamePrefix}${waveDirNameSuffix ? `-${waveDirNameSuffix}` : ""}`;
+// Termon stores all of its own data under a single dotfolder in the user's home
+// directory (~/.termon in prod, ~/.termon-dev in dev). This intentionally
+// replaces upstream Waveterm's XDG/env-paths layout so this fork lives in one
+// obvious place and never shares state with a Waveterm install.
+const termonDirNamePrefix = "termon";
+const termonDirNameSuffix = isDev ? "dev" : "";
+const termonDirName = `${termonDirNamePrefix}${termonDirNameSuffix ? `-${termonDirNameSuffix}` : ""}`;
 
-const paths = envPaths("waveterm", { suffix: waveDirNameSuffix });
-
-app.setName(isDev ? "termon (Dev)" : "termon");
+app.setName(isDev ? "Termon (Dev)" : "Termon");
 const unamePlatform = process.platform;
 const unameArch: string = process.arch;
 keyutil.setKeyUtilPlatform(unamePlatform);
@@ -68,22 +69,17 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
 }
 
 /**
- * Gets the path to the old Wave home directory (defaults to `~/.waveterm`).
- * @returns The path to the directory if it exists and contains valid data for the current app, otherwise null.
+ * Gets the path to the Termon home directory (defaults to `~/.termon`, or `~/.termon-dev` in dev).
+ * Termon always stores its state under this single folder; there is no XDG split.
+ * Honors the legacy `WAVETERM_HOME` env var if set (for power users overriding the path).
  */
-function getWaveHomeDir(): string {
-    let home = process.env[WaveHomeVarName];
-    if (!home) {
-        const homeDir = app.getPath("home");
-        if (homeDir) {
-            home = path.join(homeDir, `.${waveDirName}`);
-        }
+function getTermonHomeDir(): string {
+    const override = process.env[WaveHomeVarName];
+    if (override) {
+        return override;
     }
-    // If home exists and it has `wave.lock` in it, we know it has valid data from Wave >=v0.8. Otherwise, it could be for WaveLegacy (<v0.8)
-    if (home && existsSync(home) && existsSync(path.join(home, "wave.lock"))) {
-        return home;
-    }
-    return null;
+    const homeDir = app.getPath("home");
+    return path.join(homeDir, `.${termonDirName}`);
 }
 
 /**
@@ -99,52 +95,22 @@ function ensurePathExists(path: string): string {
 }
 
 /**
- * Gets the path to the directory where Wave configurations are stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
- * @returns The path where configurations should be stored.
+ * Gets the path to the directory where Termon configurations are stored. Creates the directory if it does not exist.
+ * Defaults to `<termon home>/config`. Honors `WAVETERM_CONFIG_HOME` override for power users.
  */
 function getWaveConfigDir(): string {
-    // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
-    if (waveHomeDir) {
-        return path.join(waveHomeDir, "config");
-    }
-
     const override = process.env[WaveConfigHomeVarName];
-    const xdgConfigHome = process.env.XDG_CONFIG_HOME;
-    let retVal: string;
-    if (override) {
-        retVal = override;
-    } else if (xdgConfigHome) {
-        retVal = path.join(xdgConfigHome, waveDirName);
-    } else {
-        retVal = path.join(app.getPath("home"), ".config", waveDirName);
-    }
+    const retVal = override ? override : path.join(getTermonHomeDir(), "config");
     return ensurePathExists(retVal);
 }
 
 /**
- * Gets the path to the directory where Wave data is stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
- * @returns The path where data should be stored.
+ * Gets the path to the directory where Termon data is stored. Creates the directory if it does not exist.
+ * Defaults to the Termon home directory itself (`~/.termon`). Honors `WAVETERM_DATA_HOME` override.
  */
 function getWaveDataDir(): string {
-    // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
-    if (waveHomeDir) {
-        return waveHomeDir;
-    }
-
     const override = process.env[WaveDataHomeVarName];
-    const xdgDataHome = process.env.XDG_DATA_HOME;
-    let retVal: string;
-    if (override) {
-        retVal = override;
-    } else if (xdgDataHome) {
-        retVal = path.join(xdgDataHome, waveDirName);
-    } else {
-        retVal = paths.data;
-    }
+    const retVal = override ? override : getTermonHomeDir();
     return ensurePathExists(retVal);
 }
 
