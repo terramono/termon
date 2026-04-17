@@ -1,22 +1,19 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { NewInstallOnboardingModal } from "@/app/onboarding/onboarding";
-import { CurrentOnboardingVersion } from "@/app/onboarding/onboarding-common";
-import { UpgradeOnboardingModal } from "@/app/onboarding/onboarding-upgrade";
-import { ClientModel } from "@/app/store/client-model";
 import { globalStore } from "@/app/store/jotaiStore";
-import { atoms, globalPrimaryTabStartup } from "@/store/global";
+import { atoms } from "@/store/global";
 import { modalsModel } from "@/store/modalmodel";
 import * as jotai from "jotai";
 import { useEffect } from "react";
-import * as semver from "semver";
 import { getModalComponent } from "./modalregistry";
 
+// Termon fork: the upstream Wave "Welcome"/feature-tour/upgrade-notes modals
+// were stripped out. We still render ad-hoc modals pushed via `modalsModel`
+// (About, settings dialogs, etc.), but the first-launch and post-upgrade
+// onboarding flows never trigger. ToS is left unset, which is fine because
+// backend telemetry also gates on `tosagreed != 0` and therefore stays off.
 const ModalsRenderer = () => {
-    const clientData = jotai.useAtomValue(ClientModel.getInstance().clientAtom);
-    const [newInstallOnboardingOpen, setNewInstallOnboardingOpen] = jotai.useAtom(modalsModel.newInstallOnboardingOpen);
-    const [upgradeOnboardingOpen, setUpgradeOnboardingOpen] = jotai.useAtom(modalsModel.upgradeOnboardingOpen);
     const [modals] = jotai.useAtom(modalsModel.modalsAtom);
     const rtn: React.ReactElement[] = [];
     for (const modal of modals) {
@@ -25,30 +22,6 @@ const ModalsRenderer = () => {
             rtn.push(<ModalComponent key={modal.displayName} {...modal.props} />);
         }
     }
-    if (newInstallOnboardingOpen) {
-        rtn.push(<NewInstallOnboardingModal key={NewInstallOnboardingModal.displayName} />);
-    }
-    if (upgradeOnboardingOpen) {
-        rtn.push(<UpgradeOnboardingModal key={UpgradeOnboardingModal.displayName} />);
-    }
-    useEffect(() => {
-        if (!clientData.tosagreed) {
-            setNewInstallOnboardingOpen(true);
-        }
-    }, [clientData]);
-
-    useEffect(() => {
-        if (!globalPrimaryTabStartup) {
-            return;
-        }
-        if (!clientData.tosagreed) {
-            return;
-        }
-        const lastVersion = clientData.meta?.["onboarding:lastversion"] ?? "v0.0.0";
-        if (semver.lt(lastVersion, CurrentOnboardingVersion)) {
-            setUpgradeOnboardingOpen(true);
-        }
-    }, []);
     useEffect(() => {
         globalStore.set(atoms.modalOpen, rtn.length > 0);
     }, [rtn]);
