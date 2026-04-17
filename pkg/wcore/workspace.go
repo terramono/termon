@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -195,28 +195,55 @@ func getTabBackground() string {
 	return config.Settings.TabPreset
 }
 
-var tabNameRe = regexp.MustCompile(`^T(\d+)$`)
+// TermonVerbs is the vocabulary Termon draws from when auto-naming new tabs.
+// Inspired by Claude Code's rotating verb vocabulary ("Cerebrating...",
+// "Ruminating...") but adapted to a terminal workspace: short, punchy verbs
+// that suggest an active session without prescribing what you do in it.
+// Kept here (rather than in a config file) so the list can be versioned with
+// the code and so tests can exercise it deterministically.
+var TermonVerbs = []string{
+	"Brew", "Forge", "Craft", "Spark", "Weave", "Pulse",
+	"Drift", "Echo", "Hum", "Rove", "Zap", "Plot",
+	"Ping", "Pipe", "Patch", "Ship", "Warp", "Coil",
+	"Spin", "Twirl", "Flux", "Glide", "Zoom", "Probe",
+	"Tinker", "Sketch", "Stash", "Tune", "Scout", "Hatch",
+	"Muse", "Prowl", "Quest", "Dart", "Flick", "Snap",
+	"Blaze", "Chirp", "Thread", "Spool", "Brim", "Ripple",
+}
 
-// getNextTabName returns the next auto-generated tab name (e.g. "T3") given a
-// slice of existing tab names. It filters to names matching T[N] where N is a
-// positive integer, finds the maximum N, and returns T[max+1]. If no matching
-// names exist it returns "T1".
+// getNextTabName picks a fresh Termon verb for a new tab, avoiding any verbs
+// already used in tabNames. If every verb in the vocabulary is taken, it
+// appends a numeric suffix ("Brew 2", "Brew 3", ...) to the least-collided
+// random pick so names still stay short and readable.
+//
+// This replaces the old "T1/T2/T3..." monotonic counter, which had a bug where
+// deleted tabs left gaps and new tabs appeared to start at T3/T4.
 func getNextTabName(tabNames []string) string {
-	maxNum := 0
+	used := make(map[string]bool, len(tabNames))
 	for _, name := range tabNames {
-		m := tabNameRe.FindStringSubmatch(name)
-		if m == nil {
-			continue
-		}
-		n, err := strconv.Atoi(m[1])
-		if err != nil || n <= 0 {
-			continue
-		}
-		if n > maxNum {
-			maxNum = n
+		used[name] = true
+	}
+
+	// Shuffle a copy so we pick randomly but still visit every verb before
+	// falling back to numeric suffixes -- gives a nice spread even on a
+	// workspace that churns a lot of tabs.
+	pool := make([]string, len(TermonVerbs))
+	copy(pool, TermonVerbs)
+	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
+
+	for _, verb := range pool {
+		if !used[verb] {
+			return verb
 		}
 	}
-	return "T" + strconv.Itoa(maxNum+1)
+
+	base := pool[0]
+	for suffix := 2; ; suffix++ {
+		candidate := base + " " + strconv.Itoa(suffix)
+		if !used[candidate] {
+			return candidate
+		}
+	}
 }
 
 // returns tabid
