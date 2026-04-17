@@ -179,6 +179,7 @@ export class WaveBrowserWindow extends BaseWindow {
             winOpts.titleBarOverlay = false;
             winOpts.autoHideMenuBar = !settings?.["window:showmenubar"];
             winOpts.acceptFirstMouse = true;
+            winOpts.icon = path.join(getElectronAppBasePath(), "public/logos/termon-chara.png");
             if (isTransparent) {
                 winOpts.transparent = true;
             } else if (isBlur) {
@@ -192,7 +193,7 @@ export class WaveBrowserWindow extends BaseWindow {
                 symbolColor: "white",
                 color: "#00000000",
             };
-            winOpts.icon = path.join(getElectronAppBasePath(), "public/logos/wave-logo-dark.png");
+            winOpts.icon = path.join(getElectronAppBasePath(), "public/logos/termon-chara.png");
             winOpts.autoHideMenuBar = !settings?.["window:showmenubar"];
             if (isTransparent) {
                 winOpts.transparent = true;

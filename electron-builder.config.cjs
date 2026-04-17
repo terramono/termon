@@ -13,6 +13,7 @@ const config = {
     appId: pkg.build.appId,
     productName: pkg.productName,
     executableName: pkg.productName,
+    icon: path.resolve(__dirname, "frontend/app/asset/termon-chara-512.png"),
     artifactName: "${productName}-${platform}-${arch}-${version}.${ext}",
     generateUpdatesFilesForAllChannels: true,
     npmRebuild: false,
