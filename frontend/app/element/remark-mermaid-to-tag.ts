@@ -9,7 +9,7 @@ import type { VFile } from "vfile";
 
 const escapeHTML = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const remarkMermaidToTag: Plugin<[], Root> = function () {
+export const remarkMermaidToTag: Plugin<[], Root> = function () {
     return (tree: Root, _file: VFile) => {
         visit(tree, "code", (node: Code, index: number | null, parent: Parent | null) => {
             if (!parent || index === null) return;
@@ -25,5 +25,3 @@ const remarkMermaidToTag: Plugin<[], Root> = function () {
         });
     };
 };
-
-export default remarkMermaidToTag;

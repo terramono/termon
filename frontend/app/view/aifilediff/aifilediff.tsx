@@ -149,4 +149,3 @@ function AiFileDiffView({ blockId, model }: ViewComponentProps<AiFileDiffViewMod
     );
 }
 
-export default AiFileDiffView;

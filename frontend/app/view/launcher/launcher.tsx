@@ -284,4 +284,3 @@ function LauncherView({ blockId, model }: ViewComponentProps<LauncherViewModel>)
     );
 }
 
-export default LauncherView;
