@@ -231,13 +231,6 @@ export default defineConfig({
                 ],
             },
         },
-        css: {
-            preprocessorOptions: {
-                scss: {
-                    silenceDeprecations: ["mixed-decls"],
-                },
-            },
-        },
         plugins: [
             tsconfigPaths(),
             { ...ViteImageOptimizer(), apply: "build" },
