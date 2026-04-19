@@ -523,4 +523,4 @@ const searchAtoms = useSearch();
 - [`frontend/app/view/term/term-model.ts`](../frontend/app/view/term/term-model.ts) - Complex view example
 - [`frontend/app/view/webview/webview.tsx`](../frontend/app/view/webview/webview.tsx) - Navigation UI example
 - [`frontend/types/custom.d.ts`](../frontend/types/custom.d.ts) - Type definitions
-- Project coding rules in [`.roo/rules/`](../.roo/rules/)
+- Project coding rules in [`.cursor/rules/`](../.cursor/rules/)
