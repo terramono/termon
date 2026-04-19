@@ -80,7 +80,6 @@ class TsunamiViewModel extends WebViewModel {
     }
 
     updateShellProcStatus(fullStatus: BlockControllerRuntimeStatus) {
-        console.log("tsunami-status", fullStatus);
         if (fullStatus == null) {
             return;
         }

@@ -336,7 +336,6 @@ const ChangeConnectionBlockModal = React.memo(
             const p2rtn = RpcApi.WslListCommand(TabRpcClient, { timeout: 2000 });
             p2rtn
                 .then((newWslList) => {
-                    console.log(newWslList);
                     setWslList(newWslList ?? []);
                 })
                 .catch((e) => {

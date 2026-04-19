@@ -35,7 +35,6 @@ export function MonacoCodeEditor({ text, readonly, language, onChange, onMount, 
         if (!el) return;
 
         const model = createModel(text, path, language);
-        console.log("[monaco] CREATE MODEL", path, model);
 
         const editor = monaco.editor.create(el, {
             ...options,
@@ -59,7 +58,6 @@ export function MonacoCodeEditor({ text, readonly, language, onChange, onMount, 
             editor.setModel(null);
             editor.dispose();
             model.dispose();
-            console.log("[monaco] dispose model");
             editorRef.current = null;
         };
         // mount/unmount only
