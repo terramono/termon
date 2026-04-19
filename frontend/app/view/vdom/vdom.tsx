@@ -181,10 +181,6 @@ function isObject(v: any): boolean {
     return v != null && !Array.isArray(v) && typeof v === "object";
 }
 
-function isArray(v: any): boolean {
-    return Array.isArray(v);
-}
-
 function resolveBinding(binding: VDomBinding, model: VDomModel): [any, string[]] {
     const bindName = binding.bind;
     if (bindName == null || bindName == "") {
@@ -435,30 +431,6 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     props.key = "e-" + elem.waveid;
     return React.createElement(elem.tag, props, childrenComps);
 }
-
-function vdomText(text: string): VDomElem {
-    return {
-        tag: "#text",
-        text: text,
-    };
-}
-
-const testVDom: VDomElem = {
-    waveid: "testid1",
-    tag: "div",
-    children: [
-        {
-            waveid: "testh1",
-            tag: "h1",
-            children: [vdomText("Hello World")],
-        },
-        {
-            waveid: "testp",
-            tag: "p",
-            children: [vdomText("This is a paragraph (from VDOM)")],
-        },
-    ],
-};
 
 function VDomRoot({ model }: { model: VDomModel }) {
     const version = jotai.useAtomValue(model.globalVersion);

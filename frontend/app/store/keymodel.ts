@@ -778,11 +778,6 @@ function registerBuilderGlobalKeys() {
     getApi().registerGlobalWebviewKeys(allKeys);
 }
 
-function getAllGlobalKeyBindings(): string[] {
-    const allKeys = Array.from(globalKeyMap.keys());
-    return allKeys;
-}
-
 export {
     appHandleKeyDown,
     disableGlobalKeybindings,
