@@ -1,9 +1,9 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { ClientService } from "@/app/store/services";
-import { atom, type PrimitiveAtom } from "jotai";
 import { globalStore } from "@/app/store/jotaiStore";
+import { ClientService } from "@/app/store/services";
+import { atom, type Atom, type PrimitiveAtom } from "jotai";
 
 export type SshHostGroup = {
     name: string;
@@ -16,7 +16,7 @@ function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     for (const host of hosts) {
         const parts = host.pattern.split(/[-_.]/);
         // Use the first segment as the group name if there are multiple segments,
-        // otherwise put it in "Other".
+        // otherwise put it in "other".
         const groupName = parts.length > 1 ? parts[0] : "other";
         let arr = groupMap.get(groupName);
         if (arr == null) {
@@ -27,8 +27,8 @@ function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     }
 
     const groups: SshHostGroup[] = [];
-    for (const [name, groupHosts] of groupMap) {
-        groups.push({ name, hosts: groupHosts });
+    for (const [name, hosts] of groupMap) {
+        groups.push({ name, hosts });
     }
 
     // Sort groups: "other" goes last, rest alphabetically
@@ -41,21 +41,18 @@ function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     return groups;
 }
 
-class SSHPanelModel {
+export class SSHPanelModel {
     private static instance: SSHPanelModel;
 
-    hostsAtom: PrimitiveAtom<SshConfigHost[]>;
-    groupsAtom: PrimitiveAtom<SshHostGroup[]>;
-    loadingAtom: PrimitiveAtom<boolean>;
-    errorAtom: PrimitiveAtom<string | null>;
-    collapsedGroupsAtom: PrimitiveAtom<Set<string>>;
+    hostsAtom: PrimitiveAtom<SshConfigHost[]> = atom<SshConfigHost[]>([]);
+    loadingAtom: PrimitiveAtom<boolean> = atom(false);
+    errorAtom = atom(null) as PrimitiveAtom<string>;
+    collapsedGroupsAtom: PrimitiveAtom<Set<string>> = atom(new Set<string>());
+
+    groupsAtom: Atom<SshHostGroup[]>;
 
     private constructor() {
-        this.hostsAtom = atom<SshConfigHost[]>([]);
-        this.groupsAtom = atom<SshHostGroup[]>([]);
-        this.loadingAtom = atom(false);
-        this.errorAtom = atom<string | null>(null);
-        this.collapsedGroupsAtom = atom<Set<string>>(new Set());
+        this.groupsAtom = atom((get) => groupHosts(get(this.hostsAtom)));
     }
 
     static getInstance(): SSHPanelModel {
@@ -70,9 +67,7 @@ class SSHPanelModel {
         globalStore.set(this.errorAtom, null);
         try {
             const hosts = await ClientService.GetSshHosts();
-            const safeHosts = hosts ?? [];
-            globalStore.set(this.hostsAtom, safeHosts);
-            globalStore.set(this.groupsAtom, groupHosts(safeHosts));
+            globalStore.set(this.hostsAtom, hosts ?? []);
         } catch (e) {
             globalStore.set(this.errorAtom, String(e));
         } finally {
@@ -95,5 +90,3 @@ class SSHPanelModel {
         return globalStore.get(this.collapsedGroupsAtom).has(groupName);
     }
 }
-
-export { SSHPanelModel };
