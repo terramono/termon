@@ -180,7 +180,7 @@ function SuggestionControlInner({
     const widgetId = useId();
     const [query, setQuery] = useState("");
     const reqNumRef = useRef(0);
-    let [suggestions, setSuggestions] = useState<SuggestionType[]>([]);
+    const [suggestions, setSuggestions] = useState<SuggestionType[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [fetched, setFetched] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);

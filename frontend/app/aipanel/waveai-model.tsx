@@ -122,7 +122,7 @@ export class WaveAIModel {
             }
             const aiModeConfigs = get(this.aiModeConfigs);
             if (!telemetryEnabled) {
-                let mode = get(getSettingsKeyAtom("waveai:defaultmode"));
+                const mode = get(getSettingsKeyAtom("waveai:defaultmode"));
                 if (mode == null || mode.startsWith("waveai@")) {
                     return "unknown";
                 }

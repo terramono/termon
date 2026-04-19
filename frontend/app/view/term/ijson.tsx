@@ -22,8 +22,8 @@ function convertNodeToTag(node: IJsonNode | string, idx?: number): React.ReactNo
     if (typeof node === "string") {
         return node;
     }
-    let key = node.props?.key ?? "child-" + idx;
-    let TagComp = TagMap[node.tag];
+    const key = node.props?.key ?? "child-" + idx;
+    const TagComp = TagMap[node.tag];
     if (!TagComp) {
         return <div key={key}>Unknown tag:{node.tag}</div>;
     }
@@ -31,10 +31,10 @@ function convertNodeToTag(node: IJsonNode | string, idx?: number): React.ReactNo
 }
 
 function IJsonHtmlTag({ node }: { node: IJsonNode }) {
-    let { tag, props, children } = node;
-    let divProps = {};
+    const { tag, props, children } = node;
+    const divProps = {};
     if (props != null) {
-        for (let [key, val] of Object.entries(props)) {
+        for (const [key, val] of Object.entries(props)) {
             if (key.startsWith("on")) {
                 divProps[key] = (e: any) => {
                     console.log("handler", key, val);
@@ -44,10 +44,10 @@ function IJsonHtmlTag({ node }: { node: IJsonNode }) {
             }
         }
     }
-    let childrenComps: React.ReactNode[] = [];
+    const childrenComps: React.ReactNode[] = [];
     if (children != null) {
         for (let idx = 0; idx < children.length; idx++) {
-            let comp = convertNodeToTag(children[idx], idx);
+            const comp = convertNodeToTag(children[idx], idx);
             if (comp != null) {
                 childrenComps.push(comp);
             }

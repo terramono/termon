@@ -59,7 +59,7 @@ function formatTimeRemaining(expirationEpoch: number): string {
 }
 
 const AIRateLimitStripComponent = memo(() => {
-    let rateLimitInfo = jotai.useAtomValue(atoms.waveAIRateLimitInfoAtom);
+    const rateLimitInfo = jotai.useAtomValue(atoms.waveAIRateLimitInfoAtom);
     // rateLimitInfo = { req: 0, reqlimit: 200, preq: 0, preqlimit: 50, resetepoch: 1759374575 + 45 * 60 }; // testing
     const [, forceUpdate] = useState({});
 

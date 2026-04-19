@@ -146,8 +146,8 @@ function convertVDomFunc(model: VDomModel, fnDecl: VDomFunc, compId: string, pro
     return (e: any) => {
         if ((propName == "onKeyDown" || propName == "onKeyDownCapture") && fnDecl["#keys"]) {
             dlog("key event", fnDecl, e);
-            let waveEvent = adaptFromReactOrNativeKeyEvent(e);
-            for (let keyDesc of fnDecl["#keys"] || []) {
+            const waveEvent = adaptFromReactOrNativeKeyEvent(e);
+            for (const keyDesc of fnDecl["#keys"] || []) {
                 if (checkKeyPressed(waveEvent, keyDesc)) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -209,12 +209,12 @@ type GenericPropsType = { [key: string]: any };
 
 // returns props, and a set of atom keys used in the props
 function convertProps(elem: VDomElem, model: VDomModel): [GenericPropsType, Set<string>] {
-    let props: GenericPropsType = {};
-    let atomKeys = new Set<string>();
+    const props: GenericPropsType = {};
+    const atomKeys = new Set<string>();
     if (elem.props == null) {
         return [props, atomKeys];
     }
-    for (let key in elem.props) {
+    for (const key in elem.props) {
         let val = elem.props[key];
         if (val == null) {
             continue;
@@ -238,19 +238,19 @@ function convertProps(elem: VDomElem, model: VDomModel): [GenericPropsType, Set<
         if (isObject(val) && val.type == VDomObjType_Binding) {
             const [propVal, atomDeps] = resolveBinding(val as VDomBinding, model);
             props[key] = propVal;
-            for (let atomDep of atomDeps) {
+            for (const atomDep of atomDeps) {
                 atomKeys.add(atomDep);
             }
             continue;
         }
         if (key == "style" && isObject(val)) {
             // assuming the entire style prop wasn't bound, look through the individual keys and bind them
-            for (let styleKey in val) {
-                let styleVal = val[styleKey];
+            for (const styleKey in val) {
+                const styleVal = val[styleKey];
                 if (isObject(styleVal) && styleVal.type == VDomObjType_Binding) {
                     const [stylePropVal, styleAtomDeps] = resolveBinding(styleVal as VDomBinding, model);
                     val[styleKey] = stylePropVal;
-                    for (let styleAtomDep of styleAtomDeps) {
+                    for (const styleAtomDep of styleAtomDeps) {
                         atomKeys.add(styleAtomDep);
                     }
                 }
@@ -297,8 +297,8 @@ function convertChildren(elem: VDomElem, model: VDomModel): React.ReactNode[] {
     if (elem.children == null || elem.children.length == 0) {
         return null;
     }
-    let childrenComps: React.ReactNode[] = [];
-    for (let child of elem.children) {
+    const childrenComps: React.ReactNode[] = [];
+    for (const child of elem.children) {
         if (child == null) {
             continue;
         }
@@ -314,7 +314,7 @@ function stringSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
     if (set1.size != set2.size) {
         return false;
     }
-    for (let elem of set1) {
+    for (const elem of set1) {
         if (!set2.has(elem)) {
             return false;
         }
@@ -325,7 +325,7 @@ function stringSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
 function useVDom(model: VDomModel, elem: VDomElem): GenericPropsType {
     const version = jotai.useAtomValue(model.getVDomNodeVersionAtom(elem));
     const [oldAtomKeys, setOldAtomKeys] = React.useState<Set<string>>(new Set());
-    let [props, atomKeys] = convertProps(elem, model);
+    const [props, atomKeys] = convertProps(elem, model);
     React.useEffect(() => {
         if (stringSetsEqual(atomKeys, oldAtomKeys)) {
             return;
@@ -428,7 +428,7 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     if (!AllowedSimpleTags[elem.tag] && !AllowedSvgTags[elem.tag]) {
         return <div>{"Invalid Tag <" + elem.tag + ">"}</div>;
     }
-    let childrenComps = convertChildren(elem, model);
+    const childrenComps = convertChildren(elem, model);
     if (elem.tag == FragmentTag) {
         return childrenComps;
     }
@@ -461,8 +461,8 @@ const testVDom: VDomElem = {
 };
 
 function VDomRoot({ model }: { model: VDomModel }) {
-    let version = jotai.useAtomValue(model.globalVersion);
-    let rootNode = jotai.useAtomValue(model.vdomRoot);
+    const version = jotai.useAtomValue(model.globalVersion);
+    const rootNode = jotai.useAtomValue(model.vdomRoot);
     React.useEffect(() => {
         model.renderDone(version);
     }, [version]);
@@ -470,7 +470,7 @@ function VDomRoot({ model }: { model: VDomModel }) {
         return null;
     }
     dlog("render", version, rootNode);
-    let rtn = convertElemToTag(rootNode, model);
+    const rtn = convertElemToTag(rootNode, model);
     return <div className="vdom">{rtn}</div>;
 }
 
@@ -480,7 +480,7 @@ type VDomViewProps = {
 };
 
 function VDomInnerView({ blockId, model }: VDomViewProps) {
-    let [styleMounted, setStyleMounted] = React.useState(!model.backendOpts?.globalstyles);
+    const [styleMounted, setStyleMounted] = React.useState(!model.backendOpts?.globalstyles);
     const handleStylesMounted = () => {
         setStyleMounted(true);
     };
@@ -495,8 +495,8 @@ function VDomInnerView({ blockId, model }: VDomViewProps) {
 }
 
 function VDomView({ blockId, model }: VDomViewProps) {
-    let viewRef = React.useRef(null);
-    let contextActive = jotai.useAtomValue(model.contextActive);
+    const viewRef = React.useRef(null);
+    const contextActive = jotai.useAtomValue(model.contextActive);
     model.viewRef = viewRef;
     const vdomClass = "vdom-" + blockId;
     return (

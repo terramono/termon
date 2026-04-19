@@ -45,7 +45,7 @@ test("newLayoutNode", () => {
 });
 
 test("addIntermediateNode", () => {
-    let node1: LayoutNode = newLayoutNode(FlexDirection.Column, undefined, [
+    const node1: LayoutNode = newLayoutNode(FlexDirection.Column, undefined, [
         newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "hello" }),
     ]);
     assert(node1.children![0].data!.blockId === "hello", "node1 should have one child which should have data");
@@ -60,7 +60,7 @@ test("addIntermediateNode", () => {
             intermediateNode1.children![0].children![0].flexDirection === FlexDirection.Row,
         "intermediateNode1 should have a nested child which should have data and flexDirection Row"
     );
-    let node2: LayoutNode = newLayoutNode(FlexDirection.Column, undefined, undefined, {
+    const node2: LayoutNode = newLayoutNode(FlexDirection.Column, undefined, undefined, {
         blockId: "hello",
     });
     const intermediateNode2 = addIntermediateNode(node2);
@@ -78,8 +78,8 @@ test("addIntermediateNode", () => {
 });
 
 test("addChildAt - same flexDirection, no children", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
-    let node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
+    const node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
     assert(node1.data === undefined, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
@@ -89,8 +89,8 @@ test("addChildAt - same flexDirection, no children", () => {
 });
 
 test("addChildAt - different flexDirection, no children", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
-    let node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
+    const node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
     assert(node1.data === undefined, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
@@ -101,10 +101,10 @@ test("addChildAt - different flexDirection, no children", () => {
 });
 
 test("addChildAt - same flexDirection, first node has children, second doesn't", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, [
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, [
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node1" }),
     ]);
-    let node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
+    const node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
     assert(node1.data === undefined, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
@@ -118,10 +118,10 @@ test("addChildAt - same flexDirection, first node has children, second doesn't",
 });
 
 test("addChildAt - different flexDirection, first node has children, second doesn't", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, [
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, [
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node1" }),
     ]);
-    let node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
+    const node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
     assert(node1.data === undefined, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
@@ -131,10 +131,10 @@ test("addChildAt - different flexDirection, first node has children, second does
 });
 
 test("addChildAt - same flexDirection, first node has children, second has children", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, [
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, [
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node1" }),
     ]);
-    let node2 = newLayoutNode(FlexDirection.Row, undefined, [
+    const node2 = newLayoutNode(FlexDirection.Row, undefined, [
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" }),
     ]);
     addChildAt(node1, 1, node2);
@@ -153,10 +153,10 @@ test("addChildAt - same flexDirection, first node has children, second has child
 });
 
 test("addChildAt - different flexDirection, first node has children, second has children", () => {
-    let node1 = newLayoutNode(FlexDirection.Row, undefined, [
+    const node1 = newLayoutNode(FlexDirection.Row, undefined, [
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node1" }),
     ]);
-    let node2 = newLayoutNode(FlexDirection.Column, undefined, [
+    const node2 = newLayoutNode(FlexDirection.Column, undefined, [
         newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" }),
     ]);
     addChildAt(node1, 1, node2);

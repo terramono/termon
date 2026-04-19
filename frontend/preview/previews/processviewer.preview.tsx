@@ -38,7 +38,7 @@ const MockSummary: ProcessSummary = {
 };
 
 function makeMockProcessListResponse(data: CommandRemoteProcessListData): ProcessListResponse {
-    let procs = [...MockProcesses];
+    const procs = [...MockProcesses];
 
     const sortBy = (data.sortby as "pid" | "command" | "user" | "cpu" | "mem") ?? "cpu";
     const sortDesc = data.sortdesc ?? false;

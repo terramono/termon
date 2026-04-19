@@ -313,7 +313,7 @@ const ChangeConnectionBlockModal = React.memo(
         const [rowIndex, setRowIndex] = React.useState(0);
         const connStatusMap = new Map<string, ConnStatus>();
         const fullConfig = jotai.useAtomValue(atoms.fullConfigAtom);
-        let filterOutNowsh = util.useAtomValueSafe(viewModel.filterOutNowsh) ?? true;
+        const filterOutNowsh = util.useAtomValueSafe(viewModel.filterOutNowsh) ?? true;
         const hasGitBash = jotai.useAtomValue(ConnectionsModel.getInstance().hasGitBashAtom);
         const localName = jotai.useAtomValue(getLocalHostDisplayNameAtom());
 

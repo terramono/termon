@@ -151,7 +151,7 @@ class WSControl {
             this.reconnectTimes = 0;
             dlog("clear reconnect times");
         }, StableConnTime);
-        for (let handler of reconnectHandlers) {
+        for (const handler of reconnectHandlers) {
             handler();
         }
         this.runMsgQueue();

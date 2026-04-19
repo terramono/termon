@@ -85,7 +85,7 @@ const Mermaid = ({ chart }: { chart: string }) => {
                 }
 
                 // Normalize the chart text
-                let normalizedChart = chart
+                const normalizedChart = chart
                     .replace(/<br\s*\/?>/gi, "\n") // Convert <br/> and <br> to newlines
                     .replace(/\r\n?/g, "\n") // Normalize \r \r\n to \n
                     .replace(/\n+$/, ""); // Remove final newline

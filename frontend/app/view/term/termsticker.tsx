@@ -115,7 +115,7 @@ function TermSticker({ sticker, config }: { sticker: StickerType; config: Sticke
 }
 
 export function TermStickers({ config }: { config: StickerTermConfig }) {
-    let stickers: StickerType[] = [];
+    const stickers: StickerType[] = [];
     if (config.blockId.startsWith("d1eaddcb")) {
         stickers.push({
             position: "absolute",

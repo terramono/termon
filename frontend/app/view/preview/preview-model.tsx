@@ -176,7 +176,7 @@ export class PreviewModel implements ViewModel {
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
         this.env = waveEnv;
-        let showHiddenFiles = globalStore.get(this.env.getSettingsKeyAtom("preview:showhiddenfiles")) ?? true;
+        const showHiddenFiles = globalStore.get(this.env.getSettingsKeyAtom("preview:showhiddenfiles")) ?? true;
         this.showHiddenFiles = atom<boolean>(showHiddenFiles);
         this.refreshVersion = atom(0);
         this.directorySearchActive = atom(false);

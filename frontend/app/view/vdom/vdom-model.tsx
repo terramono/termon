@@ -43,7 +43,7 @@ function makeVDomIdMap(vdom: VDomElem, idMap: Map<string, VDomElem>) {
     if (vdom.children == null) {
         return;
     }
-    for (let child of vdom.children) {
+    for (const child of vdom.children) {
         makeVDomIdMap(child, idMap);
     }
 }
@@ -277,7 +277,7 @@ export class VDomModel {
     }
 
     hasRefUpdates() {
-        for (let ref of this.refs.values()) {
+        for (const ref of this.refs.values()) {
             if (ref.updated) {
                 return true;
             }
@@ -286,8 +286,8 @@ export class VDomModel {
     }
 
     getRefUpdates(): VDomRefUpdate[] {
-        let updates: VDomRefUpdate[] = [];
-        for (let ref of this.refs.values()) {
+        const updates: VDomRefUpdate[] = [];
+        for (const ref of this.refs.values()) {
             if (ref.updated || (ref.vdomRef.trackposition && ref.elem != null)) {
                 const ru: VDomRefUpdate = {
                     refid: ref.vdomRef.refid,
@@ -315,7 +315,7 @@ export class VDomModel {
             return;
         }
         this.needsUpdate = true;
-        let nowTs = Date.now();
+        const nowTs = Date.now();
         if (delay > this.maxNormalUpdateIntervalMs) {
             delay = this.maxNormalUpdateIntervalMs;
         }
@@ -327,7 +327,7 @@ export class VDomModel {
                 clearTimeout(this.queuedUpdate.timeoutId);
                 this.queuedUpdate = null;
             }
-            let timeoutId = setTimeout(() => {
+            const timeoutId = setTimeout(() => {
                 this._sendRenderRequest(true);
             }, 0);
             this.queuedUpdate = { timeoutId: timeoutId, ts: nowTs, quick: true };
@@ -336,7 +336,7 @@ export class VDomModel {
         if (this.queuedUpdate) {
             return;
         }
-        let lastUpdateDiff = nowTs - this.lastUpdateTs;
+        const lastUpdateDiff = nowTs - this.lastUpdateTs;
         let timeoutMs: number = null;
         if (lastUpdateDiff >= this.maxNormalUpdateIntervalMs) {
             // it has been a while since the last update, so use delay
@@ -347,7 +347,7 @@ export class VDomModel {
         if (timeoutMs < delay) {
             timeoutMs = delay;
         }
-        let timeoutId = setTimeout(() => {
+        const timeoutId = setTimeout(() => {
             this._sendRenderRequest(false);
         }, timeoutMs);
         this.queuedUpdate = { timeoutId: timeoutId, ts: nowTs + timeoutMs, quick: false };
@@ -436,15 +436,15 @@ export class VDomModel {
     }
 
     tagUseAtoms(waveId: string, atomNames: Set<string>) {
-        for (let atomName of atomNames) {
-            let container = this.getAtomContainer(atomName);
+        for (const atomName of atomNames) {
+            const container = this.getAtomContainer(atomName);
             container.usedBy.add(waveId);
         }
     }
 
     tagUnuseAtoms(waveId: string, atomNames: Set<string>) {
-        for (let atomName of atomNames) {
-            let container = this.getAtomContainer(atomName);
+        for (const atomName of atomNames) {
+            const container = this.getAtomContainer(atomName);
             container.usedBy.delete(waveId);
         }
     }
@@ -477,13 +477,13 @@ export class VDomModel {
         if (!update.renderupdates) {
             return;
         }
-        for (let renderUpdate of update.renderupdates) {
+        for (const renderUpdate of update.renderupdates) {
             if (renderUpdate.updatetype == "root") {
                 globalStore.set(this.vdomRoot, renderUpdate.vdom);
                 continue;
             }
             if (renderUpdate.updatetype == "append") {
-                let parent = idMap.get(renderUpdate.waveid);
+                const parent = idMap.get(renderUpdate.waveid);
                 if (parent == null) {
                     this.addErrorMessage(`Could not find vdom with id ${renderUpdate.waveid} (for renderupdates)`);
                     continue;
@@ -496,7 +496,7 @@ export class VDomModel {
                 continue;
             }
             if (renderUpdate.updatetype == "replace") {
-                let parent = idMap.get(renderUpdate.waveid);
+                const parent = idMap.get(renderUpdate.waveid);
                 if (parent == null) {
                     this.addErrorMessage(`Could not find vdom with id ${renderUpdate.waveid} (for renderupdates)`);
                     continue;
@@ -510,7 +510,7 @@ export class VDomModel {
                 continue;
             }
             if (renderUpdate.updatetype == "remove") {
-                let parent = idMap.get(renderUpdate.waveid);
+                const parent = idMap.get(renderUpdate.waveid);
                 if (parent == null) {
                     this.addErrorMessage(`Could not find vdom with id ${renderUpdate.waveid} (for renderupdates)`);
                     continue;
@@ -524,7 +524,7 @@ export class VDomModel {
                 continue;
             }
             if (renderUpdate.updatetype == "insert") {
-                let parent = idMap.get(renderUpdate.waveid);
+                const parent = idMap.get(renderUpdate.waveid);
                 if (parent == null) {
                     this.addErrorMessage(`Could not find vdom with id ${renderUpdate.waveid} (for renderupdates)`);
                     continue;
@@ -546,12 +546,12 @@ export class VDomModel {
 
     setAtomValue(atomName: string, value: any, fromBe: boolean, idMap: Map<string, VDomElem>) {
         dlog("setAtomValue", atomName, value, fromBe);
-        let container = this.getAtomContainer(atomName);
+        const container = this.getAtomContainer(atomName);
         container.val = value;
         if (fromBe) {
             container.beVal = value;
         }
-        for (let id of container.usedBy) {
+        for (const id of container.usedBy) {
             this.incVDomNodeVersion(idMap.get(id));
         }
     }
@@ -560,7 +560,7 @@ export class VDomModel {
         if (update.statesync == null) {
             return;
         }
-        for (let sync of update.statesync) {
+        for (const sync of update.statesync) {
             this.setAtomValue(sync.atom, sync.value, true, idMap);
         }
     }
@@ -577,7 +577,7 @@ export class VDomModel {
         if (update.refoperations == null) {
             return;
         }
-        for (let refOp of update.refoperations) {
+        for (const refOp of update.refoperations) {
             const elem = this.getRefElem(refOp.refid);
             if (elem == null) {
                 this.addErrorMessage(`Could not find ref with id ${refOp.refid}`);
@@ -618,7 +618,7 @@ export class VDomModel {
         this.handleStateSync(update, idMap);
         this.handleRefOperations(update, idMap);
         if (update.messages) {
-            for (let message of update.messages) {
+            for (const message of update.messages) {
                 console.log("vdom-message", this.blockId, message.messagetype, message.message);
                 if (message.stacktrace) {
                     console.log("vdom-message-stacktrace", message.stacktrace);

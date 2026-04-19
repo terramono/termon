@@ -45,7 +45,7 @@ export function transformBlocks(content: string): { content: string; blocks: Map
     const blocks = new Map();
     let currentBlock = null;
     let currentContent = [];
-    let processedLines = [];
+    const processedLines = [];
 
     for (const line of lines) {
         // Check for start marker

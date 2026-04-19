@@ -3,7 +3,7 @@
 
 let isJetBrainsMonoLoaded = false;
 let isHackFontLoaded = false;
-let isHackNerdFontLoaded = false;
+const isHackNerdFontLoaded = false;
 let isInterFontLoaded = false;
 
 function addToFontFaceSet(fontFaceSet: FontFaceSet, fontFace: FontFace) {

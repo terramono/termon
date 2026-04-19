@@ -32,7 +32,7 @@ function keydownWrapper(
 }
 
 function waveEventToKeyDesc(waveEvent: WaveKeyboardEvent): string {
-    let keyDesc: string[] = [];
+    const keyDesc: string[] = [];
     if (waveEvent.cmd) {
         keyDesc.push("Cmd");
     }
@@ -61,9 +61,9 @@ function waveEventToKeyDesc(waveEvent: WaveKeyboardEvent): string {
 }
 
 function parseKey(key: string): { key: string; type: string } {
-    let regexMatch = key.match(KeyTypeCodeRegex);
+    const regexMatch = key.match(KeyTypeCodeRegex);
     if (regexMatch != null && regexMatch.length > 1) {
-        let code = regexMatch[1];
+        const code = regexMatch[1];
         return { key: code, type: KeyTypeCode };
     } else if (regexMatch != null) {
         console.log("error: regexMatch is not null yet there is no captured group: ", regexMatch, key);
@@ -72,9 +72,9 @@ function parseKey(key: string): { key: string; type: string } {
 }
 
 function parseKeyDescription(keyDescription: string): KeyPressDecl {
-    let rtn = { key: "", mods: {} } as KeyPressDecl;
-    let keys = keyDescription.replace(/[()]/g, "").split(":");
-    for (let key of keys) {
+    const rtn = { key: "", mods: {} } as KeyPressDecl;
+    const keys = keyDescription.replace(/[()]/g, "").split(":");
+    for (const key of keys) {
         if (key == "Cmd") {
             if (PLATFORM == PlatformMacOS) {
                 rtn.mods.Meta = true;
@@ -108,7 +108,7 @@ function parseKeyDescription(keyDescription: string): KeyPressDecl {
             }
             rtn.mods.Meta = true;
         } else {
-            let { key: parsedKey, type: keyType } = parseKey(key);
+            const { key: parsedKey, type: keyType } = parseKey(key);
             rtn.key = parsedKey;
             rtn.keyType = keyType;
             if (rtn.keyType == KeyTypeKey && key.length == 1) {
@@ -178,7 +178,7 @@ function isInputEvent(event: WaveKeyboardEvent): boolean {
     if (isCharacterKeyEvent(event)) {
         return true;
     }
-    for (let key of inputKeyMap.keys()) {
+    for (const key of inputKeyMap.keys()) {
         if (checkKeyPressed(event, key)) {
             return true;
         }
@@ -186,7 +186,7 @@ function isInputEvent(event: WaveKeyboardEvent): boolean {
 }
 
 function checkKeyPressed(event: WaveKeyboardEvent, keyDescription: string): boolean {
-    let keyPress = parseKeyDescription(keyDescription);
+    const keyPress = parseKeyDescription(keyDescription);
     if (notMod(keyPress.mods.Option, event.option)) {
         return false;
     }
@@ -229,7 +229,7 @@ function checkKeyPressed(event: WaveKeyboardEvent, keyDescription: string): bool
 }
 
 function adaptFromReactOrNativeKeyEvent(event: React.KeyboardEvent | KeyboardEvent): WaveKeyboardEvent {
-    let rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
+    const rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
     rtn.control = event.ctrlKey;
     rtn.shift = event.shiftKey;
     rtn.cmd = PLATFORM == PlatformMacOS ? event.metaKey : event.altKey;
@@ -250,7 +250,7 @@ function adaptFromReactOrNativeKeyEvent(event: React.KeyboardEvent | KeyboardEve
 }
 
 function adaptFromElectronKeyEvent(event: any): WaveKeyboardEvent {
-    let rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
+    const rtn: WaveKeyboardEvent = {} as WaveKeyboardEvent;
     if (event.type == "keyUp") {
         rtn.type = "keyup";
     } else if (event.type == "keyDown") {

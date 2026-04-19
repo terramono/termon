@@ -75,7 +75,7 @@ function isSshInteractive(args: string[]): boolean {
 export function getBlockingCommand(lastCommand: string | null, inAltBuffer: boolean): string | null {
     if (!lastCommand) return null;
 
-    let words = lastCommand.trim().split(/\s+/);
+    const words = lastCommand.trim().split(/\s+/);
     if (words.length === 0) return null;
 
     while (words.length && WRAPPERS.includes(words[0])) {

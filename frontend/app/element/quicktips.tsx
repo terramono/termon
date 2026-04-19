@@ -39,7 +39,7 @@ const KeyBinding = ({ keyDecl }: { keyDecl: string }) => {
         const parts = chordParts[chordIdx].trim().split(":");
         const elems: React.ReactNode[] = [];
 
-        for (let part of parts) {
+        for (const part of parts) {
             if (part === "Cmd") {
                 if (PLATFORM === PlatformMacOS) {
                     elems.push(<KeyCap key={`${chordIdx}-cmd`}>⌘ Cmd</KeyCap>);
