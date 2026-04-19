@@ -43,7 +43,7 @@ func EnsureInitialData() (bool, error) {
 		firstLaunch = true
 	}
 	if client.TempOID == "" {
-		log.Println("client.TempOID is empty")
+		log.Printf("client.TempOID is empty\n")
 		client.TempOID = uuid.NewString()
 		err = wstore.DBUpdate(ctx, client)
 		if err != nil {
@@ -51,7 +51,7 @@ func EnsureInitialData() (bool, error) {
 		}
 	}
 	if client.InstallId == "" {
-		log.Println("client.InstallId is empty")
+		log.Printf("client.InstallId is empty\n")
 		client.InstallId = uuid.NewString()
 		err = wstore.DBUpdate(ctx, client)
 		if err != nil {
@@ -61,17 +61,17 @@ func EnsureInitialData() (bool, error) {
 	log.Printf("clientid: %s\n", client.OID)
 	wstore.SetClientId(client.OID)
 	if len(client.WindowIds) == 1 {
-		log.Println("client has one window")
+		log.Printf("client has one window\n")
 		CheckAndFixWindow(ctx, client.WindowIds[0])
 		return firstLaunch, nil
 	}
 	if len(client.WindowIds) > 0 {
-		log.Println("client has windows")
+		log.Printf("client has windows\n")
 		return firstLaunch, nil
 	}
 	wsId := ""
 	if firstLaunch {
-		log.Println("client has no windows and first launch, creating starter workspace")
+		log.Printf("client has no windows and first launch, creating starter workspace\n")
 		starterWs, err := CreateWorkspace(ctx, "Starter workspace", "custom@wave-logo-solid", "#58C142", false, true)
 		if err != nil {
 			return firstLaunch, fmt.Errorf("error creating starter workspace: %w", err)

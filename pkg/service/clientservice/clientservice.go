@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,6 @@ type ClientService struct{}
 const DefaultTimeout = 2 * time.Second
 
 func (cs *ClientService) GetClientData() (*waveobj.Client, error) {
-	log.Println("GetClientData")
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
 	return wcore.GetClientData(ctx)

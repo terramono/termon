@@ -84,7 +84,7 @@ func (w *Watcher) Start() {
 				if !ok {
 					return
 				}
-				log.Println("watcher error:", err)
+				log.Printf("watcher error: %v\n", err)
 			}
 		}
 	}()
@@ -106,7 +106,7 @@ func (w *Watcher) Close() {
 	if w.watcher != nil {
 		w.watcher.Close()
 		w.watcher = nil
-		log.Println("file watcher closed")
+		log.Printf("file watcher closed\n")
 	}
 }
 

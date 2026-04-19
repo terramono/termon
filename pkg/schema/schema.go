@@ -18,7 +18,7 @@ func GetSchemaHandler() http.Handler {
 	schemaStaticPath := filepath.Join(wavebase.GetWaveAppPath(), "schema")
 	stat, err := os.Stat(schemaStaticPath)
 	if schemaHandler == nil {
-		log.Println("Schema is nil, initializing")
+		log.Printf("Schema is nil, initializing\n")
 		if err == nil && stat.IsDir() {
 			log.Printf("Found static site at %s, serving\n", schemaStaticPath)
 			schemaHandler = http.FileServer(JsonDir{http.Dir(schemaStaticPath)})

@@ -52,7 +52,7 @@ func (GoogleBackend) StreamCompletion(ctx context.Context, request wshrpc.WaveAI
 
 	model := client.GenerativeModel(request.Opts.Model)
 	if model == nil {
-		log.Println("model not found")
+		log.Printf("model not found\n")
 		client.Close()
 		return nil
 	}
