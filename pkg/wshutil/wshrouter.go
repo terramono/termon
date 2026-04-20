@@ -354,7 +354,7 @@ func (router *WshRouter) runServer() {
 		var msg RpcMessage
 		err := json.Unmarshal(msgBytes, &msg)
 		if err != nil {
-			fmt.Println("error unmarshalling message: ", err)
+			log.Printf("error unmarshalling message: %v\n", err)
 			continue
 		}
 		routeId := msg.Route

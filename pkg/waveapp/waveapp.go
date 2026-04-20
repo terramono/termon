@@ -153,7 +153,7 @@ func (client *Client) RunMain() {
 	}
 	err := client.runMainE()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }
