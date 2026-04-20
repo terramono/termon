@@ -573,7 +573,7 @@ export class VDomModel {
         return ref?.elem;
     }
 
-    handleRefOperations(update: VDomBackendUpdate, idMap: Map<string, VDomElem>) {
+    handleRefOperations(update: VDomBackendUpdate, _idMap: Map<string, VDomElem>) {
         if (update.refoperations == null) {
             return;
         }
@@ -654,9 +654,6 @@ export class VDomModel {
     }
 
     createFeUpdate(): VDomFrontendUpdate {
-        const blockORef = makeORef("block", this.blockId);
-        const blockAtom = WOS.getWaveObjectAtom<Block>(blockORef);
-        const blockData = globalStore.get(blockAtom);
         const isBlockFocused = globalStore.get(this.nodeModel.isFocused);
         const renderContext: VDomRenderContext = {
             blockid: this.blockId,

@@ -203,7 +203,8 @@ export function applyCanvasOp(canvas: HTMLCanvasElement, canvasOp: VDomRefOperat
         return;
     }
 
-    let { op, params, outputref } = canvasOp;
+    const { op, outputref } = canvasOp;
+    let { params } = canvasOp;
     if (params == null) {
         params = [];
     }

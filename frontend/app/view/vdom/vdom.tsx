@@ -319,7 +319,9 @@ function stringSetsEqual(set1: Set<string>, set2: Set<string>): boolean {
 }
 
 function useVDom(model: VDomModel, elem: VDomElem): GenericPropsType {
-    const version = jotai.useAtomValue(model.getVDomNodeVersionAtom(elem));
+    // Subscribe to the per-node version atom so this hook re-runs when the
+    // backend mutates the VDom node (its value itself is not needed here).
+    jotai.useAtomValue(model.getVDomNodeVersionAtom(elem));
     const [oldAtomKeys, setOldAtomKeys] = React.useState<Set<string>>(new Set());
     const [props, atomKeys] = convertProps(elem, model);
     React.useEffect(() => {
@@ -451,7 +453,7 @@ type VDomViewProps = {
     blockId: string;
 };
 
-function VDomInnerView({ blockId, model }: VDomViewProps) {
+function VDomInnerView({ blockId: _blockId, model }: VDomViewProps) {
     const [styleMounted, setStyleMounted] = React.useState(!model.backendOpts?.globalstyles);
     const handleStylesMounted = () => {
         setStyleMounted(true);

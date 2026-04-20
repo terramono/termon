@@ -235,7 +235,6 @@ const TsunamiView = memo((props: ViewComponentProps<TsunamiViewModel>) => {
     const shellProcFullStatus = jotai.useAtomValue(model.shellProcFullStatus);
     const blockData = jotai.useAtomValue(model.blockAtom);
     const isRestarting = jotai.useAtomValue(model.isRestarting);
-    const domReady = jotai.useAtomValue(model.domReady);
 
     useEffect(() => {
         model.resyncController();

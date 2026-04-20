@@ -190,7 +190,7 @@ const InitPage = ({
     );
 };
 
-const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
+const NoTelemetryStarPage = ({ isCompact: _isCompact }: { isCompact: boolean }) => {
     const setPageName = useSetAtom(pageNameAtom);
 
     const handleStarClick = async () => {

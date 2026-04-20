@@ -35,7 +35,7 @@ function VTabBarPreviewInner({ platform, setPlatform }: VTabBarPreviewInnerProps
     const loadBadgesEnv = useWaveEnv<LoadBadgesEnv>();
     const [hideAiButton, setHideAiButton] = useState(false);
     const [isFullScreen, setIsFullScreen] = useAtom(env.atoms.isFullScreen);
-    const [fullConfig, setFullConfig] = useAtom(env.atoms.fullConfigAtom);
+    const [, setFullConfig] = useAtom(env.atoms.fullConfigAtom);
     const [updaterStatus, setUpdaterStatus] = useAtom(env.atoms.updaterStatusAtom);
     const [width, setWidth] = useState<number>(220);
     const workspace = useAtomValue(env.wos.getWaveObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
