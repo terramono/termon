@@ -51,7 +51,7 @@ test("addIntermediateNode", () => {
     assert(node1.children![0].data!.blockId === "hello", "node1 should have one child which should have data");
     const intermediateNode1 = addIntermediateNode(node1);
     assert(
-        node1.children !== undefined && node1.children.length === 1 && node1.children?.includes(intermediateNode1),
+        node1.children != null && node1.children.length === 1 && node1.children?.includes(intermediateNode1),
         "node1 should have a single child intermediateNode1"
     );
     assert(intermediateNode1.flexDirection === FlexDirection.Row, "intermediateNode1 should have flexDirection Row");
@@ -65,14 +65,14 @@ test("addIntermediateNode", () => {
     });
     const intermediateNode2 = addIntermediateNode(node2);
     assert(
-        node2.children !== undefined &&
-            node2.data === undefined &&
+        node2.children != null &&
+            node2.data == null &&
             node2.children.length === 1 &&
             node2.children.includes(intermediateNode2),
         "node2 should have no data and a single child intermediateNode2"
     );
     assert(
-        intermediateNode2.data.blockId === "hello" && intermediateNode2.children === undefined,
+        intermediateNode2.data.blockId === "hello" && intermediateNode2.children == null,
         "intermediateNode2 should have no children and should have data matching the old value of node2"
     );
 });
@@ -81,7 +81,7 @@ test("addChildAt - same flexDirection, no children", () => {
     const node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
     const node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(node1.children![1].id === node2.id, "node1's second child should be node2");
@@ -92,7 +92,7 @@ test("addChildAt - different flexDirection, no children", () => {
     const node1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1" });
     const node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have flexDirection Column");
@@ -106,7 +106,7 @@ test("addChildAt - same flexDirection, first node has children, second doesn't",
     ]);
     const node2 = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(
@@ -123,7 +123,7 @@ test("addChildAt - different flexDirection, first node has children, second does
     ]);
     const node2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" });
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(node1.children![1].id === node2.id, "node1's second child should be node2");
@@ -138,7 +138,7 @@ test("addChildAt - same flexDirection, first node has children, second has child
         newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "node2" }),
     ]);
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(
@@ -160,7 +160,7 @@ test("addChildAt - different flexDirection, first node has children, second has 
         newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node2" }),
     ]);
     addChildAt(node1, 1, node2);
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children!.length === 2, "node1 should have two children");
     assert(node1.children![0].data!.blockId === "node1", "node1's first child should have node1's data");
     assert(
@@ -180,9 +180,9 @@ test("balanceNode - corrects flex directions", () => {
         newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "node1Inner2" }),
     ]);
     const newNode1 = balanceNode(node1);
-    assert(newNode1 !== undefined, "newNode1 should not be undefined");
+    assert(newNode1 != null, "newNode1 should not be undefined");
     node1 = newNode1;
-    assert(node1.data === undefined, "node1 should have no data");
+    assert(node1.data == null, "node1 should have no data");
     assert(node1.children![0].flexDirection !== node1.flexDirection);
 });
 
@@ -193,9 +193,9 @@ test("balanceNode - collapses nodes with single grandchild 1", () => {
         ]),
     ]);
     const newNode1 = balanceNode(node1);
-    assert(newNode1 !== undefined, "newNode1 should not be undefined");
+    assert(newNode1 != null, "newNode1 should not be undefined");
     node1 = newNode1;
-    assert(node1.children === undefined, "node1 should have no children");
+    assert(node1.children == null, "node1 should have no children");
     assert(node1.data!.blockId === "node1", "node1 should have data 'node1'");
 });
 
@@ -209,7 +209,7 @@ test("balanceNode - collapses nodes with single grandchild 2", () => {
         ]),
     ]);
     const newNode2 = balanceNode(node2);
-    assert(newNode2 !== undefined, "newNode2 should not be undefined");
+    assert(newNode2 != null, "newNode2 should not be undefined");
     node2 = newNode2;
     assert(node2.children!.length === 2, "node2 should have two children");
     assert(node2.children[0].data!.blockId === "node2Inner1", "node2's first child should have data 'node2Inner1'");
@@ -227,9 +227,9 @@ test("balanceNode - collapses nodes with single grandchild 3", () => {
         ]),
     ]);
     const newNode3 = balanceNode(node3);
-    assert(newNode3 !== undefined, "newNode3 should not be undefined");
+    assert(newNode3 != null, "newNode3 should not be undefined");
     node3 = newNode3;
-    assert(node3.children === undefined, "node3 should have no children");
+    assert(node3.children == null, "node3 should have no children");
     assert(node3.data!.blockId === "node3", "node3 should have data 'node3'");
 });
 
@@ -245,7 +245,7 @@ test("balanceNode - collapses nodes with single grandchild 4", () => {
         ]),
     ]);
     const newNode4 = balanceNode(node4);
-    assert(newNode4 !== undefined, "newNode4 should not be undefined");
+    assert(newNode4 != null, "newNode4 should not be undefined");
     node4 = newNode4;
     assert(node4.children!.length === 1, "node4 should have one child");
     assert(node4.children![0].children!.length === 2, "node4 should have two grandchildren");

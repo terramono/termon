@@ -31,7 +31,7 @@ test("layoutTreeStateReducer - compute move", () => {
     assert(insertOperation.insertAtRoot, "insert operation insertAtRoot should be true");
     moveNode(treeState, insertOperation);
     assert(
-        treeState.rootNode.data === undefined && treeState.rootNode.children!.length === 3,
+        treeState.rootNode.data == null && treeState.rootNode.children!.length === 3,
         "root node should still have three children"
     );
     assert(treeState.rootNode.children![1].data!.blockId === "node1", "root's second child should be node1");
@@ -49,7 +49,7 @@ test("layoutTreeStateReducer - compute move", () => {
     assert(!insertOperation2.insertAtRoot, "insert operation insertAtRoot should be false");
     moveNode(treeState, insertOperation2);
     assert(
-        treeState.rootNode.data === undefined && (treeState.rootNode.children!.length as number) === 2,
+        treeState.rootNode.data == null && (treeState.rootNode.children!.length as number) === 2,
         "root node should now have two children after node2 moved into node1"
     );
     assert(treeState.rootNode.children![1].children!.length === 2, "root's second child should now have two children");
@@ -71,7 +71,7 @@ test("computeMove - noop action", () => {
     };
     let pendingAction = computeMoveNode(treeState, moveAction);
 
-    assert(pendingAction === undefined, "inserting a node to the left of itself should not produce a pendingAction");
+    assert(pendingAction == null, "inserting a node to the left of itself should not produce a pendingAction");
 
     moveAction = {
         type: LayoutTreeActionType.ComputeMove,
@@ -81,5 +81,5 @@ test("computeMove - noop action", () => {
     };
 
     pendingAction = computeMoveNode(treeState, moveAction);
-    assert(pendingAction === undefined, "inserting a node to the right of itself should not produce a pendingAction");
+    assert(pendingAction == null, "inserting a node to the right of itself should not produce a pendingAction");
 });
