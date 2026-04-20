@@ -212,9 +212,9 @@ export function useSearch(options?: SearchOptions): SearchProps {
             resultsCount: atom(0),
             isOpen: atom(false),
             focusInput: atom(0),
-            regex: options?.regex !== undefined ? atom(options.regex) : undefined,
-            caseSensitive: options?.caseSensitive !== undefined ? atom(options.caseSensitive) : undefined,
-            wholeWord: options?.wholeWord !== undefined ? atom(options.wholeWord) : undefined,
+            regex: options?.regex != null ? atom(options.regex) : undefined,
+            caseSensitive: options?.caseSensitive != null ? atom(options.caseSensitive) : undefined,
+            wholeWord: options?.wholeWord != null ? atom(options.wholeWord) : undefined,
         }),
         []
     );

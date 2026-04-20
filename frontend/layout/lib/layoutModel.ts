@@ -601,7 +601,7 @@ export class LayoutModel {
         this.renderContent = contents.renderContent;
         this.renderPreview = contents.renderPreview;
         this.onNodeDelete = contents.onNodeDelete;
-        if (contents.gapSizePx !== undefined) {
+        if (contents.gapSizePx != null) {
             this.setter(this.gapSizePx, contents.gapSizePx);
         }
         const tab = this.getter(this.tabAtom);
@@ -964,7 +964,7 @@ export class LayoutModel {
                     }
 
                     const parentNode = findNode(this.treeState.rootNode, parentId);
-                    if (action.index !== undefined && parentNode) {
+                    if (action.index != null && parentNode) {
                         const targetIndex = boundNumber(
                             action.index - 1,
                             0,

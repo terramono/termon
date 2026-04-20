@@ -463,7 +463,7 @@ export class WaveConfigViewModel implements ViewModel {
         try {
             const secrets = await this.env.rpc.GetSecretsCommand(TabRpcClient, [selectedSecret]);
             const value = secrets[selectedSecret];
-            if (value !== undefined) {
+            if (value != null) {
                 globalStore.set(this.secretValueAtom, value);
                 globalStore.set(this.secretShownAtom, true);
             } else {

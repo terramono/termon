@@ -150,7 +150,7 @@ const waveObjectValueCache = new Map<string, WaveObjectValue<any>>();
 
 function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     let wov = waveObjectValueCache.get(oref);
-    if (wov === undefined) {
+    if (wov == null) {
         wov = getWaveObjectValue<T>(oref, true);
         return wov.pendingPromise;
     }
@@ -192,7 +192,7 @@ function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boo
 
 function getWaveObjectValue<T extends WaveObj>(oref: string, createIfMissing = true): WaveObjectValue<T> {
     let wov = waveObjectValueCache.get(oref);
-    if (wov === undefined && createIfMissing) {
+    if (wov == null && createIfMissing) {
         wov = createWaveValueObject(oref, true);
         waveObjectValueCache.set(oref, wov);
     }
@@ -302,10 +302,10 @@ function getObjectValue<T extends WaveObj>(oref: string, getFn?: Getter): T {
 function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServer?: boolean) {
     const oref = makeORef(value.otype, value.oid);
     const wov = getWaveObjectValue(oref, false);
-    if (wov === undefined) {
+    if (wov == null) {
         return;
     }
-    if (setFn === undefined) {
+    if (setFn == null) {
         setFn = globalStore.set;
     }
     setFn(wov.dataAtom, { value: value, loading: false });

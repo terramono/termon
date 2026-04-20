@@ -73,7 +73,7 @@ function deepCompareReturnPrev(key: any, newValue: any): any {
         return newValue;
     }
     const previousValue = prevValueCache.get(key);
-    if (previousValue !== undefined && JSON.stringify(newValue) === JSON.stringify(previousValue)) {
+    if (previousValue != null && JSON.stringify(newValue) === JSON.stringify(previousValue)) {
         return previousValue;
     }
     prevValueCache.set(key, newValue);
@@ -352,7 +352,7 @@ function mergeMeta(meta: MetaType, metaUpdate: MetaType, prefix?: string): MetaT
 
     // Helper function to check if a key matches the prefix criteria
     const shouldIncludeKey = (key: string): boolean => {
-        if (prefix === undefined) {
+        if (prefix == null) {
             return true;
         }
         if (prefix === "") {
@@ -407,7 +407,7 @@ function mergeMeta(meta: MetaType, metaUpdate: MetaType, prefix?: string): MetaT
             continue;
         }
 
-        if (v === null || v === undefined) {
+        if (v == null) {
             delete rtn[k];
             continue;
         }
@@ -451,7 +451,7 @@ type ParsedDataUrl = {
 function parseDataUrl(dataUrl: string): ParsedDataUrl {
     if (!dataUrl.startsWith("data:")) throw new Error("Invalid data URL");
     const [header, data] = dataUrl.split(",", 2);
-    if (data === undefined) throw new Error("Invalid data URL: missing data");
+    if (data == null) throw new Error("Invalid data URL: missing data");
 
     const meta = header.slice(5);
     let mimeType = "text/plain;charset=US-ASCII";
