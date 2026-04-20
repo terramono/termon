@@ -32,7 +32,7 @@ type Writer struct {
 	closed       bool
 }
 
-func NewWriter(id string, readWindow int64, dataSender DataSender) *Writer {
+func MakeWriter(id string, readWindow int64, dataSender DataSender) *Writer {
 	w := &Writer{
 		id:           id,
 		readWindow:   readWindow,

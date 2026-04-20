@@ -461,7 +461,7 @@ func main() {
 	log.SetPrefix("[wavesrv] ")
 	wavebase.WaveVersion = WaveVersion
 	wavebase.BuildTime = BuildTime
-	wshutil.DefaultRouter = wshutil.NewWshRouter()
+	wshutil.DefaultRouter = wshutil.MakeWshRouter()
 	wshutil.DefaultRouter.SetAsRootRouter()
 
 	err := grabAndRemoveEnvVars()

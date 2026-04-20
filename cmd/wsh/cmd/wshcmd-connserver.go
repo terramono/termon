@@ -201,7 +201,7 @@ func setupConnServerRpcClientWithRouter(router *wshutil.WshRouter, sockName stri
 
 func serverRunRouter() error {
 	log.Printf("starting connserver router")
-	router := wshutil.NewWshRouter()
+	router := wshutil.MakeWshRouter()
 	ConnServerWshRouter = router
 	termProxy := wshutil.MakeRpcProxy("connserver-term")
 	rawCh := make(chan []byte, wshutil.DefaultOutputChSize)
@@ -302,7 +302,7 @@ func serverRunRouterDomainSocket(jwtToken string) error {
 	}
 
 	// create router
-	router := wshutil.NewWshRouter()
+	router := wshutil.MakeWshRouter()
 	ConnServerWshRouter = router
 
 	// create proxy for the domain socket connection

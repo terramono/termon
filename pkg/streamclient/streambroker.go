@@ -37,7 +37,7 @@ type Broker struct {
 	recvQueue           *utilds.WorkQueue[workItem]
 }
 
-func NewBroker(rpcClient StreamRpcInterface) *Broker {
+func MakeBroker(rpcClient StreamRpcInterface) *Broker {
 	b := &Broker{
 		rpcClient:           rpcClient,
 		readers:             make(map[string]*Reader),
@@ -61,7 +61,7 @@ func (b *Broker) CreateStreamReaderWithSeq(readerRoute string, writerRoute strin
 
 	streamId := uuid.New().String()
 
-	reader := NewReaderWithSeq(streamId, rwnd, startSeq, b)
+	reader := MakeReaderWithSeq(streamId, rwnd, startSeq, b)
 	b.readers[streamId] = reader
 	b.readerRoutes[streamId] = readerRoute
 	b.writerRoutes[streamId] = writerRoute
@@ -100,7 +100,7 @@ func (b *Broker) DetachStreamWriter(streamId string) {
 }
 
 func (b *Broker) CreateStreamWriter(meta *wshrpc.StreamMeta) (*Writer, error) {
-	writer := NewWriter(meta.Id, meta.RWnd, b)
+	writer := MakeWriter(meta.Id, meta.RWnd, b)
 	err := b.AttachStreamWriter(meta, writer)
 	if err != nil {
 		return nil, err

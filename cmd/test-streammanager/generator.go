@@ -15,7 +15,7 @@ type TestDataGenerator struct {
 	generated  int64
 }
 
-func NewTestDataGenerator(totalBytes int64) *TestDataGenerator {
+func MakeTestDataGenerator(totalBytes int64) *TestDataGenerator {
 	return &TestDataGenerator{totalBytes: totalBytes}
 }
 

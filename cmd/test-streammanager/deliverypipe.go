@@ -56,7 +56,7 @@ type DeliveryPipe struct {
 	currentBytes int64
 }
 
-func NewDeliveryPipe(config DeliveryConfig, metrics *Metrics) *DeliveryPipe {
+func MakeDeliveryPipe(config DeliveryConfig, metrics *Metrics) *DeliveryPipe {
 	return &DeliveryPipe{
 		config:         config,
 		metrics:        metrics,

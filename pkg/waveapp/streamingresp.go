@@ -23,7 +23,7 @@ type StreamingResponseWriter struct {
 	buffer     *bytes.Buffer
 }
 
-func NewStreamingResponseWriter(respChan chan<- wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse]) *StreamingResponseWriter {
+func MakeStreamingResponseWriter(respChan chan<- wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse]) *StreamingResponseWriter {
 	return &StreamingResponseWriter{
 		header:     make(http.Header),
 		statusCode: http.StatusOK,

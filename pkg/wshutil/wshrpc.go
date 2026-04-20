@@ -233,7 +233,7 @@ func MakeWshRpcWithChannels(inputCh chan baseds.RpcInputChType, outputCh chan []
 		ResponseHandlerMap: make(map[string]*RpcResponseHandler),
 	}
 	rtn.RpcContext.Store(&rpcCtx)
-	rtn.StreamBroker = streamclient.NewBroker(AdaptWshRpc(rtn))
+	rtn.StreamBroker = streamclient.MakeBroker(AdaptWshRpc(rtn))
 	go rtn.runServer()
 	return rtn
 }

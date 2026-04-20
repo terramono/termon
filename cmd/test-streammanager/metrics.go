@@ -30,7 +30,7 @@ type Metrics struct {
 	pipeHighWaterMark int64
 }
 
-func NewMetrics() *Metrics {
+func MakeMetrics() *Metrics {
 	return &Metrics{}
 }
 

@@ -104,7 +104,7 @@ func (impl *WaveAppServerImpl) VDomRenderCommand(ctx context.Context, feUpdate v
 
 func (impl *WaveAppServerImpl) VDomUrlRequestCommand(ctx context.Context, data wshrpc.VDomUrlRequestData) chan wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse] {
 	respChan := make(chan wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse])
-	writer := NewStreamingResponseWriter(respChan)
+	writer := MakeStreamingResponseWriter(respChan)
 
 	go func() {
 		defer close(respChan) // Declared first, so it executes last

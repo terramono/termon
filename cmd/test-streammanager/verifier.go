@@ -15,9 +15,9 @@ type Verifier struct {
 	firstMismatch int64
 }
 
-func NewVerifier(totalBytes int64) *Verifier {
+func MakeVerifier(totalBytes int64) *Verifier {
 	return &Verifier{
-		expectedGen:   NewTestDataGenerator(totalBytes),
+		expectedGen:   MakeTestDataGenerator(totalBytes),
 		firstMismatch: -1,
 	}
 }

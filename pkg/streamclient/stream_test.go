@@ -33,8 +33,8 @@ func (ft *fakeTransport) SendAck(ackPk wshrpc.CommandStreamAckData) {
 func TestBasicReadWrite(t *testing.T) {
 	transport := newFakeTransport()
 
-	reader := NewReader("1", 1024, transport)
-	writer := NewWriter("1", 1024, transport)
+	reader := MakeReader("1", 1024, transport)
+	writer := MakeWriter("1", 1024, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -73,8 +73,8 @@ func TestBasicReadWrite(t *testing.T) {
 func TestEOF(t *testing.T) {
 	transport := newFakeTransport()
 
-	reader := NewReader("1", 1024, transport)
-	writer := NewWriter("1", 1024, transport)
+	reader := MakeReader("1", 1024, transport)
+	writer := MakeWriter("1", 1024, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -111,8 +111,8 @@ func TestFlowControl(t *testing.T) {
 	smallWindow := int64(10)
 	transport := newFakeTransport()
 
-	reader := NewReader("1", smallWindow, transport)
-	writer := NewWriter("1", smallWindow, transport)
+	reader := MakeReader("1", smallWindow, transport)
+	writer := MakeWriter("1", smallWindow, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -164,8 +164,8 @@ func TestFlowControl(t *testing.T) {
 func TestError(t *testing.T) {
 	transport := newFakeTransport()
 
-	reader := NewReader("1", 1024, transport)
-	writer := NewWriter("1", 1024, transport)
+	reader := MakeReader("1", 1024, transport)
+	writer := MakeWriter("1", 1024, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -195,8 +195,8 @@ func TestError(t *testing.T) {
 func TestCancel(t *testing.T) {
 	transport := newFakeTransport()
 
-	reader := NewReader("1", 1024, transport)
-	writer := NewWriter("1", 1024, transport)
+	reader := MakeReader("1", 1024, transport)
+	writer := MakeWriter("1", 1024, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -228,8 +228,8 @@ func TestCancel(t *testing.T) {
 func TestMultipleWrites(t *testing.T) {
 	transport := newFakeTransport()
 
-	reader := NewReader("1", 1024, transport)
-	writer := NewWriter("1", 1024, transport)
+	reader := MakeReader("1", 1024, transport)
+	writer := MakeWriter("1", 1024, transport)
 
 	go func() {
 		for dataPk := range transport.dataChan {
@@ -269,7 +269,7 @@ func TestMultipleWrites(t *testing.T) {
 
 func TestOutOfOrderPackets(t *testing.T) {
 	transport := newFakeTransport()
-	reader := NewReader("test-ooo", 1024, transport)
+	reader := MakeReader("test-ooo", 1024, transport)
 
 	packet0 := wshrpc.CommandStreamData{
 		Id:     "test-ooo",
@@ -330,7 +330,7 @@ func TestOutOfOrderPackets(t *testing.T) {
 
 func TestOutOfOrderWithDuplicates(t *testing.T) {
 	transport := newFakeTransport()
-	reader := NewReader("test-dup", 1024, transport)
+	reader := MakeReader("test-dup", 1024, transport)
 
 	packet0 := wshrpc.CommandStreamData{
 		Id:     "test-dup",
@@ -380,7 +380,7 @@ func TestOutOfOrderWithDuplicates(t *testing.T) {
 
 func TestOutOfOrderWithGaps(t *testing.T) {
 	transport := newFakeTransport()
-	reader := NewReader("test-gaps", 1024, transport)
+	reader := MakeReader("test-gaps", 1024, transport)
 
 	packet0 := wshrpc.CommandStreamData{
 		Id:     "test-gaps",
@@ -480,7 +480,7 @@ func TestOutOfOrderWithGaps(t *testing.T) {
 
 func TestOutOfOrderWithEOF(t *testing.T) {
 	transport := newFakeTransport()
-	reader := NewReader("test-eof", 1024, transport)
+	reader := MakeReader("test-eof", 1024, transport)
 
 	packet0 := wshrpc.CommandStreamData{
 		Id:     "test-eof",

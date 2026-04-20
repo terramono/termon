@@ -146,7 +146,7 @@ func MakeLinkRouteId(linkId baseds.LinkId) string {
 
 var DefaultRouter *WshRouter
 
-func NewWshRouter() *WshRouter {
+func MakeWshRouter() *WshRouter {
 	rtn := &WshRouter{
 		lock:                 &sync.Mutex{},
 		nextLinkId:           0,

@@ -73,7 +73,7 @@ func initTestHarness(autoAccept bool) error {
 		return fmt.Errorf("failed to cache env vars: %w", err)
 	}
 
-	wshutil.DefaultRouter = wshutil.NewWshRouter()
+	wshutil.DefaultRouter = wshutil.MakeWshRouter()
 	wshutil.DefaultRouter.SetAsRootRouter()
 
 	wstore.SetClientId("test-client-" + fmt.Sprintf("%d", time.Now().Unix()))

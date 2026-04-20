@@ -34,8 +34,8 @@ func setupBrokerPair() (*Broker, *Broker) {
 		ackChan:  make(chan wshrpc.CommandStreamAckData, 10),
 	}
 
-	broker1 := NewBroker(rpc1)
-	broker2 := NewBroker(rpc2)
+	broker1 := MakeBroker(rpc1)
+	broker2 := MakeBroker(rpc2)
 
 	go func() {
 		for data := range rpc1.dataChan {

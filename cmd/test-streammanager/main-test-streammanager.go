@@ -67,10 +67,10 @@ func runTest(config TestConfig) error {
 	}
 
 	// 1. Create metrics
-	metrics := NewMetrics()
+	metrics := MakeMetrics()
 
 	// 2. Create the delivery pipe
-	pipe := NewDeliveryPipe(DeliveryConfig{
+	pipe := MakeDeliveryPipe(DeliveryConfig{
 		Delay: config.Delay,
 		Skew:  config.Skew,
 	}, metrics)
@@ -79,8 +79,8 @@ func runTest(config TestConfig) error {
 	writerBridge := &WriterBridge{pipe: pipe}
 	readerBridge := &ReaderBridge{pipe: pipe}
 
-	writerBroker := streamclient.NewBroker(writerBridge)
-	readerBroker := streamclient.NewBroker(readerBridge)
+	writerBroker := streamclient.MakeBroker(writerBridge)
+	readerBroker := streamclient.MakeBroker(readerBridge)
 
 	// 4. Wire up delivery targets
 	pipe.SetDataTarget(readerBroker.RecvData)
@@ -101,7 +101,7 @@ func runTest(config TestConfig) error {
 	}
 
 	// 8. Create verifier
-	verifier := NewVerifier(config.DataSize)
+	verifier := MakeVerifier(config.DataSize)
 
 	// 9. Create metrics writer wrapper
 	metricsWriter := &MetricsWriter{
@@ -112,7 +112,7 @@ func runTest(config TestConfig) error {
 	// 10. Wrap reader with slow reader if configured
 	var actualReader io.Reader = reader
 	if config.SlowReader > 0 {
-		actualReader = NewSlowReader(reader, config.SlowReader)
+		actualReader = MakeSlowReader(reader, config.SlowReader)
 	}
 
 	// 11. Start reading from stream reader and writing to verifier
@@ -171,7 +171,7 @@ func runStreamManagerMode(config TestConfig, writerBroker *streamclient.Broker, 
 	}
 	fmt.Printf("  Stream connected, startSeq: %d\n", startSeq)
 
-	generator := NewTestDataGenerator(config.DataSize)
+	generator := MakeTestDataGenerator(config.DataSize)
 	if err := streamManager.AttachReader(generator); err != nil {
 		fmt.Printf("failed to attach reader: %v\n", err)
 		return nil
@@ -188,7 +188,7 @@ func runWriterMode(config TestConfig, writerBroker *streamclient.Broker, streamM
 	}
 	fmt.Printf("  Stream writer created\n")
 
-	generator := NewTestDataGenerator(config.DataSize)
+	generator := MakeTestDataGenerator(config.DataSize)
 
 	done := make(chan error, 1)
 	go func() {
@@ -233,7 +233,7 @@ type SlowReader struct {
 	bytesPerSec int
 }
 
-func NewSlowReader(reader io.Reader, bytesPerSec int) *SlowReader {
+func MakeSlowReader(reader io.Reader, bytesPerSec int) *SlowReader {
 	return &SlowReader{
 		reader:      reader,
 		bytesPerSec: bytesPerSec,
