@@ -13,7 +13,7 @@ export function findBuilderAppPanel(element: HTMLElement): HTMLElement | null {
 }
 
 export function builderAppHasFocusWithin(focusTarget?: Element | null): boolean {
-    if (focusTarget !== undefined) {
+    if (focusTarget != null) {
         if (focusTarget instanceof HTMLElement) {
             return findBuilderAppPanel(focusTarget) != null;
         }

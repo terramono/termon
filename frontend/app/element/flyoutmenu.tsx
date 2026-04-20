@@ -239,7 +239,7 @@ const SubMenu = memo(
         });
 
         const position = subMenuPosition[parentKey];
-        const isPositioned = position && position.top !== undefined && position.left !== undefined;
+        const isPositioned = position && position.top != null && position.left != null;
 
         const subMenu = (
             <div

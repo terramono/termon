@@ -47,7 +47,7 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
         console.warn("either nodeId or nodeToMoveId not set", nodeId, nodeToMoveId);
         return;
     }
-    if (direction === undefined) {
+    if (direction == null) {
         console.warn("No direction provided for insertItemInDirection");
         return;
     }

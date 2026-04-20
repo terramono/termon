@@ -119,7 +119,7 @@ const ExpandableMenuItemGroup = ({
     const id = idRef.current;
 
     // Determine if the component is controlled or uncontrolled
-    const isControlled = isOpen !== undefined;
+    const isControlled = isOpen != null;
 
     // Get the open state from global atom in uncontrolled mode
     const actualIsOpen = isControlled ? isOpen : (openGroups[id] ?? false);

@@ -62,10 +62,6 @@ const Popover = memo(
                 }
             };
 
-            if (offset === undefined) {
-                offset = 3;
-            }
-
             middleware ??= [];
             middleware.push(offsetMiddleware(offset));
 

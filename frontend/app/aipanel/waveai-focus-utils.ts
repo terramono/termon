@@ -13,7 +13,7 @@ export function findWaveAIPanel(element: HTMLElement): HTMLElement | null {
 }
 
 export function waveAIHasFocusWithin(focusTarget?: Element | null): boolean {
-    if (focusTarget !== undefined) {
+    if (focusTarget != null) {
         if (focusTarget instanceof HTMLElement) {
             return findWaveAIPanel(focusTarget) != null;
         }

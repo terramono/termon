@@ -108,7 +108,7 @@ const Input = memo(
                     return;
                 }
 
-                if (value === undefined) {
+                if (value == null) {
                     setInternalValue(inputValue);
                 }
 
