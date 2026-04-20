@@ -80,7 +80,7 @@ function CreateNewWaveApp({ onCreateApp }: { onCreateApp: (appName: string) => P
                         disabled={!newAppName.trim() || !!inputError || isCreating}
                         className={`px-4 py-2 rounded-r transition-colors font-medium whitespace-nowrap ${
                             !newAppName.trim() || inputError || isCreating
-                                ? "bg-panel border border-l-0 border-border text-muted cursor-not-allowed"
+                                ? "bg-panel border border-l-0 border-border text-muted"
                                 : "bg-accent text-black hover:bg-accent-hover cursor-pointer"
                         }`}
                     >

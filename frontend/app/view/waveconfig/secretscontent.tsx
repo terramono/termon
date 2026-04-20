@@ -171,14 +171,14 @@ const AddSecretForm = memo(
                 </div>
                 <div className="flex gap-2 justify-end">
                     <button
-                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded cursor-pointer disabled:opacity-50"
                         onClick={onCancel}
                         disabled={isLoading}
                     >
                         Cancel
                     </button>
                     <button
-                        className="px-4 py-2 bg-accent-600 hover:bg-accent-500 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-accent-600 hover:bg-accent-500 rounded cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         onClick={onSubmit}
                         disabled={isLoading || isNameInvalid || newSecretName.trim() === ""}
                     >
@@ -249,7 +249,7 @@ const SecretDetailView = memo(({ model }: SecretDetailViewProps) => {
                             </span>
                         ) : (
                             <button
-                                className="text-accent-500 underline hover:text-accent-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="text-accent-500 underline hover:text-accent-400 cursor-pointer disabled:opacity-50"
                                 onClick={() => model.showSecret()}
                                 disabled={isLoading}
                             >
@@ -261,7 +261,7 @@ const SecretDetailView = memo(({ model }: SecretDetailViewProps) => {
             </div>
             <div className="flex gap-2 justify-between">
                 <button
-                    className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded cursor-pointer disabled:opacity-50 flex items-center gap-2"
                     onClick={() => model.deleteSecret()}
                     disabled={isLoading}
                     title="Delete this secret"
@@ -280,14 +280,14 @@ const SecretDetailView = memo(({ model }: SecretDetailViewProps) => {
                 </button>
                 <div className="flex gap-2">
                     <button
-                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded cursor-pointer disabled:opacity-50"
                         onClick={() => model.closeSecretView()}
                         disabled={isLoading}
                     >
                         Cancel
                     </button>
                     <button
-                        className="px-4 py-2 bg-accent-600 hover:bg-accent-500 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-accent-600 hover:bg-accent-500 rounded cursor-pointer disabled:opacity-50 flex items-center gap-2"
                         onClick={() => model.saveSecret()}
                         disabled={isLoading}
                     >

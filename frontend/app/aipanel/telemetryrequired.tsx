@@ -76,7 +76,7 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
                                 <button
                                     onClick={handleEnableTelemetry}
                                     disabled={isEnabling}
-                                    className="bg-accent/80 hover:bg-accent disabled:bg-accent/50 text-background px-4 py-2 rounded-lg font-medium cursor-pointer disabled:cursor-not-allowed"
+                                    className="bg-accent/80 hover:bg-accent disabled:bg-accent/50 text-background px-4 py-2 rounded-lg font-medium cursor-pointer"
                                 >
                                     {isEnabling ? "Enabling..." : "Enable Telemetry and Continue"}
                                 </button>
