@@ -106,7 +106,7 @@ export class TabClient extends WshClient {
         layoutModel.focusNode(node.id);
     }
 
-    async handle_getfocusedblockdata(rh: RpcResponseHelper): Promise<FocusedBlockData> {
+    async handle_getfocusedblockdata(_rh: RpcResponseHelper): Promise<FocusedBlockData> {
         const layoutModel = getLayoutModelForStaticTab();
         if (!layoutModel) {
             throw new Error("Layout model not found");

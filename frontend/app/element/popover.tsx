@@ -127,7 +127,7 @@ const PopoverButton = forwardRef<HTMLButtonElement | HTMLDivElement, PopoverButt
             onClick: userOnClick, // Destructured from props
             getReferenceProps,
             className,
-            as: Component = "button",
+            as: _as = "button",
             ...props // The rest of the props, without onClick
         },
         ref
@@ -136,7 +136,7 @@ const PopoverButton = forwardRef<HTMLButtonElement | HTMLDivElement, PopoverButt
         const popoverOnClick = referenceProps.onClick;
 
         // Remove onClick from referenceProps to prevent it from overwriting our combinedOnClick
-        const { onClick: refOnClick, ...restReferenceProps } = referenceProps;
+        const { onClick: _refOnClick, ...restReferenceProps } = referenceProps;
 
         const combinedOnClick = (event: React.MouseEvent) => {
             if (userOnClick) {

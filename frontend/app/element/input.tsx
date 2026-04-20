@@ -86,7 +86,7 @@ const Input = memo(
                 onBlur,
                 placeholder,
                 defaultValue = "",
-                required,
+                required: _required,
                 maxLength,
                 autoFocus,
                 autoSelect,

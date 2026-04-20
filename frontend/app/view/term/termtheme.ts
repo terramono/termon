@@ -14,7 +14,7 @@ interface TermThemeProps {
     model: TermViewModel;
 }
 
-const TermThemeUpdater = ({ blockId, model, termRef }: TermThemeProps) => {
+const TermThemeUpdater = ({ blockId: _blockId, model, termRef }: TermThemeProps) => {
     const fullConfig = useAtomValue(atoms.fullConfigAtom);
     const blockTermTheme = useAtomValue(model.termThemeNameAtom);
     const transparency = useAtomValue(model.termTransparencyAtom);

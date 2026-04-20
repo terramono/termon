@@ -33,7 +33,7 @@ function StreamingImagePreview({ url }: { url: string }) {
     return (
         <div className="flex flex-row h-full overflow-hidden items-center justify-center relative">
             <TransformWrapper initialScale={1} centerOnInit pinch={{ step: 10 }}>
-                {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+                {({ zoomIn: _zoomIn, zoomOut: _zoomOut, resetTransform: _resetTransform, ..._rest }) => (
                     <>
                         <ImageZoomControls />
                         <TransformComponent wrapperClass="!h-full !w-full">

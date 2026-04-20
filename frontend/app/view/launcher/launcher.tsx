@@ -137,7 +137,7 @@ export class LauncherViewModel implements ViewModel {
     }
 }
 
-function LauncherView({ blockId, model }: ViewComponentProps<LauncherViewModel>) {
+function LauncherView({ blockId: _blockId, model }: ViewComponentProps<LauncherViewModel>) {
     // Search and selection state
     const [searchTerm, setSearchTerm] = useAtom(model.searchTerm);
     const [selectedIndex, setSelectedIndex] = useAtom(model.selectedIndex);

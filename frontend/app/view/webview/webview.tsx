@@ -228,8 +228,9 @@ export class WebViewModel implements ViewModel {
     shouldDisableBackButton() {
         try {
             return !this.webviewRef.current?.canGoBack();
-        } catch (_) {}
-        return true;
+        } catch {
+            return true;
+        }
     }
 
     /**
@@ -239,8 +240,9 @@ export class WebViewModel implements ViewModel {
     shouldDisableForwardButton() {
         try {
             return !this.webviewRef.current?.canGoForward();
-        } catch (_) {}
-        return true;
+        } catch {
+            return true;
+        }
     }
 
     /**
@@ -251,8 +253,9 @@ export class WebViewModel implements ViewModel {
         try {
             const homepageUrl = globalStore.get(this.homepageUrl);
             return !homepageUrl || this.getUrl() === homepageUrl;
-        } catch (_) {}
-        return true;
+        } catch {
+            return true;
+        }
     }
 
     handleHome(e?: React.MouseEvent<HTMLDivElement, MouseEvent>) {
@@ -368,7 +371,7 @@ export class WebViewModel implements ViewModel {
         event.target.select();
     }
 
-    handleBlur(event: React.FocusEvent<HTMLInputElement>) {
+    handleBlur(_event: React.FocusEvent<HTMLInputElement>) {
         globalStore.set(this.urlWrapperClassName, "");
         globalStore.set(this.urlInputFocused, false);
     }

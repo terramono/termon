@@ -43,7 +43,7 @@ class WshRouter {
     }
 
     reannounceRoutes() {
-        for (const [routeId, client] of this.routeMap) {
+        for (const [routeId, _client] of this.routeMap) {
             const announceMsg: RpcMessage = {
                 command: "routeannounce",
                 data: routeId,

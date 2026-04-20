@@ -454,7 +454,7 @@ const ResizeHandle = memo(({ resizeHandleAtom, layoutModel }: ResizeHandleCompon
 
     // We want to wait a bit before committing the pending resize operation in case some events haven't arrived yet.
     const onPointerRelease = useCallback(
-        debounce(30, (event: React.PointerEvent<HTMLDivElement>) => {
+        debounce(30, (_event: React.PointerEvent<HTMLDivElement>) => {
             setTrackingPointer(undefined);
             layoutModel.onResizeEnd();
         }),

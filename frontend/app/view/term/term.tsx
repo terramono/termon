@@ -45,7 +45,7 @@ const TermClaudeIcon = React.memo(() => {
 
 TermClaudeIcon.displayName = "TermClaudeIcon";
 
-const TermResyncHandler = React.memo(({ blockId, model }: TerminalViewProps) => {
+const TermResyncHandler = React.memo(({ blockId: _blockId, model }: TerminalViewProps) => {
     const connStatus = jotai.useAtomValue(model.connStatus);
     const [lastConnStatus, setLastConnStatus] = React.useState<ConnStatus>(connStatus);
 

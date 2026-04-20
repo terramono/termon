@@ -56,7 +56,7 @@ const Suggestions = forwardRef<HTMLDivElement, SuggestionsProps>(
                         return (
                             <div key={index}>
                                 {item.headerText && <div className="suggestion-header">{item.headerText}</div>}
-                                {item.items.map((subItem, subIndex) => {
+                                {item.items.map((subItem, _subIndex) => {
                                     fullIndex += 1;
                                     return renderItem(subItem, fullIndex);
                                 })}

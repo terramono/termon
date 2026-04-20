@@ -135,7 +135,7 @@ function PreviewView({
         model.handleOpenFile(s["file:path"]);
         return true;
     };
-    const handleTab = (s: SuggestionType, query: string): string => {
+    const handleTab = (s: SuggestionType, _query: string): string => {
         if (s["file:mimetype"] == "directory") {
             return s["file:name"] + "/";
         } else {
