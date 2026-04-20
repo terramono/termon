@@ -127,7 +127,6 @@ function isEmpty(obj: any): boolean {
 }
 
 function removeFromArr(arr: any[], idx: number): any[] {
-    console.log("removefromarray", arr, idx);
     if (idx >= arr.length) {
         return arr;
     }

@@ -113,7 +113,6 @@ function PreviewView({
     const fileInfo = useAtomValue(model.statFile);
 
     useEffect(() => {
-        console.log("fileInfo or connection changed", fileInfo, connection);
         if (!fileInfo) {
             return;
         }

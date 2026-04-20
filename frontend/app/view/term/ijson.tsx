@@ -36,9 +36,7 @@ function IJsonHtmlTag({ node }: { node: IJsonNode }) {
     if (props != null) {
         for (const [key, val] of Object.entries(props)) {
             if (key.startsWith("on")) {
-                divProps[key] = (e: any) => {
-                    console.log("handler", key, val);
-                };
+                divProps[key] = (_e: any) => {};
             } else {
                 divProps[key] = val;
             }
