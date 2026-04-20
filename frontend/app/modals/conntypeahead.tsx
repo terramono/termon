@@ -492,4 +492,6 @@ const ChangeConnectionBlockModal = React.memo(
     }
 );
 
+ChangeConnectionBlockModal.displayName = "ChangeConnectionBlockModal";
+
 export { ChangeConnectionBlockModal };

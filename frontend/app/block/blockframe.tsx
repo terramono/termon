@@ -91,6 +91,8 @@ const BlockMask = React.memo(({ nodeModel }: { nodeModel: NodeModel }) => {
     );
 });
 
+BlockMask.displayName = "BlockMask";
+
 const BlockFrame_Default_Component = (props: BlockFrameProps) => {
     const waveEnv = useWaveEnv<BlockEnv>();
     const { nodeModel, viewModel, blockModel, preview, numBlocksInTab, children } = props;
@@ -226,5 +228,7 @@ const BlockFrame = React.memo((props: BlockFrameProps) => {
     }
     return <BlockFrame_Default {...props} numBlocksInTab={numBlocks} />;
 });
+
+BlockFrame.displayName = "BlockFrame";
 
 export { BlockFrame };

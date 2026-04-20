@@ -67,6 +67,8 @@ const TermResyncHandler = React.memo(({ blockId, model }: TerminalViewProps) => 
     return null;
 });
 
+TermResyncHandler.displayName = "TermResyncHandler";
+
 const TermVDomToolbarNode = ({ vdomBlockId, blockId, model }: TerminalViewProps & { vdomBlockId: string }) => {
     React.useEffect(() => {
         const unsub = waveEventSubscribeSingle({

@@ -262,6 +262,10 @@ export const HeaderTextElem = React.memo(({ elem, preview }: { elem: HeaderElem;
     return null;
 });
 
+Input.displayName = "Input";
+OptMagnifyButton.displayName = "OptMagnifyButton";
+HeaderTextElem.displayName = "HeaderTextElem";
+
 export function renderHeaderElements(headerTextUnion: HeaderElem[], preview: boolean): React.ReactElement[] {
     const headerTextElems: React.ReactElement[] = [];
     for (let idx = 0; idx < headerTextUnion.length; idx++) {

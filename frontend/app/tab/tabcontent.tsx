@@ -73,4 +73,6 @@ const TabContent = React.memo(({ tabId, noTopPadding }: { tabId: string; noTopPa
     );
 });
 
+TabContent.displayName = "TabContent";
+
 export { TabContent };

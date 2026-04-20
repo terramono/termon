@@ -569,4 +569,6 @@ const SysinfoViewInner = React.memo(({ model }: SysinfoViewProps) => {
     );
 });
 
+SysinfoViewInner.displayName = "SysinfoViewInner";
+
 export { SysinfoViewModel };
