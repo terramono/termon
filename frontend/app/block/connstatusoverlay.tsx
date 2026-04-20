@@ -112,7 +112,7 @@ StalledOverlay.displayName = "StalledOverlay";
 export const ConnStatusOverlay = React.memo(
     ({
         nodeModel,
-        viewModel,
+        viewModel: _viewModel,
         changeConnModalAtom,
     }: {
         nodeModel: NodeModel;

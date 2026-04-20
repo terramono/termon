@@ -57,7 +57,7 @@ type TabButtonProps = {
     showStatusDot?: boolean;
 };
 
-const TabButton = memo(({ label, tabType, isActive, isAppFocused, onClick, showStatusDot }: TabButtonProps) => {
+const TabButton = memo(({ label, tabType: _tabType, isActive, isAppFocused, onClick, showStatusDot }: TabButtonProps) => {
     return (
         <button
             className={cn(
@@ -197,7 +197,6 @@ const BuilderAppPanel = memo(() => {
     const focusType = useAtomValue(BuilderFocusManager.getInstance().focusType);
     const isAppFocused = focusType === "app";
     const builderAppId = useAtomValue(atoms.builderAppId);
-    const builderId = useAtomValue(atoms.builderId);
     const hasSecrets = useAtomValue(model.hasSecretsAtom);
 
     useEffect(() => {
@@ -214,7 +213,7 @@ const BuilderAppPanel = memo(() => {
         model.giveFocus();
     };
 
-    const handleFocusCapture = useCallback((event: React.FocusEvent) => {
+    const handleFocusCapture = useCallback((_event: React.FocusEvent) => {
         BuilderFocusManager.getInstance().setAppFocused();
     }, []);
 
@@ -242,10 +241,6 @@ const BuilderAppPanel = memo(() => {
         },
         [model]
     );
-
-    const handleRestart = useCallback(() => {
-        model.restartBuilder();
-    }, [model]);
 
     const handlePublishClick = useCallback(() => {
         if (!builderAppId) return;

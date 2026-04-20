@@ -3,7 +3,6 @@
 
 import { BuilderAppPanelModel } from "@/builder/store/builder-apppanel-model";
 import { CopyButton } from "@/element/copybutton";
-import { atoms } from "@/store/global";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useState } from "react";
 
@@ -67,7 +66,6 @@ type ConfigDataState = {
 const BuilderConfigDataTab = memo(() => {
     const model = BuilderAppPanelModel.getInstance();
     const builderStatus = useAtomValue(model.builderStatusAtom);
-    const builderId = useAtomValue(atoms.builderId);
     const activeTab = useAtomValue(model.activeTab);
     const [state, setState] = useState<ConfigDataState>({
         config: null,

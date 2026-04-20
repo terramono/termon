@@ -59,7 +59,7 @@ function BuilderAppInner() {
     );
 }
 
-export function BuilderApp({ initOpts, onFirstRender }: BuilderAppProps) {
+export function BuilderApp({ initOpts: _initOpts, onFirstRender }: BuilderAppProps) {
     useEffect(() => {
         onFirstRender();
     }, []);

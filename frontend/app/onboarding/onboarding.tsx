@@ -265,7 +265,7 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
 };
 
 const FeaturesPage = () => {
-    const [newInstallOnboardingOpen, setNewInstallOnboardingOpen] = useAtom(modalsModel.newInstallOnboardingOpen);
+    const [, setNewInstallOnboardingOpen] = useAtom(modalsModel.newInstallOnboardingOpen);
 
     const handleComplete = () => {
         setNewInstallOnboardingOpen(false);

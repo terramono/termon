@@ -75,7 +75,7 @@ interface DurableAttachedContentProps {
     onClose: () => void;
 }
 
-function DurableAttachedContent({ onClose }: DurableAttachedContentProps) {
+function DurableAttachedContent({ onClose: _onClose }: DurableAttachedContentProps) {
     return (
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
@@ -95,7 +95,7 @@ interface DurableDetachedContentProps {
     onClose: () => void;
 }
 
-function DurableDetachedContent({ onClose }: DurableDetachedContentProps) {
+function DurableDetachedContent({ onClose: _onClose }: DurableDetachedContentProps) {
     return (
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">
@@ -163,7 +163,7 @@ interface DurableStartingContentProps {
     onClose: () => void;
 }
 
-function DurableStartingContent({ onClose }: DurableStartingContentProps) {
+function DurableStartingContent({ onClose: _onClose }: DurableStartingContentProps) {
     return (
         <div className="flex flex-col gap-2 max-w-[280px]">
             <div className="font-semibold text-sm flex items-center gap-2 text-secondary">

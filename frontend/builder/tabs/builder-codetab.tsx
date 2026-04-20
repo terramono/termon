@@ -31,7 +31,7 @@ const BuilderCodeTab = memo(() => {
         model.setCodeContent(newText);
     };
 
-    const handleEditorMount = (editor: MonacoTypes.editor.IStandaloneCodeEditor, monaco: typeof MonacoTypes) => {
+    const handleEditorMount = (editor: MonacoTypes.editor.IStandaloneCodeEditor, _monaco: typeof MonacoTypes) => {
         model.setMonacoEditorRef(editor);
         return () => {
             model.setMonacoEditorRef(null);

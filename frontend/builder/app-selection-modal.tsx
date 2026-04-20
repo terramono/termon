@@ -159,10 +159,6 @@ export function AppSelectionModal() {
         getApi().setBuilderWindowAppId(draftAppId);
     };
 
-    const isDraftApp = (appId: string) => {
-        return appId.startsWith("draft/");
-    };
-
     const getAppDisplayName = (appId: string) => {
         const parts = appId.split("/");
         if (parts.length === 2) {

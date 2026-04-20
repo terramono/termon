@@ -273,7 +273,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const isUsingCustomMode = !defaultMode.startsWith("waveai@");
     const allowAccess = telemetryEnabled || (hasCustomModes && isUsingCustomMode);
 
-    const { messages, sendMessage, status, setMessages, error, stop } = useChat<WaveUIMessage>({
+    const { messages, sendMessage, status, setMessages, error: _error, stop } = useChat<WaveUIMessage>({
         transport: new DefaultChatTransport({
             api: model.getUseChatEndpointUrl(),
             prepareSendMessagesRequest: (_opts) => {
