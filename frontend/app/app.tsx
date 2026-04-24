@@ -245,16 +245,13 @@ const MacOSFirstClickHandler = () => {
                 const blockId = getBlockIdFromTarget(e.target);
                 if (blockId != null) {
                     setTimeout(() => {
-                        console.log("macos first-click, focusing block", blockId);
                         refocusNode(blockId);
                     }, 10);
                 } else if (isAIPanelTarget(e.target)) {
                     setTimeout(() => {
-                        console.log("macos first-click, focusing AI panel");
                         FocusManager.getInstance().setWaveAIFocused(true);
                     }, 10);
                 }
-                console.log("macos first-click detected, canceled", timeDiff + "ms");
                 return;
             }
             cancelNextClick = false;
@@ -267,7 +264,6 @@ const MacOSFirstClickHandler = () => {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            console.log("macos first-click (click event) canceled");
         };
         window.addEventListener("focus", handleWindowFocus);
         window.addEventListener("mousedown", handleMouseDown, true);
