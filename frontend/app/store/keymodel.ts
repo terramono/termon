@@ -140,7 +140,7 @@ function simpleCloseStaticTab() {
             }
         })
         .catch((e) => {
-            console.log("error closing tab", e);
+            console.error("error closing tab", e);
         });
 }
 
@@ -281,7 +281,6 @@ function getAllTabs(ws: Workspace): string[] {
 }
 
 function switchTabAbs(index: number) {
-    console.log("switchTabAbs", index);
     const ws = globalStore.get(atoms.workspace);
     const newTabIdx = index - 1;
     const tabids = getAllTabs(ws);
@@ -293,7 +292,6 @@ function switchTabAbs(index: number) {
 }
 
 function switchTab(offset: number) {
-    console.log("switchTab", offset);
     const ws = globalStore.get(atoms.workspace);
     const curTabId = globalStore.get(atoms.staticTabId);
     let tabIdx = -1;
@@ -423,7 +421,6 @@ function appHandleKeyDown(waveEvent: WaveKeyboardEvent): boolean {
     }
     lastHandledEvent = nativeEvent;
     if (activeChord) {
-        console.log("handle activeChord", activeChord);
         // If we're in chord mode, look for the second key.
         const chordBindings = globalChordMap.get(activeChord);
         const [, handler] = checkKeyMap(waveEvent, chordBindings);
