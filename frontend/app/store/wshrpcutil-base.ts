@@ -93,24 +93,6 @@ function sendRpcCommand(
     return rtnGen;
 }
 
-async function consumeGenerator(gen: AsyncGenerator<any, any, any>) {
-    let idx = 0;
-    try {
-        for await (const msg of gen) {
-            console.log("gen", idx, msg);
-            idx++;
-        }
-        const result = await gen.return(undefined);
-        console.log("gen done", result.value);
-    } catch (e) {
-        console.log("gen error", e);
-    }
-}
-
-if (globalThis.window != null) {
-    globalThis["consumeGenerator"] = consumeGenerator;
-}
-
 function initElectronWshrpc(electronClient: WshClient, eoOpts: ElectronOverrideOpts) {
     setDefaultRouter(new WshRouter(new UpstreamWshRpcProxy()));
     const handleFn = (event: WSEventType) => {
