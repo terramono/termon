@@ -280,6 +280,3 @@ function findNextInsertLocationHelper(
     return insertLocs[0];
 }
 
-export function totalChildrenSize(node: LayoutNode): number {
-    return node.children?.reduce((partialSum, child) => partialSum + child.size, 0);
-}
