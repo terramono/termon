@@ -75,7 +75,7 @@ function DirectoryTableHeaderCell({ header }: DirectoryTableHeaderCellProps) {
 }
 
 declare module "@tanstack/react-table" {
-    interface TableMeta<TData extends RowData> {
+    interface TableMeta<_TData extends RowData> {
         updateName: (path: string, isDir: boolean) => void;
         newFile: () => void;
         newDirectory: () => void;
