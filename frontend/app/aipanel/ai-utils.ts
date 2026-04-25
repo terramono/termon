@@ -275,21 +275,6 @@ export const normalizeMimeType = (file: File): string => {
     return "text/plain";
 };
 
-// Helper function to read file as base64 for AIMessage
-export const readFileAsBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const result = reader.result as string;
-            // Remove data URL prefix to get just base64
-            const base64 = result.split(",")[1];
-            resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-};
-
 // Helper function to create data URL for UIMessage
 export const createDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
