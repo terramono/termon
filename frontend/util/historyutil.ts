@@ -69,4 +69,4 @@ function goHistory(curValKey: "url" | "file", curVal: string, newVal: string, me
     return { [curValKey]: newVal, history: history, "history:forward": [] };
 }
 
-export { getParentDirectory, goHistory, goHistoryBack, goHistoryForward };
+export { goHistory, goHistoryBack, goHistoryForward };
