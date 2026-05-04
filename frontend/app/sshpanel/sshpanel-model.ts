@@ -68,8 +68,9 @@ export class SSHPanelModel {
         try {
             const hosts = await ClientService.GetSshHosts();
             globalStore.set(this.hostsAtom, hosts ?? []);
-        } catch (e) {
-            globalStore.set(this.errorAtom, String(e));
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            globalStore.set(this.errorAtom, msg);
         } finally {
             globalStore.set(this.loadingAtom, false);
         }

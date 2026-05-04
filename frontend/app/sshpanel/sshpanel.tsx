@@ -15,6 +15,18 @@ import type { SshHostGroup } from "./sshpanel-model";
 import { SSHPanelModel } from "./sshpanel-model";
 import { SSHPanelHeader } from "./sshpanelheader";
 
+function connectionMetaFromSshHost(host: SshConfigHost): string {
+    let s = "";
+    if (host.user) {
+        s = host.user + "@";
+    }
+    s += host.pattern;
+    if (host.port != null && host.port !== "" && host.port !== "22") {
+        s += ":" + host.port;
+    }
+    return s;
+}
+
 type HostCardProps = {
     host: SshConfigHost;
 };
@@ -34,13 +46,12 @@ const HostStatusDot = memo(({ connName }: { connName: string }) => {
 HostStatusDot.displayName = "HostStatusDot";
 
 const HostCard = memo(({ host }: HostCardProps) => {
-    const connStr = host.user
-        ? `${host.user}@${host.hostname || host.pattern}`
-        : host.hostname || host.pattern;
+    const displayHost = host.hostname || host.pattern;
+    const connStr = host.user ? `${host.user}@${displayHost}` : displayHost;
 
-    const sshConnName = `${host.user ? host.user + "@" : ""}${host.pattern}`;
+    const connMeta = connectionMetaFromSshHost(host);
 
-    const subtitle = [host.user ? `${host.user}@${host.hostname || host.pattern}` : (host.hostname || host.pattern)]
+    const subtitle = [host.user ? `${host.user}@${displayHost}` : displayHost]
         .concat(host.port ? [`:${host.port}`] : [])
         .join("");
 
@@ -48,7 +59,7 @@ const HostCard = memo(({ host }: HostCardProps) => {
         const blockDef: BlockDef = {
             meta: {
                 view: "term",
-                connection: `ssh://${connStr}`,
+                connection: connMeta,
             },
         };
         const focusedBlockId = getFocusedBlockId();
@@ -65,7 +76,7 @@ const HostCard = memo(({ host }: HostCardProps) => {
             onDoubleClick={handleDoubleClick}
             title={`Double-click to SSH into ${host.pattern}`}
         >
-            <HostStatusDot connName={sshConnName} />
+            <HostStatusDot connName={connMeta} />
             <div className="flex flex-col min-w-0">
                 <span className="text-white text-sm font-medium truncate">{host.pattern}</span>
                 <span className="text-gray-400 text-xs truncate">{subtitle}</span>
@@ -99,7 +110,10 @@ const GroupSection = memo(({ group }: GroupSectionProps) => {
             {!isCollapsed && (
                 <div className="pl-1">
                     {group.hosts.map((host) => (
-                        <HostCard key={host.pattern} host={host} />
+                        <HostCard
+                            key={`${host.pattern}|${host.user}|${host.port}|${host.hostname}`}
+                            host={host}
+                        />
                     ))}
                 </div>
             )}
