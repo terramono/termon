@@ -119,6 +119,7 @@ func handleService(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(bodyData, &webCall)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("invalid request body: %v", err), http.StatusBadRequest)
+		return
 	}
 
 	rtn := service.CallService(r.Context(), webCall)
