@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/remote"
+	"github.com/kevinburke/ssh_config"
 	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
 	"github.com/wavetermdev/waveterm/pkg/waveobj"
 	"github.com/wavetermdev/waveterm/pkg/wconfig"
@@ -137,7 +137,10 @@ func (cs *ClientService) GetSshHosts(ctx context.Context) ([]SshConfigHost, erro
 		return nil, fmt.Errorf("error reading ssh config: %w", err)
 	}
 
-	settings := remote.WaveSshConfigUserSettings()
+	settings := &ssh_config.UserSettings{}
+	settings.IgnoreMatchDirective = true
+	settings.ConfigFinder(func() string { return configPath })
+	settings.ReloadConfigs()
 	hosts := make([]SshConfigHost, 0, len(patterns))
 	for _, pattern := range patterns {
 		hostname, _ := settings.GetStrict(pattern, "HostName")
