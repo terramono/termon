@@ -47,8 +47,6 @@ HostStatusDot.displayName = "HostStatusDot";
 
 const HostCard = memo(({ host }: HostCardProps) => {
     const displayHost = host.hostname || host.pattern;
-    const connStr = host.user ? `${host.user}@${displayHost}` : displayHost;
-
     const connMeta = connectionMetaFromSshHost(host);
 
     const subtitle = [host.user ? `${host.user}@${displayHost}` : displayHost]
