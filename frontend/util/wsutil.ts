@@ -10,7 +10,7 @@ if (typeof window === "undefined") {
     import("ws")
         .then((ws) => (NodeWebSocket = ws.default))
         .catch((e) => {
-            console.log("Error importing 'ws':", e);
+            console.error("Error importing 'ws':", e);
         });
 }
 

@@ -66,7 +66,7 @@ function parseKey(key: string): { key: string; type: string } {
         const code = regexMatch[1];
         return { key: code, type: KeyTypeCode };
     } else if (regexMatch != null) {
-        console.log("error: regexMatch is not null yet there is no captured group: ", regexMatch, key);
+        console.error("error: regexMatch is not null yet there is no captured group: ", regexMatch, key);
     }
     return { key: key, type: KeyTypeKey };
 }

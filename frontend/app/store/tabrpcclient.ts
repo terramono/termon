@@ -168,7 +168,7 @@ export class TabClient extends WshClient {
                     }
                 }
             } catch (e) {
-                console.log("error getting term-specific data", e);
+                console.error("error getting term-specific data", e);
             }
         }
 

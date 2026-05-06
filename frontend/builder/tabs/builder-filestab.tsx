@@ -54,7 +54,7 @@ const RenameFileModal = memo(
                 onSuccess();
                 modalsModel.popModal();
             } catch (err) {
-                console.log("Error renaming file:", err);
+                console.error("Error renaming file:", err);
                 setError(err instanceof Error ? err.message : String(err));
             } finally {
                 setIsRenaming(false);
@@ -124,7 +124,7 @@ const DeleteFileModal = memo(
                 onSuccess();
                 modalsModel.popModal();
             } catch (err) {
-                console.log("Error deleting file:", err);
+                console.error("Error deleting file:", err);
                 setError(err instanceof Error ? err.message : String(err));
             } finally {
                 setIsDeleting(false);
