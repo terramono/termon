@@ -370,7 +370,7 @@ export class TermViewModel implements ViewModel {
                 this.handleBlockJobStatusUpdate(status);
             })
             .catch((error) => {
-                console.log("error getting initial block job status", error);
+                console.error("error getting initial block job status", error);
             });
         this.blockJobStatusUnsubFn = waveEventSubscribeSingle({
             eventType: "block:jobstatus",

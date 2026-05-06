@@ -425,7 +425,7 @@ export class TermWrap {
             globalStore.set(this.lastCommandAtom, lastCmd || null);
             globalStore.set(this.claudeCodeActiveAtom, isCC);
         } catch (e) {
-            console.log("Error loading runtime info:", e);
+            console.error("Error loading runtime info:", e);
         }
 
         try {

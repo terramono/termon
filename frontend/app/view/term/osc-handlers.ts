@@ -274,7 +274,7 @@ export function handleOsc7Command(data: string, blockId: string, loaded: boolean
                 data: rtInfo,
             };
             await RpcApi.SetRTInfoCommand(TabRpcClient, rtInfoData).catch((e) =>
-                console.log("error setting RT info", e)
+                console.error("error setting RT info", e)
             );
         });
     }, 0);
@@ -375,7 +375,7 @@ export function handleOsc16162Command(data: string, blockId: string, loaded: boo
                     data: rtInfo,
                 };
                 await RpcApi.SetRTInfoCommand(TabRpcClient, rtInfoData).catch((e) =>
-                    console.log("error setting RT info (OSC 16162)", e)
+                    console.error("error setting RT info (OSC 16162)", e)
                 );
             });
         }, 0);
