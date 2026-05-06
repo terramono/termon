@@ -135,7 +135,7 @@ function getReconnectItem(
                 { host: connStatus.connection, logblockid: blockId },
                 { timeout: 60000 }
             );
-            prtn.catch((e) => console.log("error reconnecting", connStatus.connection, e));
+            prtn.catch((e) => console.error("error reconnecting", connStatus.connection, e));
         },
     };
     return reconnectSuggestionItem;
@@ -221,7 +221,7 @@ function getDisconnectItem(
         onSelect: async (_: string) => {
             globalStore.set(changeConnModalAtom, false);
             const prtn = RpcApi.ConnDisconnectCommand(TabRpcClient, connection, { timeout: 60000 });
-            prtn.catch((e) => console.log("error disconnecting", connStatus.connection, e));
+            prtn.catch((e) => console.error("error disconnecting", connStatus.connection, e));
         },
     };
     return disconnectSuggestionItem;
@@ -368,7 +368,7 @@ const ChangeConnectionBlockModal = React.memo(
                         { timeout: 60000 }
                     );
                 } catch (e) {
-                    console.log("error connecting", blockId, connName, e);
+                    console.error("error connecting", blockId, connName, e);
                 }
             },
             [blockId, blockData]

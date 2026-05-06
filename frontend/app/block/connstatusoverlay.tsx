@@ -58,7 +58,7 @@ const StalledOverlay = React.memo(
         const waveEnv = useWaveEnv<BlockEnv>();
         const handleDisconnect = React.useCallback(() => {
             const prtn = waveEnv.rpc.ConnDisconnectCommand(TabRpcClient, connName, { timeout: 5000 });
-            prtn.catch((e) => console.log("error disconnecting", connName, e));
+            prtn.catch((e) => console.error("error disconnecting", connName, e));
         }, [connName, waveEnv]);
 
         React.useEffect(() => {
@@ -145,7 +145,7 @@ export const ConnStatusOverlay = React.memo(
                 { host: connName, logblockid: nodeModel.blockId },
                 { timeout: 60000 }
             );
-            prtn.catch((e) => console.log("error reconnecting", connName, e));
+            prtn.catch((e) => console.error("error reconnecting", connName, e));
         }, [connName, nodeModel.blockId, waveEnv]);
 
         const handleDisableWsh = React.useCallback(async () => {
@@ -159,7 +159,7 @@ export const ConnStatusOverlay = React.memo(
             try {
                 await waveEnv.rpc.SetConnectionsConfigCommand(TabRpcClient, data);
             } catch (e) {
-                console.log("problem setting connection config: ", e);
+                console.error("problem setting connection config: ", e);
             }
         }, [connName, waveEnv]);
 
@@ -167,7 +167,7 @@ export const ConnStatusOverlay = React.memo(
             try {
                 await waveEnv.rpc.DismissWshFailCommand(TabRpcClient, connName);
             } catch (e) {
-                console.log("unable to dismiss wsh error: ", e);
+                console.error("unable to dismiss wsh error: ", e);
             }
         }, [connName, waveEnv]);
 

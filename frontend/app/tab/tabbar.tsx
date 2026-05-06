@@ -537,7 +537,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                 }
             })
             .catch((e) => {
-                console.log("error closing tab", e);
+                console.error("error closing tab", e);
             });
     };
 

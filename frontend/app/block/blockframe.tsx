@@ -152,7 +152,7 @@ const BlockFrame_Default_Component = (props: BlockFrameProps) => {
                     { timeout: 60000 }
                 )
                 .catch((e) => {
-                    console.log("error ensuring connection", nodeModel.blockId, connName, e);
+                    console.error("error ensuring connection", nodeModel.blockId, connName, e);
                 });
         }
     }, [manageConnection, connName]);
