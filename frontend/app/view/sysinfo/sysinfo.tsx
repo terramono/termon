@@ -170,7 +170,7 @@ class SysinfoViewModel implements ViewModel {
                 }
                 set(this.dataAtom, newDataWithGaps);
             } catch (e) {
-                console.log("Error adding data to sysinfo", e);
+                console.error("Error adding data to sysinfo", e);
             }
         });
         this.addContinuousDataAtom = jotai.atom(null, (get, set, newPoint) => {
@@ -183,7 +183,7 @@ class SysinfoViewModel implements ViewModel {
                 const newData = data.filter((dataItem) => dataItem.ts >= cutoffTs);
                 set(this.dataAtom, newData);
             } catch (e) {
-                console.log("Error adding data to sysinfo", e);
+                console.error("Error adding data to sysinfo", e);
             }
         });
         this.plotMetaAtom = jotai.atom(new Map(Object.entries(DefaultPlotMeta)));
@@ -269,7 +269,7 @@ class SysinfoViewModel implements ViewModel {
             //newData.splice(newData.length - initialDataItems.length, initialDataItems.length, ...initialDataItems);
             globalStore.set(this.addInitialDataAtom, initialDataItems);
         } catch (e) {
-            console.log("Error loading initial data for sysinfo", e);
+            console.error("Error loading initial data for sysinfo", e);
         } finally {
             globalStore.set(this.loadingAtom, false);
         }
