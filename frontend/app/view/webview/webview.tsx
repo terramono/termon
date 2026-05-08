@@ -949,7 +949,7 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
                 })
                 .catch((e) => {
                     webview.style.backgroundColor = "black"; // Dark mode background
-                    console.log("Error getting color scheme, defaulting to dark", e);
+                    console.error("Error getting color scheme, defaulting to dark", e);
                 });
         }, 100);
     }
