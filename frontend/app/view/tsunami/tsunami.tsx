@@ -117,7 +117,7 @@ class TsunamiViewModel extends WebViewModel {
 
     destroyController() {
         const prtn = RpcApi.ControllerDestroyCommand(TabRpcClient, this.blockId);
-        prtn.catch((e) => console.log("error destroying controller", e));
+        prtn.catch((e) => console.error("error destroying controller", e));
     }
 
     async restartController() {
@@ -137,7 +137,7 @@ class TsunamiViewModel extends WebViewModel {
                 forcerestart: false,
             });
         } catch (e) {
-            console.log("error restarting controller", e);
+            console.error("error restarting controller", e);
         }
     }
 
