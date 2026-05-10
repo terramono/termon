@@ -116,7 +116,7 @@ class WshClient {
             if (!helper.done) {
                 helper.sendResponse({ error: e.message });
             } else {
-                console.log(`rpc-client[${this.routeId}] command[${msg.command}] error`, e.message);
+                console.error(`rpc-client[${this.routeId}] command[${msg.command}] error`, e.message);
             }
         } finally {
             if (!helper.done) {

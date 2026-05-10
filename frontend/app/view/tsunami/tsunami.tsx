@@ -108,7 +108,7 @@ class TsunamiViewModel extends WebViewModel {
             blockid: this.blockId,
             forcerestart: forceRestart,
         });
-        prtn.catch((e) => console.log(`error controller resync (${logContext})`, e));
+        prtn.catch((e) => console.error(`error controller resync (${logContext})`, e));
     }
 
     resyncController() {

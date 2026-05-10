@@ -332,7 +332,7 @@ const ChangeConnectionBlockModal = React.memo(
             const prtn = RpcApi.ConnListCommand(TabRpcClient, { timeout: 2000 });
             prtn.then((newConnList) => {
                 setConnList(newConnList ?? []);
-            }).catch((e) => console.log("unable to load conn list from backend. using blank list: ", e));
+            }).catch((e) => console.error("unable to load conn list from backend. using blank list: ", e));
             const p2rtn = RpcApi.WslListCommand(TabRpcClient, { timeout: 2000 });
             p2rtn
                 .then((newWslList) => {

@@ -557,7 +557,7 @@ export class TermWrap {
                 rtopts: rtOpts,
             });
         } catch (e) {
-            console.log(`error controller resync (${reason})`, this.blockId, e);
+            console.error(`error controller resync (${reason})`, this.blockId, e);
         }
     }
 

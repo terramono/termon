@@ -30,7 +30,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
             globalStore.set(isFullScreenAtom, isFullScreen);
         });
     } catch (e) {
-        console.log("failed to initialize isFullScreenAtom", e);
+        console.error("failed to initialize isFullScreenAtom", e);
     }
 
     const zoomFactorAtom = atom(1.0) as PrimitiveAtom<number>;
@@ -40,7 +40,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
             globalStore.set(zoomFactorAtom, zoomFactor);
         });
     } catch (e) {
-        console.log("failed to initialize zoomFactorAtom", e);
+        console.error("failed to initialize zoomFactorAtom", e);
     }
 
     const workspaceIdAtom: Atom<string> = atom((get) => {
@@ -85,7 +85,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
             globalStore.set(updaterStatusAtom, status);
         });
     } catch (e) {
-        console.log("failed to initialize updaterStatusAtom", e);
+        console.error("failed to initialize updaterStatusAtom", e);
     }
 
     const reducedMotionSettingAtom = atom((get) => get(settingsAtom)?.["window:reducedmotion"]);

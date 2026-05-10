@@ -250,7 +250,7 @@ async function initBuilder(initOpts: BuilderInitOpts) {
             appIdToUse = rtInfo["builder:appid"];
         }
     } catch (e) {
-        console.log("Could not load saved builder appId from rtinfo:", e);
+        console.error("Could not load saved builder appId from rtinfo:", e);
     }
 
     document.title = appIdToUse ? `WaveApp Builder (${appIdToUse})` : "WaveApp Builder";

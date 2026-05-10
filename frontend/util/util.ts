@@ -176,7 +176,7 @@ function makeIconClass(icon: string, fw: boolean, opts?: { spin?: boolean; defau
  */
 function fireAndForget(f: () => Promise<any>) {
     f()?.catch((e) => {
-        console.log("fireAndForget error", e);
+        console.error("fireAndForget error", e);
     });
 }
 

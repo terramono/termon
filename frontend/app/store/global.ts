@@ -48,7 +48,7 @@ function initGlobal(initOpts: GlobalInitOptions) {
             modalsModel.pushModal("AboutModal");
         });
     } catch (e) {
-        console.log("failed to initialize onMenuItemAbout handler", e);
+        console.error("failed to initialize onMenuItemAbout handler", e);
     }
 }
 
@@ -616,7 +616,7 @@ function subscribeToConnEvents() {
                 const curAtom = getConnStatusAtom(connStatus.connection);
                 globalStore.set(curAtom, connStatus);
             } catch (e) {
-                console.log("connchange error", e);
+                console.error("connchange error", e);
             }
         },
     });
