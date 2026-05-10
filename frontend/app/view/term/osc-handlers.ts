@@ -257,7 +257,7 @@ export function handleOsc7Command(data: string, blockId: string, loaded: boolean
             pathPart = pathPart.substring(1);
         }
     } catch (e) {
-        console.log("Invalid OSC 7 command received (parse error)", data, e);
+        console.warn("Invalid OSC 7 command received (parse error)", data, e);
         return true;
     }
 

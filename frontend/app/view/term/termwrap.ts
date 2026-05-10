@@ -483,7 +483,7 @@ export class TermWrap {
                 this.heldData.push(decodedData);
             }
         } else {
-            console.log("bad fileop for terminal", msg);
+            console.warn("bad fileop for terminal", msg);
             return;
         }
     }
