@@ -293,7 +293,7 @@ function getContentToRender(
     } else if (status == null) {
         return <DurableAwaitingStart connected={!!connStatus?.connected} viewModel={viewModel} onClose={onClose} />;
     }
-    console.log("DurableSessionFlyover: unexpected jobStatus", jobStatus);
+    console.warn("DurableSessionFlyover: unexpected jobStatus", jobStatus);
     return null;
 }
 

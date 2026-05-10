@@ -133,14 +133,14 @@ class WshClient {
             return;
         }
         if (msg.resid == null) {
-            console.log("rpc response missing resid", msg);
+            console.warn("rpc response missing resid", msg);
             return;
         }
         const entry = this.openRpcs.get(msg.resid);
         if (entry == null) {
             if (!notFoundLogMap.has(msg.resid)) {
                 notFoundLogMap.set(msg.resid, true);
-                console.log("rpc response generator not found", msg);
+                console.warn("rpc response generator not found", msg);
             }
             return;
         }
