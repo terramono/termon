@@ -265,7 +265,7 @@ function updateWaveObject(update: WaveObjUpdate) {
         globalStore.set(wov.dataAtom, { value: null, loading: false });
     } else {
         if (!isValidWaveObj(update.obj)) {
-            console.log("invalid wave object update", update);
+            console.warn("invalid wave object update", update);
             return;
         }
         const curValue: WaveObjectDataItemType<WaveObj> = globalStore.get(wov.dataAtom);
