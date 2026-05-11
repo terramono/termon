@@ -50,3 +50,28 @@ func TestGetSshHosts_missingConfigReturnsEmpty(t *testing.T) {
 		t.Fatalf("expected no hosts, got %d", len(hosts))
 	}
 }
+
+func TestGetSshHosts_blankUserAndNormalizedPort22(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	if err := os.MkdirAll(filepath.Join(home, ".ssh"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	cfgPath := filepath.Join(home, ".ssh", "config")
+	content := "Host plain\n  HostName plain.example.com\n  Port 22\n"
+	if err := os.WriteFile(cfgPath, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var cs ClientService
+	hosts, err := cs.GetSshHosts(context.Background())
+	if err != nil {
+		t.Fatalf("GetSshHosts: %v", err)
+	}
+	if len(hosts) != 1 {
+		t.Fatalf("expected 1 host, got %d (%+v)", len(hosts), hosts)
+	}
+	h := hosts[0]
+	if h.Pattern != "plain" || h.Hostname != "plain.example.com" || h.User != "" || h.Port != "" {
+		t.Fatalf("unexpected host: %+v", h)
+	}
+}
