@@ -10,7 +10,19 @@ export type SshHostGroup = {
     hosts: SshConfigHost[];
 };
 
-function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
+export function connectionMetaFromSshHost(host: SshConfigHost): string {
+    let s = "";
+    if (host.user) {
+        s = host.user + "@";
+    }
+    s += host.pattern;
+    if (host.port != null && host.port !== "" && host.port !== "22") {
+        s += ":" + host.port;
+    }
+    return s;
+}
+
+export function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     const groupMap = new Map<string, SshConfigHost[]>();
 
     for (const host of hosts) {

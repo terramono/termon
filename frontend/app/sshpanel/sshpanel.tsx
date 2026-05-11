@@ -12,20 +12,8 @@ import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useEffect, useState } from "react";
 import type { SshHostGroup } from "./sshpanel-model";
-import { SSHPanelModel } from "./sshpanel-model";
+import { connectionMetaFromSshHost, SSHPanelModel } from "./sshpanel-model";
 import { SSHPanelHeader } from "./sshpanelheader";
-
-function connectionMetaFromSshHost(host: SshConfigHost): string {
-    let s = "";
-    if (host.user) {
-        s = host.user + "@";
-    }
-    s += host.pattern;
-    if (host.port != null && host.port !== "" && host.port !== "22") {
-        s += ":" + host.port;
-    }
-    return s;
-}
 
 type HostCardProps = {
     host: SshConfigHost;
