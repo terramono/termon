@@ -73,7 +73,21 @@ describe("groupHosts", () => {
         ]);
         expect(groups.map((g) => g.name)).toEqual(["acme", "beta"]);
         const acme = groups.find((g) => g.name === "acme");
-        expect(acme?.hosts.map((h) => h.pattern).sort()).toEqual(["acme-db", "acme-web"]);
+        expect(acme?.hosts.map((h) => h.pattern)).toEqual(["acme-db", "acme-web"]);
+    });
+
+    it("sorts hosts inside a group by pattern then user then port", () => {
+        const groups = groupHosts([
+            host({ pattern: "acme-zebra", user: "b" }),
+            host({ pattern: "acme-zebra", user: "a" }),
+            host({ pattern: "acme-alpha" }),
+        ]);
+        const acme = groups.find((g) => g.name === "acme");
+        expect(acme?.hosts.map((h) => `${h.pattern}|${h.user}`)).toEqual([
+            "acme-alpha|",
+            "acme-zebra|a",
+            "acme-zebra|b",
+        ]);
     });
 
     it("sorts other last and remaining alphabetically", () => {

@@ -38,6 +38,20 @@ export function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
         arr.push(host);
     }
 
+    for (const [, list] of groupMap) {
+        list.sort((a, b) => {
+            const pa = a.pattern.localeCompare(b.pattern);
+            if (pa !== 0) {
+                return pa;
+            }
+            const ua = (a.user || "").localeCompare(b.user || "");
+            if (ua !== 0) {
+                return ua;
+            }
+            return (a.port || "").localeCompare(b.port || "");
+        });
+    }
+
     const groups: SshHostGroup[] = [];
     for (const [name, hosts] of groupMap) {
         groups.push({ name, hosts });
