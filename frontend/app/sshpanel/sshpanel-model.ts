@@ -11,13 +11,9 @@ export type SshHostGroup = {
 };
 
 export function connectionMetaFromSshHost(host: SshConfigHost): string {
-    let s = "";
-    if (host.user) {
-        s = host.user + "@";
-    }
-    s += host.pattern;
+    let s = host.user ? `${host.user}@${host.pattern}` : host.pattern;
     if (host.port != null && host.port !== "" && host.port !== "22") {
-        s += ":" + host.port;
+        s += `:${host.port}`;
     }
     return s;
 }
