@@ -36,10 +36,7 @@ HostStatusDot.displayName = "HostStatusDot";
 const HostCard = memo(({ host }: HostCardProps) => {
     const displayHost = host.hostname || host.pattern;
     const connMeta = connectionMetaFromSshHost(host);
-
-    const subtitle = [host.user ? `${host.user}@${displayHost}` : displayHost]
-        .concat(host.port ? [`:${host.port}`] : [])
-        .join("");
+    const subtitle = `${host.user ? `${host.user}@` : ""}${displayHost}${host.port ? `:${host.port}` : ""}`;
 
     const handleDoubleClick = async () => {
         const blockDef: BlockDef = {
