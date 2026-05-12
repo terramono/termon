@@ -10,7 +10,7 @@ import {
 } from "@/store/global";
 import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect } from "react";
 import type { SshHostGroup } from "./sshpanel-model";
 import { connectionMetaFromSshHost, SSHPanelModel } from "./sshpanel-model";
 import { SSHPanelHeader } from "./sshpanelheader";
@@ -117,14 +117,10 @@ const SSHPanelInner = memo(({ roundTopLeft }: SSHPanelInnerProps) => {
     const groups = useAtomValue(model.groupsAtom);
     const loading = useAtomValue(model.loadingAtom);
     const error = useAtomValue(model.errorAtom);
-    const [initialLoad, setInitialLoad] = useState(false);
 
     useEffect(() => {
-        if (!initialLoad) {
-            setInitialLoad(true);
-            model.loadHosts();
-        }
-    }, [initialLoad]);
+        model.loadHosts();
+    }, [model]);
 
     return (
         <div
