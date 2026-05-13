@@ -1,3 +1,3 @@
 # Termon
 
-Opinionated [waveterm](https://github.com/wavetermdev/waveterm)
+Opinionated [waveterm](https://github.com/wavetermdev/waveterm) 🖥️
