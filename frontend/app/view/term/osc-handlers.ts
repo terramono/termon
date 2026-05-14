@@ -146,22 +146,22 @@ export function handleOsc52Command(data: string, blockId: string, loaded: boolea
     if (osc52Mode === "focus") {
         const isBlockFocused = termWrap.nodeModel ? globalStore.get(termWrap.nodeModel.isFocused) : false;
         if (!document.hasFocus() || !isBlockFocused) {
-            console.log("OSC 52: rejected, window or block not focused");
+            console.warn("OSC 52: rejected, window or block not focused");
             return true;
         }
     }
     if (!data || data.length === 0) {
-        console.log("OSC 52: empty data received");
+        console.warn("OSC 52: empty data received");
         return true;
     }
     if (data.length > Osc52MaxRawLength) {
-        console.log("OSC 52: raw data too large", data.length);
+        console.warn("OSC 52: raw data too large", data.length);
         return true;
     }
 
     const semicolonIndex = data.indexOf(";");
     if (semicolonIndex === -1) {
-        console.log("OSC 52: invalid format (no semicolon)", data.substring(0, 50));
+        console.warn("OSC 52: invalid format (no semicolon)", data.substring(0, 50));
         return true;
     }
 
@@ -170,7 +170,7 @@ export function handleOsc52Command(data: string, blockId: string, loaded: boolea
 
     // clipboard query ("?") is not supported for security (prevents clipboard theft)
     if (base64Data === "?") {
-        console.log("OSC 52: clipboard query not supported");
+        console.warn("OSC 52: clipboard query not supported");
         return true;
     }
 
@@ -179,13 +179,13 @@ export function handleOsc52Command(data: string, blockId: string, loaded: boolea
     }
 
     if (clipboardSelection.length > 10) {
-        console.log("OSC 52: clipboard selection too long", clipboardSelection);
+        console.warn("OSC 52: clipboard selection too long", clipboardSelection);
         return true;
     }
 
     const estimatedDecodedSize = Math.ceil(base64Data.length * 0.75);
     if (estimatedDecodedSize > Osc52MaxDecodedSize) {
-        console.log("OSC 52: data too large", estimatedDecodedSize, "bytes");
+        console.warn("OSC 52: data too large", estimatedDecodedSize, "bytes");
         return true;
     }
 
@@ -197,7 +197,7 @@ export function handleOsc52Command(data: string, blockId: string, loaded: boolea
         // validate actual decoded size (base64 estimate can be off for multi-byte UTF-8)
         const actualByteSize = new TextEncoder().encode(decodedText).length;
         if (actualByteSize > Osc52MaxDecodedSize) {
-            console.log("OSC 52: decoded text too large", actualByteSize, "bytes");
+            console.warn("OSC 52: decoded text too large", actualByteSize, "bytes");
             return true;
         }
 
@@ -223,11 +223,11 @@ export function handleOsc7Command(data: string, blockId: string, loaded: boolean
         return true;
     }
     if (data == null || data.length == 0) {
-        console.log("Invalid OSC 7 command received (empty)");
+        console.warn("Invalid OSC 7 command received (empty)");
         return true;
     }
     if (data.length > 1024) {
-        console.log("Invalid OSC 7, data length too long", data.length);
+        console.warn("Invalid OSC 7, data length too long", data.length);
         return true;
     }
 
@@ -235,7 +235,7 @@ export function handleOsc7Command(data: string, blockId: string, loaded: boolean
     try {
         const url = new URL(data);
         if (url.protocol !== "file:") {
-            console.log("Invalid OSC 7 command received (non-file protocol)", data);
+            console.warn("Invalid OSC 7 command received (non-file protocol)", data);
             return true;
         }
         pathPart = decodeURIComponent(url.pathname);
