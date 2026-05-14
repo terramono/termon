@@ -342,7 +342,6 @@ const ChangeConnectionBlockModal = React.memo(
                     // removing this log and failing silentyly since it will happen
                     // if a system isn't using the wsl. and would happen every time the
                     // typeahead was opened. good candidate for verbose log level.
-                    //console.log("unable to load wsl list from backend. using blank list: ", e)
                 });
         }, [changeConnModalOpen]);
 
