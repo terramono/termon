@@ -74,18 +74,18 @@ function GetObject<T>(oref: string): Promise<T> {
 function debugLogBackendCall(methodName: string, durationStr: string, args: any[]) {
     durationStr = "| " + durationStr;
     if (methodName == "object.UpdateObject" && args.length > 0) {
-        console.log("[service] object.UpdateObject", args[0].otype, args[0].oid, durationStr, args[0]);
+        console.debug("[service] object.UpdateObject", args[0].otype, args[0].oid, durationStr, args[0]);
         return;
     }
     if (methodName == "object.GetObject" && args.length > 0) {
-        console.log("[service] object.GetObject", args[0], durationStr);
+        console.debug("[service] object.GetObject", args[0], durationStr);
         return;
     }
     if (methodName == "file.StatFile" && args.length >= 2) {
-        console.log("[service] file.StatFile", args[1], durationStr);
+        console.debug("[service] file.StatFile", args[1], durationStr);
         return;
     }
-    console.log("[service]", methodName, durationStr);
+    console.debug("[service]", methodName, durationStr);
 }
 
 function wpsSubscribeToObject(oref: string): () => void {
@@ -185,7 +185,7 @@ function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boo
         }
         wov.pendingPromise = null;
         globalStore.set(wov.dataAtom, { value: val, loading: false });
-        console.log("WaveObj resolved", oref, Date.now() - startTs + "ms");
+        console.debug("WaveObj resolved", oref, Date.now() - startTs + "ms");
     });
     return wov;
 }
@@ -261,7 +261,7 @@ function updateWaveObject(update: WaveObjUpdate) {
     const oref = makeORef(update.otype, update.oid);
     const wov = getWaveObjectValue(oref);
     if (update.updatetype == "delete") {
-        console.log("WaveObj deleted", oref);
+        console.debug("WaveObj deleted", oref);
         globalStore.set(wov.dataAtom, { value: null, loading: false });
     } else {
         if (!isValidWaveObj(update.obj)) {
@@ -272,7 +272,7 @@ function updateWaveObject(update: WaveObjUpdate) {
         if (curValue.value != null && curValue.value.version >= update.obj.version) {
             return;
         }
-        console.log("WaveObj updated", oref);
+        console.debug("WaveObj updated", oref);
         globalStore.set(wov.dataAtom, { value: update.obj, loading: false });
     }
     return;
