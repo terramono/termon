@@ -148,7 +148,7 @@ class WshClient {
     }
 
     async handle_message(helper: RpcResponseHelper, data: CommandMessageData): Promise<void> {
-        console.log(`rpc:message[${this.routeId}]`, data?.message);
+        console.debug(`rpc:message[${this.routeId}]`, data?.message);
     }
 
     async handle_default(helper: RpcResponseHelper, msg: RpcMessage): Promise<void> {
