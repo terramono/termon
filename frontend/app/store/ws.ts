@@ -127,7 +127,6 @@ class WSControl {
     }
 
     onclose(event: CloseEvent) {
-        // console.log("close", event);
         if (this.onOpenTimeoutId) {
             clearTimeout(this.onOpenTimeoutId);
         }
