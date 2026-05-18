@@ -18,6 +18,11 @@ export function connectionMetaFromSshHost(host: SshConfigHost): string {
     return s;
 }
 
+export function hostCardSubtitleFromSshHost(host: SshConfigHost): string {
+    const displayHost = host.hostname || host.pattern;
+    return `${host.user ? `${host.user}@` : ""}${displayHost}${host.port ? `:${host.port}` : ""}`;
+}
+
 export function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     const groupMap = new Map<string, SshConfigHost[]>();
 

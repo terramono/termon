@@ -12,7 +12,7 @@ import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useEffect } from "react";
 import type { SshHostGroup } from "./sshpanel-model";
-import { connectionMetaFromSshHost, SSHPanelModel } from "./sshpanel-model";
+import { connectionMetaFromSshHost, hostCardSubtitleFromSshHost, SSHPanelModel } from "./sshpanel-model";
 import { SSHPanelHeader } from "./sshpanelheader";
 
 type HostCardProps = {
@@ -34,9 +34,8 @@ const HostStatusDot = memo(({ connName }: { connName: string }) => {
 HostStatusDot.displayName = "HostStatusDot";
 
 const HostCard = memo(({ host }: HostCardProps) => {
-    const displayHost = host.hostname || host.pattern;
     const connMeta = connectionMetaFromSshHost(host);
-    const subtitle = `${host.user ? `${host.user}@` : ""}${displayHost}${host.port ? `:${host.port}` : ""}`;
+    const subtitle = hostCardSubtitleFromSshHost(host);
 
     const handleDoubleClick = async () => {
         const blockDef: BlockDef = {

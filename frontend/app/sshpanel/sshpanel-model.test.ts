@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { connectionMetaFromSshHost, groupHosts } from "./sshpanel-model";
+import { connectionMetaFromSshHost, groupHosts, hostCardSubtitleFromSshHost } from "./sshpanel-model";
 
 const userHostRe = /^([a-zA-Z0-9][a-zA-Z0-9._@\\-]*@)?([a-zA-Z0-9][a-zA-Z0-9.-]*)(?::([0-9]+))?$/;
 
@@ -50,6 +50,22 @@ describe("connectionMetaFromSshHost", () => {
         );
         expect(meta).toBe("ubuntu@prod");
         expectCompatibleWithParseOpts(meta);
+    });
+});
+
+describe("hostCardSubtitleFromSshHost", () => {
+    it("uses hostname when set", () => {
+        expect(
+            hostCardSubtitleFromSshHost(host({ pattern: "prod", hostname: "10.0.0.1", user: "ubuntu", port: "2222" }))
+        ).toBe("ubuntu@10.0.0.1:2222");
+    });
+
+    it("falls back to pattern when hostname is empty", () => {
+        expect(hostCardSubtitleFromSshHost(host({ pattern: "mybox", user: "deploy" }))).toBe("deploy@mybox");
+    });
+
+    it("omits user and port when unset", () => {
+        expect(hostCardSubtitleFromSshHost(host({ pattern: "plain" }))).toBe("plain");
     });
 });
 
