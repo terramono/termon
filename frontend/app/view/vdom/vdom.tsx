@@ -15,6 +15,8 @@ import {
     validateAndWrapCss,
     validateAndWrapReactStyle,
 } from "@/app/view/vdom/vdom-utils";
+import { isDev } from "@/util/isdev";
+import { isAllowedRemoteFetchUrl } from "@/util/urlutil";
 
 const TextTag = "#text";
 const FragmentTag = "#fragment";
@@ -371,6 +373,11 @@ function WaveStyle({ src, model, onMount }: { src: string; model: VDomModel; onM
     const [styleContent, setStyleContent] = React.useState<string | null>(null);
     React.useEffect(() => {
         async function fetchAndSanitizeCss() {
+            if (!isAllowedRemoteFetchUrl(src, isDev())) {
+                console.error("Blocked remote CSS fetch:", src);
+                onMount?.();
+                return;
+            }
             try {
                 const response = await fetch(src);
                 if (!response.ok) {
