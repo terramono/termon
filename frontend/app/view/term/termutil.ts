@@ -10,6 +10,11 @@ import { colord } from "colord";
 
 export type GenClipboardItem = { text?: string; image?: Blob };
 
+function htmlClipboardToPlainText(html: string): string {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+}
+
 export function normalizeCursorStyle(cursorStyle: string): TermTypes.Terminal["options"]["cursorStyle"] {
     if (cursorStyle === "underline" || cursorStyle === "bar") {
         return cursorStyle;
@@ -141,9 +146,7 @@ export async function extractClipboardData(item: ClipboardItem): Promise<GenClip
         if (!html) {
             return null;
         }
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = html;
-        const text = tempDiv.textContent || "";
+        const text = htmlClipboardToPlainText(html);
         return text ? { text } : null;
     }
 
@@ -269,9 +272,7 @@ export async function extractDataTransferItems(items: DataTransferItemList): Pro
                     resolve([]);
                     return;
                 }
-                const tempDiv = document.createElement("div");
-                tempDiv.innerHTML = html;
-                const text = tempDiv.textContent || "";
+                const text = htmlClipboardToPlainText(html);
                 resolve(text ? [{ text }] : []);
             });
         });
