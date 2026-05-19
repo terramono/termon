@@ -17,6 +17,7 @@ import { MockBoundary } from "@/app/waveenv/mockboundary";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { openLink } from "@/store/global";
 import { adaptFromReactOrNativeKeyEvent, checkKeyPressed } from "@/util/keyutil";
+import { isAllowedExternalUrl } from "@/util/urlutil";
 import { fireAndForget, useAtomValueSafe } from "@/util/util";
 import clsx from "clsx";
 import { WebviewTag } from "electron";
@@ -1022,7 +1023,11 @@ const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps)
         };
         const newWindowHandler = (e: any) => {
             e.preventDefault();
-            const newUrl = e.detail.url;
+            const newUrl = e.detail?.url;
+            if (!newUrl || !isAllowedExternalUrl(newUrl)) {
+                console.warn("Blocked webview new-window URL:", newUrl);
+                return;
+            }
             fireAndForget(() => openLink(newUrl, true));
         };
         const startLoadingHandler = () => {
