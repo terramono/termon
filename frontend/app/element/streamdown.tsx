@@ -12,6 +12,48 @@ import { throttle } from "throttle-debounce";
 
 const ShikiTheme = "github-dark-high-contrast";
 
+function sanitizeShikiInnerHtml(html: string): string {
+    if (!html) {
+        return "";
+    }
+    const doc = new DOMParser().parseFromString(`<code>${html}</code>`, "text/html");
+    const code = doc.body.querySelector("code");
+    if (!code) {
+        return "";
+    }
+    const walk = (node: Node): string => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent ?? "";
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return "";
+        }
+        const el = node as Element;
+        if (el.tagName !== "SPAN") {
+            return "";
+        }
+        let attrs = "";
+        const cls = el.getAttribute("class");
+        const style = el.getAttribute("style");
+        if (cls) {
+            attrs += ` class="${cls.replace(/"/g, "")}"`;
+        }
+        if (style) {
+            attrs += ` style="${style.replace(/"/g, "")}"`;
+        }
+        let inner = "";
+        for (const child of el.childNodes) {
+            inner += walk(child);
+        }
+        return `<span${attrs}>${inner}</span>`;
+    };
+    let out = "";
+    for (const child of code.childNodes) {
+        out += walk(child);
+    }
+    return out;
+}
+
 function extractText(node: React.ReactNode): string {
     if (node == null || typeof node === "boolean") return "";
     if (typeof node === "string" || typeof node === "number") return String(node);
@@ -48,7 +90,7 @@ function CodeHighlight({ className = "", lang, text }: { className?: string; lan
                 const end = full.lastIndexOf("</code>");
                 const inner = start !== -1 && open !== -1 && end !== -1 ? full.slice(open + 1, end) : "";
                 if (!disposedRef.current && seq === seqRef.current) {
-                    setHtml(inner);
+                    setHtml(sanitizeShikiInnerHtml(inner));
                     setHasError(false);
                 }
             } catch (e) {
