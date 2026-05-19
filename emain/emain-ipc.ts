@@ -403,8 +403,17 @@ export function initIpcHandlers() {
 
     electron.ipcMain.handle("clear-webview-storage", async (event, webContentsId: number) => {
         try {
+            if (typeof webContentsId !== "number" || !Number.isFinite(webContentsId)) {
+                console.error("Blocked clear-webview-storage: invalid webContentsId", webContentsId);
+                return;
+            }
             const wc = electron.webContents.fromId(webContentsId);
-            if (wc && wc.session) {
+            const host = wc?.hostWebContents;
+            if (wc == null || wc.isDestroyed() || host == null || host.id !== event.sender.id) {
+                console.error("Blocked clear-webview-storage for webContentsId:", webContentsId);
+                return;
+            }
+            if (wc.session) {
                 await wc.session.clearStorageData();
                 console.log("Cleared cookies and storage for webContentsId:", webContentsId);
             }
