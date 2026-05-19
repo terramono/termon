@@ -22,7 +22,10 @@ import {
 import { createBuilderWindow, getAllBuilderWindows, getBuilderWindowByWebContentsId } from "./emain-builder";
 import { callWithOriginalXdgCurrentDesktopAsync, unamePlatform } from "./emain-platform";
 import { getWaveTabViewByWebContentsId } from "./emain-tabview";
+import { getAllowedEnvVar } from "./envutil";
+import { expandHomeInPath, isValidQuicklookPath, sanitizeSaveFileName } from "./pathutil";
 import { handleCtrlShiftState } from "./emain-util";
+import { isAllowedExternalUrl, isAllowedRemoteFetchUrl } from "./urlutil";
 import { getWaveVersion } from "./emain-wavesrv";
 import { createNewWaveWindow, getWaveWindowByWebContentsId } from "./emain-window";
 import { ElectronWshClient } from "./emain-wsh";
@@ -80,6 +83,11 @@ function getFileNameFromUrl(url: string): string {
 
 function getUrlInSession(session: Electron.Session, url: string): Promise<UrlInSessionResult> {
     return new Promise((resolve, reject) => {
+        const allowLocalhost = !electron.app.isPackaged;
+        if (!isAllowedRemoteFetchUrl(url, allowLocalhost)) {
+            reject(new Error("blocked remote fetch url"));
+            return;
+        }
         if (url.startsWith("data:")) {
             try {
                 const parsed = parseDataUrl(url);
@@ -194,7 +202,7 @@ function saveImageFileWithNativeDialog(
 
 export function initIpcHandlers() {
     electron.ipcMain.on("open-external", (event, url) => {
-        if (url && typeof url === "string") {
+        if (isAllowedExternalUrl(url)) {
             fireAndForget(() =>
                 callWithOriginalXdgCurrentDesktopAsync(() =>
                     electron.shell.openExternal(url).catch((err) => {
@@ -203,7 +211,7 @@ export function initIpcHandlers() {
                 )
             );
         } else {
-            console.error("Invalid URL received in open-external event:", url);
+            console.error("Blocked URL received in open-external event:", url);
         }
     });
 
@@ -245,9 +253,14 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("download", (event, payload) => {
-        const baseName = encodeURIComponent(path.basename(payload.filePath));
+        const filePath = payload?.filePath;
+        if (!filePath || typeof filePath !== "string" || filePath.includes("\0")) {
+            console.error("Blocked download path:", filePath);
+            return;
+        }
+        const baseName = encodeURIComponent(path.basename(filePath));
         const streamingUrl =
-            getWebServerEndpoint() + "/wave/stream-file/" + baseName + "?path=" + encodeURIComponent(payload.filePath);
+            getWebServerEndpoint() + "/wave/stream-file/" + baseName + "?path=" + encodeURIComponent(filePath);
         event.sender.downloadURL(streamingUrl);
     });
 
@@ -277,7 +290,7 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("get-env", (event, varName) => {
-        event.returnValue = process.env[varName] ?? null;
+        event.returnValue = getAllowedEnvVar(varName);
     });
 
     electron.ipcMain.on("get-about-modal-details", (event) => {
@@ -329,7 +342,11 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("register-global-webview-keys", (event, keys: string[]) => {
-        webviewKeys = keys ?? [];
+        if (!Array.isArray(keys)) {
+            webviewKeys = [];
+            return;
+        }
+        webviewKeys = keys.filter((k) => typeof k === "string").slice(0, 50);
     });
 
     electron.ipcMain.on("set-keyboard-chord-mode", (event) => {
@@ -373,6 +390,10 @@ export function initIpcHandlers() {
 
     electron.ipcMain.on("quicklook", (event, filePath: string) => {
         if (unamePlatform !== "darwin") return;
+        if (!isValidQuicklookPath(filePath)) {
+            console.error("Blocked quicklook path:", filePath);
+            return;
+        }
         child_process.execFile("/usr/bin/qlmanage", ["-p", filePath], (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error opening Quick Look: ${error}`);
@@ -394,12 +415,17 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("open-native-path", (event, filePath: string) => {
-        console.log("open-native-path", filePath);
-        filePath = filePath.replace("~", electronApp.getPath("home"));
+        const homeDir = electronApp.getPath("home");
+        const expandedPath = expandHomeInPath(filePath, homeDir);
+        if (expandedPath == null) {
+            console.error("Blocked open-native-path:", filePath);
+            return;
+        }
+        console.log("open-native-path", expandedPath);
         fireAndForget(() =>
             callWithOriginalXdgCurrentDesktopAsync(() =>
-                electron.shell.openPath(filePath).then((excuse) => {
-                    if (excuse) console.error(`Failed to open ${filePath} in native application: ${excuse}`);
+                electron.shell.openPath(expandedPath).then((excuse) => {
+                    if (excuse) console.error(`Failed to open ${expandedPath} in native application: ${excuse}`);
                 })
             )
         );
@@ -435,7 +461,12 @@ export function initIpcHandlers() {
     });
 
     electron.ipcMain.on("fe-log", (event, logStr: string) => {
-        console.log("fe-log", logStr);
+        if (typeof logStr !== "string") {
+            return;
+        }
+        const maxLen = 8192;
+        const trimmed = logStr.length > maxLen ? logStr.slice(0, maxLen) + "…" : logStr;
+        console.log("fe-log", trimmed);
     });
 
     electron.ipcMain.on(
@@ -504,7 +535,7 @@ export function initIpcHandlers() {
         }
         const result = await electron.dialog.showSaveDialog(ww, {
             title: "Save Scrollback",
-            defaultPath: fileName || "session.log",
+            defaultPath: sanitizeSaveFileName(fileName),
             filters: [{ name: "Text Files", extensions: ["txt", "log"] }],
         });
         if (result.canceled || !result.filePath) {
