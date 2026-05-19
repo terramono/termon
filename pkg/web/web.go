@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -225,9 +226,9 @@ func handleLocalStreamFile(w http.ResponseWriter, r *http.Request, path string, 
 		rw := &notFoundBlockingResponseWriter{w: w, headers: http.Header{}}
 
 		// Serve the file using http.ServeFile
-		path, err := wavebase.ExpandHomeDir(path)
+		path, err := wavebase.ResolvePathInHome(path)
 		if err == nil {
-			http.ServeFile(rw, r, filepath.Clean(path))
+			http.ServeFile(rw, r, path)
 			// if the file was not found, serve the transparent GIF
 			log.Printf("got streamfile status: %d\n", rw.status)
 			if rw.status == http.StatusNotFound {
@@ -237,12 +238,28 @@ func handleLocalStreamFile(w http.ResponseWriter, r *http.Request, path string, 
 			serveTransparentGIF(w)
 		}
 	} else {
-		path, err := wavebase.ExpandHomeDir(path)
+		resolvedPath, err := wavebase.ResolvePathInHome(path)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		http.ServeFile(w, r, path)
+		http.ServeFile(w, r, resolvedPath)
 	}
+}
+
+func isAllowedDevCORSOrigin(origin string) bool {
+	if origin == "" {
+		return false
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 func handleStreamFileFromReader(w http.ResponseWriter, r *http.Request, path string, no404 bool) error {
@@ -474,7 +491,7 @@ func RunWebServer(listener net.Listener) {
 		originalHandler := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
-			if origin != "" {
+			if isAllowedDevCORSOrigin(origin) {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
