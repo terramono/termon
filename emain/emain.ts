@@ -399,6 +399,15 @@ async function appMain() {
     console.log("wavesrv ready signal received", ready, Date.now() - startTs, "ms");
     await electronApp.whenReady();
     configureAuthKeyRequestInjection(electron.session.defaultSession);
+    const webviewAllowedPermissions = new Set([
+        "clipboard-read",
+        "clipboard-sanitized-write",
+        "fullscreen",
+        "media",
+    ]);
+    electron.session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+        callback(webviewAllowedPermissions.has(permission));
+    });
     initIpcHandlers();
 
     await sleep(10); // wait a bit for wavesrv to be ready
