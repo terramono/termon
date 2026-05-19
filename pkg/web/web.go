@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -168,7 +167,10 @@ func handleWaveFile(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
-
+	}
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") || strings.Contains(name, "..") {
+		http.Error(w, "invalid file name", http.StatusBadRequest)
+		return
 	}
 	file, err := filestore.WFS.Stat(r.Context(), zoneId, name)
 	if err == fs.ErrNotExist {
