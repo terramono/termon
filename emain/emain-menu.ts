@@ -446,12 +446,19 @@ function convertMenuDefArrToMenu(
     return electron.Menu.buildFromTemplate(menuItems);
 }
 
+const MaxContextMenuItems = 200;
+
 electron.ipcMain.on(
     "contextmenu-show",
     (event, workspaceOrBuilderId: string, menuDefArr: ElectronContextMenuItem[]) => {
         const webContents = getWebContentsByWorkspaceOrBuilderId(workspaceOrBuilderId);
         if (!webContents) {
             console.error("invalid window for context menu:", workspaceOrBuilderId);
+            event.returnValue = true;
+            return;
+        }
+        if (!Array.isArray(menuDefArr) || menuDefArr.length > MaxContextMenuItems) {
+            console.error("blocked oversized context menu from renderer");
             event.returnValue = true;
             return;
         }
