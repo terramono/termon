@@ -168,6 +168,39 @@ func ExpandHomeDirSafe(pathStr string) string {
 	return path
 }
 
+func isPathUnderDir(baseDir, targetPath string) bool {
+	if targetPath == baseDir {
+		return true
+	}
+	rel, err := filepath.Rel(baseDir, targetPath)
+	if err != nil {
+		return false
+	}
+	if rel == ".." {
+		return false
+	}
+	return !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+func ResolvePathInHome(pathStr string) (string, error) {
+	expanded, err := ExpandHomeDir(pathStr)
+	if err != nil {
+		return "", err
+	}
+	absPath, err := filepath.Abs(expanded)
+	if err != nil {
+		return "", err
+	}
+	homeDir, err := filepath.Abs(GetHomeDir())
+	if err != nil {
+		return "", err
+	}
+	if !isPathUnderDir(homeDir, absPath) {
+		return "", fmt.Errorf("path outside home directory: %s", pathStr)
+	}
+	return absPath, nil
+}
+
 func ReplaceHomeDir(pathStr string) string {
 	homeDir := GetHomeDir()
 	if pathStr == homeDir {
