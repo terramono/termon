@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { contextBridge, ipcRenderer, Rectangle, webUtils, WebviewTag } from "electron";
+import { isAllowedExternalUrl } from "./urlutil";
 
 // update type in custom.d.ts (ElectronApi type)
 contextBridge.exposeInMainWorld("api", {
@@ -25,10 +26,10 @@ contextBridge.exposeInMainWorld("api", {
         ipcRenderer.on("contextmenu-click", (_event, id: string | null) => callback(id)),
     downloadFile: (filePath) => ipcRenderer.send("download", { filePath }),
     openExternal: (url) => {
-        if (url && typeof url === "string") {
+        if (isAllowedExternalUrl(url)) {
             ipcRenderer.send("open-external", url);
         } else {
-            console.error("Invalid URL passed to openExternal:", url);
+            console.error("Blocked URL passed to openExternal:", url);
         }
     },
     getEnv: (varName) => ipcRenderer.sendSync("get-env", varName),
@@ -82,7 +83,11 @@ ipcRenderer.on("webview-new-window", (e, webContentsId, details) => {
 });
 
 ipcRenderer.on("webcontentsid-from-blockid", (e, blockId, responseCh) => {
-    const webviewElem: WebviewTag = document.querySelector("div[data-blockid='" + blockId + "'] webview");
+    if (!blockId || typeof blockId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(blockId)) {
+        ipcRenderer.send(responseCh, null);
+        return;
+    }
+    const webviewElem: WebviewTag = document.querySelector(`div[data-blockid="${CSS.escape(blockId)}"] webview`);
     const wcId = webviewElem?.dataset?.webcontentsid;
     ipcRenderer.send(responseCh, wcId);
 });
