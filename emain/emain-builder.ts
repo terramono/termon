@@ -8,6 +8,7 @@ import { BrowserWindow } from "electron";
 import { globalEvents } from "emain/emain-events";
 import path from "path";
 import { getElectronAppBasePath, isDevVite, unamePlatform } from "./emain-platform";
+import { makeSecureWebPreferences } from "./webpreferences";
 import { calculateWindowBounds, MinWindowHeight, MinWindowWidth } from "./emain-window";
 import { ElectronWshClient } from "./emain-wsh";
 
@@ -64,10 +65,7 @@ export async function createBuilderWindow(appId: string): Promise<BuilderWindowT
                 : undefined,
         show: false,
         backgroundColor: "#222222",
-        webPreferences: {
-            preload: path.join(getElectronAppBasePath(), "preload", "index.cjs"),
-            webviewTag: true,
-        },
+        webPreferences: makeSecureWebPreferences(),
     });
 
     if (isDevVite) {

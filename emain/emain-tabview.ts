@@ -20,6 +20,8 @@ import {
     shNavHandler,
 } from "./emain-util";
 import { ElectronWshClient } from "./emain-wsh";
+import { isAllowedExternalUrl } from "./urlutil";
+import { makeSecureWebPreferences } from "./webpreferences";
 
 function handleWindowsMenuAccelerators(
     waveEvent: WaveKeyboardEvent,
@@ -136,10 +138,7 @@ export class WaveTabView extends WebContentsView {
     constructor(fullConfig: FullConfigType) {
         console.log("createBareTabView");
         super({
-            webPreferences: {
-                preload: path.join(getElectronAppBasePath(), "preload", "index.cjs"),
-                webviewTag: true,
-            },
+            webPreferences: makeSecureWebPreferences(),
         });
         this.createdTs = Date.now();
         this.isWaveAIOpen = false;
@@ -343,7 +342,7 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
         }
     });
     tabView.webContents.setWindowOpenHandler(({ url, frameName }) => {
-        if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("file://")) {
+        if (isAllowedExternalUrl(url)) {
             console.log("openExternal fallback", url);
             shell.openExternal(url);
         }
