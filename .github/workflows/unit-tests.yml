@@ -1,0 +1,86 @@
+name: Unit Tests
+
+on:
+    pull_request:
+
+env:
+    GO_VERSION: "1.25.6"
+    NODE_VERSION: 22
+
+jobs:
+    frontend:
+        name: Frontend unit tests
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.draft == false
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: npm
+                  cache-dependency-path: package-lock.json
+
+            - uses: nick-fields/retry@v4
+              name: npm ci
+              with:
+                  command: npm ci --no-audit --no-fund
+                  retry_on: error
+                  max_attempts: 3
+                  timeout_minutes: 5
+              env:
+                  GIT_ASKPASS: "echo"
+                  GIT_TERMINAL_PROMPT: "0"
+
+            - name: Run unit tests
+              run: npm run test:unit
+
+            - name: Frontend coverage
+              run: npm run coverage:frontend
+
+            - name: Upload frontend coverage
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-frontend
+                  path: coverage/lcov.info
+                  if-no-files-found: ignore
+
+    go:
+        name: Go unit tests
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.draft == false
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: actions/setup-go@v6
+              with:
+                  go-version: ${{ env.GO_VERSION }}
+                  cache-dependency-path: go.sum
+
+            - name: Force git deps to HTTPS
+              run: |
+                  git config --global url.https://github.com/.insteadof ssh://git@github.com/
+                  git config --global url.https://github.com/.insteadof git@github.com:
+
+            - name: Run Go tests
+              env:
+                  GOTOOLCHAIN: auto
+              run: go test ./pkg/... ./cmd/wsh/...
+
+            - name: Go coverage
+              env:
+                  GOTOOLCHAIN: auto
+              run: go test -coverprofile=coverage.out ./pkg/... ./cmd/wsh/...
+
+            - name: Upload Go coverage
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-go
+                  path: coverage.out
+                  if-no-files-found: ignore
