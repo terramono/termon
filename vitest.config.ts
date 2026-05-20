@@ -11,7 +11,21 @@ export default mergeConfig(
             },
             coverage: {
                 provider: "istanbul",
-                reporter: ["lcov"],
+                all: false,
+                include: ["frontend/**/*.{ts,tsx}"],
+                exclude: [
+                    "**/*.test.{ts,tsx}",
+                    "**/*.d.ts",
+                    "frontend/types/**",
+                    "frontend/app/store/wshclientapi.ts",
+                    "frontend/app/store/services.ts",
+                    "dist/**",
+                    "make/**",
+                    "emain/**",
+                    "node_modules/**",
+                    "coverage/**",
+                ],
+                reporter: ["text-summary", "lcov"],
                 reportsDirectory: "./coverage",
             },
             typecheck: {
