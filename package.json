@@ -24,7 +24,10 @@
         "build:dev": "electron-vite build --mode development",
         "build:prod": "electron-vite build --mode production",
         "coverage": "vitest run --coverage",
+        "coverage:frontend": "vitest run --coverage",
+        "coverage:go": "go test -coverprofile=coverage.out ./pkg/... ./cmd/wsh/...",
         "test": "vitest",
+        "test:unit": "vitest run",
         "postinstall": "node ./postinstall.cjs"
     },
     "devDependencies": {
