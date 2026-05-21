@@ -43,3 +43,82 @@ func TestAtomicWriteFileRenameErrorCleansTempFile(t *testing.T) {
 		t.Fatalf("temporary file should be removed on rename error, stat err: %v", statErr)
 	}
 }
+
+func TestParseByteRange(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		input   string
+		wantAll bool
+		wantErr bool
+	}{
+		{"empty means all", "", true, false},
+		{"open ended", "100-", false, false},
+		{"closed range", "0-99", false, false},
+		{"invalid range", "abc", false, true},
+		{"negative start", "-1-5", false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := ParseByteRange(tt.input)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got.All != tt.wantAll {
+				t.Fatalf("All = %v, want %v", got.All, tt.wantAll)
+			}
+		})
+	}
+
+	closed, err := ParseByteRange("10-20")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if closed.Start != 10 || closed.End != 20 || closed.OpenEnd {
+		t.Fatalf("unexpected closed range: %+v", closed)
+	}
+}
+
+func TestIsInitScriptPath(t *testing.T) {
+	t.Parallel()
+
+	if !IsInitScriptPath("/home/user/init.sh") {
+		t.Fatal("expected absolute path to be treated as script path")
+	}
+	if !IsInitScriptPath("~/scripts/init.sh") {
+		t.Fatal("expected home path to be treated as script path")
+	}
+	if IsInitScriptPath("echo hello; rm -rf /") {
+		t.Fatal("expected suspicious inline script to be rejected")
+	}
+	if IsInitScriptPath("/usr/bin/bash --login") {
+		t.Fatal("expected system bin path with flags to be rejected")
+	}
+}
+
+func TestApplyEdits(t *testing.T) {
+	t.Parallel()
+
+	content := []byte("hello world")
+	edited, err := ApplyEdits(content, []EditSpec{{OldStr: "world", NewStr: "wave"}})
+	if err != nil {
+		t.Fatalf("ApplyEdits failed: %v", err)
+	}
+	if string(edited) != "hello wave" {
+		t.Fatalf("unexpected content: %q", string(edited))
+	}
+
+	_, err = ApplyEdits(content, []EditSpec{{OldStr: "missing", NewStr: "x"}})
+	if err == nil {
+		t.Fatal("expected error when old_str not found")
+	}
+}
