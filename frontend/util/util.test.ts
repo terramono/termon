@@ -6,12 +6,16 @@ import { describe, expect, it } from "vitest";
 import {
     base64ToString,
     boundNumber,
+    formatRelativeTime,
+    getPrefixedSettings,
     isBlank,
     isLocalConnName,
     isSshConnName,
     isWslConnName,
     jsonDeepEqual,
     makeConnRoute,
+    mergeMeta,
+    parseDataUrl,
     sortByDisplayOrder,
     stringToBase64,
 } from "./util";
@@ -95,5 +99,74 @@ describe("base64 string helpers", () => {
     it("round-trips UTF-8 text", () => {
         const text = "hello 世界";
         expect(base64ToString(stringToBase64(text))).toBe(text);
+    });
+});
+
+describe("parseDataUrl", () => {
+    it("parses base64 data urls", () => {
+        const parsed = parseDataUrl("data:text/plain;base64,aGVsbG8=");
+        expect(parsed.mimeType).toBe("text/plain");
+        expect(new TextDecoder().decode(parsed.buffer)).toBe("hello");
+    });
+
+    it("parses percent-encoded text data urls", () => {
+        const parsed = parseDataUrl("data:text/plain,hello%20world");
+        expect(new TextDecoder().decode(parsed.buffer)).toBe("hello world");
+    });
+
+    it("throws for invalid data urls", () => {
+        expect(() => parseDataUrl("not-a-data-url")).toThrow("Invalid data URL");
+    });
+});
+
+describe("mergeMeta", () => {
+    it("merges updates and deletes null values", () => {
+        const merged = mergeMeta({ a: 1, b: 2 }, { b: null, c: 3 });
+        expect(merged).toEqual({ a: 1, c: 3 });
+    });
+
+    it("respects prefix filtering", () => {
+        const merged = mergeMeta({ "term:font": "mono", view: "term" }, { "term:size": 12 }, "term");
+        expect(merged).toEqual({ "term:font": "mono", "term:size": 12 });
+        expect(merged.view).toBeUndefined();
+    });
+
+    it("clears section keys when section:* is true", () => {
+        const merged = mergeMeta({ "ai:model": "gpt", "ai:provider": "openai" }, { "ai:*": true, "ai:model": "claude" });
+        expect(merged).toEqual({ "ai:model": "claude" });
+    });
+});
+
+describe("getPrefixedSettings", () => {
+    it("returns settings matching prefix", () => {
+        const settings = {
+            "term:font": "mono",
+            "term:size": 12,
+            view: "term",
+        };
+        expect(getPrefixedSettings(settings, "term")).toEqual({
+            "term:font": "mono",
+            "term:size": 12,
+        });
+    });
+
+    it("returns empty object for blank prefix", () => {
+        expect(getPrefixedSettings({ a: 1 }, "")).toEqual({});
+    });
+});
+
+describe("formatRelativeTime", () => {
+    it("returns never for falsy timestamps", () => {
+        expect(formatRelativeTime(0)).toBe("never");
+    });
+
+    it("formats recent minutes", () => {
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+        expect(formatRelativeTime(fiveMinutesAgo)).toBe("5 mins ago");
+    });
+
+    it("formats singular minute", () => {
+        const oneMinuteAgo = Date.now() - 61 * 1000;
+        expect(formatRelativeTime(oneMinuteAgo)).toBe("1 min ago");
     });
 });
