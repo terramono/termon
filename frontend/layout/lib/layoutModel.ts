@@ -56,6 +56,7 @@ import {
     ResizeHandleProps,
     TileLayoutContents,
 } from "./types";
+import { getLeafOrder } from "./layoutleaforder";
 import { getCenter, navigateDirectionToOffset, setTransform } from "./utils";
 
 interface ResizeContext {
@@ -1569,16 +1570,3 @@ export class LayoutModel {
     }
 }
 
-function getLeafOrder(
-    leafs: LayoutNode[],
-    additionalProps: Record<string, LayoutNodeAdditionalProps>
-): LeafOrderEntry[] {
-    return leafs
-        .map((node) => ({ nodeid: node.id, blockid: node.data.blockId }) as LeafOrderEntry)
-        .sort((a, b) => {
-            const treeKeyA = additionalProps[a.nodeid]?.treeKey;
-            const treeKeyB = additionalProps[b.nodeid]?.treeKey;
-            if (!treeKeyA || !treeKeyB) return;
-            return treeKeyA.localeCompare(treeKeyB);
-        });
-}
