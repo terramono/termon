@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { isClaudeCodeCommand } from "./osc-handlers";
+import { isClaudeCodeCommand, normalizeCmd } from "./osc-handlers";
+
+describe("normalizeCmd", () => {
+    it("strips env prefix and assignments", () => {
+        expect(normalizeCmd('env FOO=bar claude --print')).toBe("claude --print");
+        expect(normalizeCmd('ANTHROPIC_API_KEY="test" claude')).toBe("claude");
+        expect(normalizeCmd("  git status  ")).toBe("git status");
+    });
+});
 
 describe("isClaudeCodeCommand", () => {
     it("matches direct Claude Code invocations", () => {
@@ -19,5 +27,6 @@ describe("isClaudeCodeCommand", () => {
         expect(isClaudeCodeCommand("ls ~/claude")).toBe(false);
         expect(isClaudeCodeCommand("cat /logs/claude")).toBe(false);
         expect(isClaudeCodeCommand("")).toBe(false);
+        expect(isClaudeCodeCommand("opencode run")).toBe(false);
     });
 });
