@@ -13,27 +13,20 @@ import debug from "debug";
 import * as jotai from "jotai";
 import { debounce } from "lodash-es";
 import { ImperativePanelGroupHandle, ImperativePanelHandle } from "react-resizable-panels";
+import {
+    AIPanel_DefaultWidth,
+    AIPanel_DefaultWidthRatio,
+    VTabBar_DefaultWidth,
+    clampAIPanelWidth,
+    clampVTabWidth,
+    computeWorkspaceLayout,
+    getInnerAIPanelInitialPercentage as computeInnerAIPanelInitialPercentage,
+    getInnerVTabInitialPercentage as computeInnerVTabInitialPercentage,
+    getLeftGroupInitialPercentage as computeLeftGroupInitialPercentage,
+    resolveAIWidth,
+} from "./workspace-layout-util";
 
 const dlog = debug("wave:workspace");
-
-const AIPanel_DefaultWidth = 300;
-const AIPanel_DefaultWidthRatio = 0.33;
-const AIPanel_MinWidth = 300;
-const AIPanel_MaxWidthRatio = 0.66;
-
-const VTabBar_DefaultWidth = 220;
-const VTabBar_MinWidth = 110;
-const VTabBar_MaxWidth = 280;
-
-function clampVTabWidth(w: number): number {
-    return Math.max(VTabBar_MinWidth, Math.min(w, VTabBar_MaxWidth));
-}
-
-function clampAIPanelWidth(w: number, windowWidth: number): number {
-    const maxWidth = Math.floor(windowWidth * AIPanel_MaxWidthRatio);
-    if (AIPanel_MinWidth > maxWidth) return AIPanel_MinWidth;
-    return Math.max(AIPanel_MinWidth, Math.min(w, maxWidth));
-}
 
 class WorkspaceLayoutModel {
     private static instance: WorkspaceLayoutModel | null = null;
@@ -169,12 +162,10 @@ class WorkspaceLayoutModel {
     // ---- Resolved width getters (always clamped) ----
 
     private getResolvedAIWidth(windowWidth: number): number {
-        let w = this.aiPanelWidth;
-        if (w == null) {
-            w = Math.max(AIPanel_DefaultWidth, windowWidth * AIPanel_DefaultWidthRatio);
-            this.aiPanelWidth = w;
+        if (this.aiPanelWidth == null) {
+            this.aiPanelWidth = Math.max(AIPanel_DefaultWidth, windowWidth * AIPanel_DefaultWidthRatio);
         }
-        return clampAIPanelWidth(w, windowWidth);
+        return clampAIPanelWidth(this.aiPanelWidth, windowWidth);
     }
 
     private getResolvedVTabWidth(): number {
@@ -187,26 +178,13 @@ class WorkspaceLayoutModel {
     // and produces the two percentage arrays for the panel groups.
 
     private computeLayout(windowWidth: number): { outer: number[]; inner: number[] } {
-        const vtabW = this.vtabVisible ? this.getResolvedVTabWidth() : 0;
-        const aiW = this.aiPanelVisible ? this.getResolvedAIWidth(windowWidth) : 0;
-        const leftGroupW = vtabW + aiW;
-
-        // outer: [leftGroupPct, contentPct]
-        const leftPct = windowWidth > 0 ? (leftGroupW / windowWidth) * 100 : 0;
-        const contentPct = Math.max(0, 100 - leftPct);
-
-        // inner: [vtabPct, aiPanelPct] relative to leftGroupW
-        let vtabPct: number;
-        let aiPct: number;
-        if (leftGroupW > 0) {
-            vtabPct = (vtabW / leftGroupW) * 100;
-            aiPct = 100 - vtabPct;
-        } else {
-            vtabPct = 50;
-            aiPct = 50;
-        }
-
-        return { outer: [leftPct, contentPct], inner: [vtabPct, aiPct] };
+        return computeWorkspaceLayout({
+            windowWidth,
+            vtabVisible: this.vtabVisible,
+            aiPanelVisible: this.aiPanelVisible,
+            vtabWidth: this.vtabWidth,
+            aiPanelWidth: this.aiPanelWidth,
+        });
     }
 
     private commitLayouts(windowWidth: number): void {
@@ -363,26 +341,37 @@ class WorkspaceLayoutModel {
     // ---- Initial percentage helpers (used by workspace.tsx for defaultSize) ----
 
     getLeftGroupInitialPercentage(windowWidth: number, showLeftTabBar: boolean): number {
-        const vtabW = showLeftTabBar && !isBuilderWindow() ? this.getResolvedVTabWidth() : 0;
-        const aiW = this.aiPanelVisible ? this.getResolvedAIWidth(windowWidth) : 0;
-        return ((vtabW + aiW) / windowWidth) * 100;
+        return computeLeftGroupInitialPercentage({
+            windowWidth,
+            vtabVisible: this.vtabVisible,
+            aiPanelVisible: this.aiPanelVisible,
+            vtabWidth: this.vtabWidth,
+            aiPanelWidth: this.aiPanelWidth,
+            showLeftTabBar: showLeftTabBar && !isBuilderWindow(),
+        });
     }
 
     getInnerVTabInitialPercentage(windowWidth: number, showLeftTabBar: boolean): number {
-        if (!showLeftTabBar || isBuilderWindow()) return 0;
-        const vtabW = this.getResolvedVTabWidth();
-        const aiW = this.aiPanelVisible ? this.getResolvedAIWidth(windowWidth) : 0;
-        const total = vtabW + aiW;
-        if (total === 0) return 50;
-        return (vtabW / total) * 100;
+        if (isBuilderWindow()) return 0;
+        return computeInnerVTabInitialPercentage({
+            windowWidth,
+            vtabVisible: this.vtabVisible,
+            aiPanelVisible: this.aiPanelVisible,
+            vtabWidth: this.vtabWidth,
+            aiPanelWidth: this.aiPanelWidth,
+            showLeftTabBar,
+        });
     }
 
     getInnerAIPanelInitialPercentage(windowWidth: number, showLeftTabBar: boolean): number {
-        const vtabW = showLeftTabBar && !isBuilderWindow() ? this.getResolvedVTabWidth() : 0;
-        const aiW = this.aiPanelVisible ? this.getResolvedAIWidth(windowWidth) : 0;
-        const total = vtabW + aiW;
-        if (total === 0) return 50;
-        return (aiW / total) * 100;
+        return computeInnerAIPanelInitialPercentage({
+            windowWidth,
+            vtabVisible: this.vtabVisible,
+            aiPanelVisible: this.aiPanelVisible,
+            vtabWidth: this.vtabWidth,
+            aiPanelWidth: this.aiPanelWidth,
+            showLeftTabBar: showLeftTabBar && !isBuilderWindow(),
+        });
     }
 
     // ---- Toggle visibility ----
