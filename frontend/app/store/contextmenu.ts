@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { atoms, getApi, globalStore } from "./global";
+import { convertContextMenuForElectron } from "./contextmenu-util";
 
 type ShowContextMenuOpts = {
     onSelect?: (item: ContextMenuItem) => void;
@@ -41,31 +42,7 @@ class ContextMenuModel {
     }
 
     _convertAndRegisterMenu(menu: ContextMenuItem[]): ElectronContextMenuItem[] {
-        const electronMenuItems: ElectronContextMenuItem[] = [];
-        for (const item of menu) {
-            const electronItem: ElectronContextMenuItem = {
-                role: item.role,
-                type: item.type,
-                label: item.label,
-                sublabel: item.sublabel,
-                id: crypto.randomUUID(),
-                checked: item.checked,
-            };
-            if (item.visible === false) {
-                electronItem.visible = false;
-            }
-            if (item.enabled === false) {
-                electronItem.enabled = false;
-            }
-            if (item.click) {
-                this.handlers.set(electronItem.id, item);
-            }
-            if (item.submenu) {
-                electronItem.submenu = this._convertAndRegisterMenu(item.submenu);
-            }
-            electronMenuItems.push(electronItem);
-        }
-        return electronMenuItems;
+        return convertContextMenuForElectron(menu, this.handlers);
     }
 
     showContextMenu(menu: ContextMenuItem[], ev: React.MouseEvent<any>, opts?: ShowContextMenuOpts): void {
