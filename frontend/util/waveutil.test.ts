@@ -1,8 +1,12 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from "vitest";
-import { formatRemoteUri, processBackgroundUrls } from "./waveutil";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { computeBgStyleFromMeta, formatRemoteUri, processBackgroundUrls } from "./waveutil";
+
+vi.mock("@/util/endpoints", () => ({
+    getWebServerEndpoint: () => "http://127.0.0.1:8080",
+}));
 
 describe("formatRemoteUri", () => {
     it("defaults connection to local", () => {
@@ -31,5 +35,33 @@ describe("processBackgroundUrls", () => {
 
     it("rejects unsafe relative urls", () => {
         expect(processBackgroundUrls('url("../secret.png")')).toBe(null);
+    });
+
+    it("rewrites absolute file paths to stream URLs", () => {
+        const css = 'url("/tmp/bg.png")';
+        const result = processBackgroundUrls(css);
+        expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
+        expect(result).toContain(encodeURIComponent("wsh://local//tmp/bg.png"));
+    });
+});
+
+describe("computeBgStyleFromMeta", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "error").mockImplementation(() => null);
+    });
+
+    it("returns null for blank background meta", () => {
+        expect(computeBgStyleFromMeta({})).toBe(null);
+    });
+
+    it("applies opacity and blend mode from meta", () => {
+        const style = computeBgStyleFromMeta({
+            bg: 'url("https://example.com/bg.png")',
+            "bg:opacity": 0.5,
+            "bg:blendmode": "multiply",
+        });
+        expect(style.opacity).toBe(0.5);
+        expect(style.backgroundBlendMode).toBe("multiply");
+        expect(style.background).toContain("https://example.com/bg.png");
     });
 });

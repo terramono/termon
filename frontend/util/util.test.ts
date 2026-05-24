@@ -4,8 +4,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    base64ToArray,
     base64ToString,
     boundNumber,
+    cn,
+    countGraphemes,
+    escapeBytes,
     formatRelativeTime,
     getPrefixedSettings,
     isBlank,
@@ -13,7 +17,10 @@ import {
     isSshConnName,
     isWslConnName,
     jsonDeepEqual,
+    lazy,
     makeConnRoute,
+    makeExternLink,
+    makeIconClass,
     mergeMeta,
     parseDataUrl,
     sortByDisplayOrder,
@@ -152,6 +159,55 @@ describe("getPrefixedSettings", () => {
 
     it("returns empty object for blank prefix", () => {
         expect(getPrefixedSettings({ a: 1 }, "")).toEqual({});
+    });
+});
+
+describe("cn", () => {
+    it("merges tailwind classes with later wins", () => {
+        expect(cn("px-2 py-1", "px-4")).toBe("py-1 px-4");
+    });
+});
+
+describe("lazy", () => {
+    it("memoizes the initializer result", () => {
+        let calls = 0;
+        const fn = lazy(() => {
+            calls++;
+            return calls;
+        });
+        expect(fn()).toBe(1);
+        expect(fn()).toBe(1);
+        expect(calls).toBe(1);
+    });
+});
+
+describe("escapeBytes", () => {
+    it("escapes control characters", () => {
+        expect(escapeBytes("a\nb\t")).toBe("a\\nb\\t");
+    });
+});
+
+describe("countGraphemes", () => {
+    it("counts unicode grapheme clusters", () => {
+        expect(countGraphemes("hello")).toBe(5);
+        expect(countGraphemes("👋🏽")).toBe(1);
+    });
+});
+
+describe("makeIconClass and makeExternLink", () => {
+    it("builds font-awesome class names", () => {
+        expect(makeIconClass("terminal", true)).toContain("fa-terminal");
+        expect(makeIconClass("solid@terminal", true)).toContain("fa-terminal");
+    });
+
+    it("builds extern redirect links", () => {
+        expect(makeExternLink("https://example.com")).toBe("https://extern?https%3A%2F%2Fexample.com");
+    });
+});
+
+describe("base64ToArray", () => {
+    it("decodes base64 to bytes ignoring whitespace", () => {
+        expect(Array.from(base64ToArray("aGVs bG8="))).toEqual([104, 101, 108, 108, 111]);
     });
 });
 

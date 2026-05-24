@@ -3,7 +3,14 @@
 
 import { assert, test } from "vitest";
 import { DropDirection, FlexDirection } from "../lib/types";
-import { determineDropDirection, reverseFlexDirection } from "../lib/utils";
+import { NavigateDirection } from "../lib/types";
+import {
+    determineDropDirection,
+    getCenter,
+    navigateDirectionToOffset,
+    reverseFlexDirection,
+    setTransform,
+} from "../lib/utils";
 
 test("determineDropDirection", () => {
     const dimensions: Dimensions = {
@@ -105,4 +112,25 @@ test("determineDropDirection", () => {
 test("reverseFlexDirection", () => {
     assert.equal(reverseFlexDirection(FlexDirection.Row), FlexDirection.Column);
     assert.equal(reverseFlexDirection(FlexDirection.Column), FlexDirection.Row);
+});
+
+test("setTransform rounds dimensions and applies translate3d", () => {
+    const style = setTransform({ top: 10.7, left: 5.2, width: 100.1, height: 50.9 }, true, true, 2);
+    assert.equal(style.transform, "translate3d(5px,10px, 0)");
+    assert.equal(style.width, "101px");
+    assert.equal(style.height, "51px");
+    assert.equal(style.zIndex, 2);
+});
+
+test("getCenter returns box center point", () => {
+    const center = getCenter({ top: 10, left: 20, width: 100, height: 50 });
+    assert.equal(center.x, 70);
+    assert.equal(center.y, 35);
+});
+
+test("navigateDirectionToOffset maps directions to unit offsets", () => {
+    assert.deepEqual(navigateDirectionToOffset(NavigateDirection.Up), { x: 0, y: -1 });
+    assert.deepEqual(navigateDirectionToOffset(NavigateDirection.Down), { x: 0, y: 1 });
+    assert.deepEqual(navigateDirectionToOffset(NavigateDirection.Left), { x: -1, y: 0 });
+    assert.deepEqual(navigateDirectionToOffset(NavigateDirection.Right), { x: 1, y: 0 });
 });
