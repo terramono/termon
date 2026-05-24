@@ -1,0 +1,38 @@
+{
+    "gates": [
+        {
+            "name": "frontend/util",
+            "kind": "lcov",
+            "pathPrefix": "frontend/util/",
+            "metric": "lines",
+            "minPercent": 58,
+            "targetPercent": 80
+        },
+        {
+            "name": "frontend/layout/lib",
+            "kind": "lcov",
+            "pathPrefix": "frontend/layout/lib/",
+            "metric": "lines",
+            "minPercent": 24,
+            "targetPercent": 70
+        },
+        {
+            "name": "pkg/util",
+            "kind": "go",
+            "goPackages": [
+                "./pkg/util/daystr",
+                "./pkg/util/ds",
+                "./pkg/util/fileutil",
+                "./pkg/util/iochan",
+                "./pkg/util/iterfn",
+                "./pkg/util/packetparser",
+                "./pkg/util/pamparse",
+                "./pkg/util/shellutil",
+                "./pkg/util/utilfn"
+            ],
+            "metric": "statements",
+            "minPercent": 28,
+            "targetPercent": 65
+        }
+    ]
+}

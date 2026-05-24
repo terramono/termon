@@ -40,6 +40,9 @@ jobs:
             - name: Frontend coverage
               run: npm run coverage:frontend
 
+            - name: Check frontend coverage gates
+              run: npm run coverage:gates:frontend
+
             - name: Upload frontend coverage
               if: always()
               uses: actions/upload-artifact@v4
@@ -76,6 +79,11 @@ jobs:
               env:
                   GOTOOLCHAIN: auto
               run: go test -coverprofile=coverage.out ./pkg/... ./cmd/wsh/...
+
+            - name: Check Go coverage gates
+              env:
+                  GOTOOLCHAIN: auto
+              run: node scripts/check-coverage-gates.mjs --go
 
             - name: Upload Go coverage
               if: always()
