@@ -3,7 +3,7 @@
 - User prefers brief, direct communication — ask for TLDRs after long agent sessions and dislikes being kept in the dark during extended work.
 - User wants to be kept informed at regular intervals; spiraling silently on a problem for 45+ minutes without updates is frustrating.
 - User prefers the agent to escalate and summarize when stuck, rather than continuing to loop on a dead-end approach.
-- User sometimes drives large autonomous refactor batches (many commits) and expects agents to keep the app green with tests and builds while executing them.
+- User sometimes drives large autonomous batches (refactors, security hardening, dead-code cleanup) with explicit commit-count targets; expects Conventional Commits (one logical change each), builds/tests green throughout, and a TLDR when the batch finishes.
 
 ## Learned Workspace Facts
 
@@ -17,3 +17,5 @@
 - When `Electron --version` reports a low version like `v24.x.x`, that is the bundled Node.js internal version, not the Electron version; actual Electron version is in the app plist and `package.json` (v41.1.0 alongside dependencies).
 - User's machine: macOS arm64 (Apple Silicon); `package.json` version is 0.14.4 for this fork line.
 - SSH panel feature lives in this fork: `GetSshHosts()` in `pkg/service/clientservice/clientservice.go`, components under `frontend/app/sshpanel/`, panel mode atom in `workspace-layout-model.ts`, tab toggle in `tabbar.tsx`.
+- Git remote is `github.com:keshav-k3/termon.git` (default branch `main`).
+- Testing: `npm run test:unit` (Vitest); `npm run coverage` / `npm run coverage:go` for reports; per-directory gates via `npm run coverage:gates` (config in `scripts/coverage-gates.json`, checker in `scripts/check-coverage-gates.mjs`). See `docs/testing.md`.
