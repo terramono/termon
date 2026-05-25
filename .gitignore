@@ -37,6 +37,11 @@ storybook-static/
 
 test-results.xml
 
+coverage/
+coverage.out
+coverage-go.out
+coverage-pkgutil.out
+
 docsite/
 
 .kilo-format-temp-*
