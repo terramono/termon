@@ -3,6 +3,14 @@
 
 import { assert, test } from "vitest";
 import { addChildAt, addIntermediateNode, balanceNode, findNextInsertLocation, newLayoutNode } from "../lib/layoutNode";
+import {
+    findInsertLocationFromIndexArr,
+    findNode,
+    findParent,
+    removeChild,
+    validateNode,
+    walkNodes,
+} from "../lib/layoutNode";
 import { FlexDirection, LayoutNode } from "../lib/types";
 
 test("newLayoutNode", () => {
@@ -296,4 +304,69 @@ test("findNextInsertLocation", () => {
     const insertLoc3 = findNextInsertLocation(node3, 5);
     assert(insertLoc3.node.id === node3Inner4.id, "should insert into node3Inner4");
     assert(insertLoc3.index === 1, "should insert into index 1 of node3Inner4");
+});
+
+test("findNode and findParent", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leaf]);
+    assert(findNode(root, leaf.id)?.id === leaf.id, "findNode should locate nested leaf");
+    assert(findNode(root, "missing") == null, "findNode should return undefined for missing id");
+    assert(findParent(root, leaf.id)?.id === root.id, "findParent should return direct parent");
+    assert(findParent(root, root.id) == null, "findParent on root id should return undefined");
+});
+
+test("removeChild removes matching child", () => {
+    const child = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "child" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child]);
+    removeChild(root, child);
+    assert.equal(root.children?.length, 0);
+    removeChild(root, child);
+    assert.equal(root.children?.length, 0);
+});
+
+test("validateNode rejects invalid nodes", () => {
+    const both: LayoutNode = {
+        id: "bad",
+        flexDirection: FlexDirection.Row,
+        size: 50,
+        data: { blockId: "x" },
+        children: [newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "y" })],
+    };
+    assert(validateNode(both) === false, "node with both data and children is invalid");
+    const emptyChildren: LayoutNode = {
+        id: "empty",
+        flexDirection: FlexDirection.Row,
+        size: 50,
+        children: [],
+    };
+    assert(validateNode(emptyChildren) === false, "node with empty children is invalid");
+});
+
+test("walkNodes visits all nodes in order", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leaf]);
+    const visited: string[] = [];
+    walkNodes(
+        root,
+        (node) => visited.push(`pre:${node.id}`),
+        (node) => visited.push(`post:${node.id}`)
+    );
+    assert(visited.includes(`pre:${root.id}`));
+    assert(visited.includes(`pre:${leaf.id}`));
+    assert(visited.includes(`post:${leaf.id}`));
+    assert(visited.indexOf(`post:${leaf.id}`) > visited.indexOf(`pre:${leaf.id}`));
+});
+
+test("findInsertLocationFromIndexArr traverses nested indices", () => {
+    const inner = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "inner" });
+    const mid = newLayoutNode(FlexDirection.Row, undefined, [inner]);
+    const root = newLayoutNode(FlexDirection.Row, undefined, [mid]);
+    const loc = findInsertLocationFromIndexArr(root, [0, 0]);
+    assert.equal(loc.node.id, mid.id);
+    assert.equal(loc.index, 0);
+});
+
+test("findInsertLocationFromIndexArr returns undefined for empty indexArr", () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    assert(findInsertLocationFromIndexArr(root, []) == null);
 });
