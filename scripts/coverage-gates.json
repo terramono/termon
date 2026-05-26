@@ -5,7 +5,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/util/",
             "metric": "lines",
-            "minPercent": 60,
+            "minPercent": 62,
             "targetPercent": 80
         },
         {
@@ -13,7 +13,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/layout/lib/",
             "metric": "lines",
-            "minPercent": 24,
+            "minPercent": 25,
             "targetPercent": 70
         },
         {
@@ -31,7 +31,7 @@
                 "./pkg/util/utilfn"
             ],
             "metric": "statements",
-            "minPercent": 28,
+            "minPercent": 30,
             "targetPercent": 65
         }
     ]
