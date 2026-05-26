@@ -8,6 +8,16 @@ describe("normalizeCmd", () => {
         expect(normalizeCmd('ANTHROPIC_API_KEY="test" claude')).toBe("claude");
         expect(normalizeCmd("  git status  ")).toBe("git status");
     });
+
+    it("strips multiple leading env assignments", () => {
+        expect(normalizeCmd('FOO=1 BAR="two" ssh host')).toBe("ssh host");
+        expect(normalizeCmd("env FOO=1 BAR=2 vim file.txt")).toBe("vim file.txt");
+    });
+
+    it("preserves commands without env wrappers", () => {
+        expect(normalizeCmd("tail -f /var/log/syslog")).toBe("tail -f /var/log/syslog");
+        expect(normalizeCmd("opencode run")).toBe("opencode run");
+    });
 });
 
 describe("isClaudeCodeCommand", () => {
