@@ -8,6 +8,8 @@ describe("validateCssColor", () => {
             supports: (_property: string, value: string) => {
                 return [
                     "red",
+                    "#abc",
+                    "#abcd",
                     "#aabbcc",
                     "#aabbccdd",
                     "rgb(255, 0, 0)",
@@ -26,6 +28,9 @@ describe("validateCssColor", () => {
 
     it("returns type for supported CSS color formats", () => {
         expect(validateCssColor("red")).toBe("keyword");
+        expect(validateCssColor("  red  ")).toBe("keyword");
+        expect(validateCssColor("#abc")).toBe("hex3");
+        expect(validateCssColor("#abcd")).toBe("hex4");
         expect(validateCssColor("#aabbcc")).toBe("hex");
         expect(validateCssColor("#aabbccdd")).toBe("hex8");
         expect(validateCssColor("rgb(255, 0, 0)")).toBe("rgb");
@@ -39,5 +44,12 @@ describe("validateCssColor", () => {
         expect(() => validateCssColor(":not-a-color:")).toThrow("Invalid CSS color");
         expect(() => validateCssColor("#12")).toThrow("Invalid CSS color");
         expect(() => validateCssColor("rgb(255, 0)")).toThrow("Invalid CSS color");
+        expect(() => validateCssColor("")).toThrow("Invalid CSS color");
+        expect(() => validateCssColor(null as unknown as string)).toThrow("Invalid CSS color");
+    });
+
+    it("throws when CSS.supports is unavailable", () => {
+        vi.stubGlobal("CSS", undefined);
+        expect(() => validateCssColor("red")).toThrow("Invalid CSS color");
     });
 });
