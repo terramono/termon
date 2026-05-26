@@ -24,6 +24,7 @@ import {
     LayoutTreeActionType,
     LayoutTreeComputeMoveNodeAction,
     LayoutTreeMoveNodeAction,
+    LayoutTreeSwapNodeAction,
 } from "../lib/types";
 import { newLayoutTreeState } from "./model";
 
@@ -231,5 +232,57 @@ test("insertNodeAtIndex uses indexArr", () => {
         indexArr: [0],
     });
     assert.equal(treeState.rootNode.children!.length, 3);
+});
+
+test("computeMove - left and right on row layout", () => {
+    const nodeA = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeA" });
+    const nodeB = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeB" });
+    const nodeC = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeC" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB, nodeC]));
+
+    const leftMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeB.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Left,
+    }) as LayoutTreeMoveNodeAction;
+    assert(leftMove.parentId === nodeB.id);
+    assert.equal(leftMove.index, 0);
+
+    const rightMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeA.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Right,
+    }) as LayoutTreeMoveNodeAction;
+    assert(rightMove.parentId === nodeA.id);
+    assert.equal(rightMove.index, 1);
+});
+
+test("computeMove - center returns swap action", () => {
+    const nodeA = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeA" });
+    const nodeB = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeB" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB]));
+    const swapAction = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeA.id,
+        nodeToMoveId: nodeB.id,
+        direction: DropDirection.Center,
+    });
+    assert(swapAction?.type === LayoutTreeActionType.Swap);
+    assert.equal((swapAction as LayoutTreeSwapNodeAction).node1Id, nodeA.id);
+    assert.equal((swapAction as LayoutTreeSwapNodeAction).node2Id, nodeB.id);
+});
+
+test("computeMove - returns undefined for missing nodes", () => {
+    const nodeA = newLayoutNode(undefined, undefined, undefined, { blockId: "nodeA" });
+    const treeState = newLayoutTreeState(nodeA);
+    const action = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeA.id,
+        nodeToMoveId: "missing-id",
+        direction: DropDirection.Bottom,
+    });
+    assert(action == null);
 });
 
