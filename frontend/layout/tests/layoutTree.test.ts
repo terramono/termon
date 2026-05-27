@@ -167,10 +167,28 @@ test("clearTree resets state", () => {
     const treeState = newLayoutTreeState(node);
     treeState.focusedNodeId = node.id;
     treeState.magnifiedNodeId = node.id;
+    treeState.leafOrder = [{ nodeid: node.id, blockid: "n" }];
     clearTree(treeState);
     assert(treeState.rootNode == null);
     assert(treeState.focusedNodeId == null);
     assert(treeState.magnifiedNodeId == null);
+    assert(treeState.leafOrder == null);
+});
+
+test("replaceNode replaces nested target preserving size", () => {
+    const target = newLayoutNode(FlexDirection.Row, 60, undefined, { blockId: "old" });
+    const sibling = newLayoutNode(FlexDirection.Row, 40, undefined, { blockId: "sib" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    replaceNode(treeState, {
+        type: LayoutTreeActionType.ReplaceNode,
+        targetNodeId: target.id,
+        newNode,
+    });
+    assert.equal(treeState.rootNode.children![0].id, newNode.id);
+    assert.equal(treeState.rootNode.children![0].size, 60);
+    assert.equal(treeState.rootNode.children![0].data!.blockId, "new");
 });
 
 test("replaceNode preserves size at root", () => {

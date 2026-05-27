@@ -13,7 +13,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/layout/lib/",
             "metric": "lines",
-            "minPercent": 26,
+            "minPercent": 27,
             "targetPercent": 70
         },
         {
@@ -22,6 +22,7 @@
             "goPackages": [
                 "./pkg/util/daystr",
                 "./pkg/util/ds",
+                "./pkg/util/envutil",
                 "./pkg/util/fileutil",
                 "./pkg/util/iochan",
                 "./pkg/util/iterfn",
@@ -31,7 +32,7 @@
                 "./pkg/util/utilfn"
             ],
             "metric": "statements",
-            "minPercent": 35,
+            "minPercent": 38,
             "targetPercent": 65
         }
     ]
