@@ -1,17 +1,23 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+    arrayToBase64,
     base64ToArray,
+    base64ToArrayBuffer,
     base64ToString,
     boundNumber,
     cn,
     countGraphemes,
+    deepCompareReturnPrev,
     escapeBytes,
+    fireAndForget,
     formatRelativeTime,
     getPrefixedSettings,
+    getPromiseState,
+    getPromiseValue,
     isBlank,
     isLocalConnName,
     isSshConnName,
@@ -200,6 +206,27 @@ describe("makeIconClass and makeExternLink", () => {
         expect(makeIconClass("solid@terminal", true)).toContain("fa-terminal");
     });
 
+    it("builds brand, regular, and custom icon classes", () => {
+        expect(makeIconClass("brands@github", false)).toContain("fa-brands fa-github");
+        expect(makeIconClass("regular@star", false)).toContain("fa-regular fa-star");
+        expect(makeIconClass("custom@wave", false)).toContain("fa-kit fa-wave");
+    });
+
+    it("applies animation and fw modifiers from icon suffix", () => {
+        expect(makeIconClass("terminal+spin", false)).toContain("fa-spin");
+        expect(makeIconClass("terminal+beat", false)).toContain("fa-beat");
+        expect(makeIconClass("terminal+fw", false)).toContain("fa-fw");
+    });
+
+    it("falls back to defaultIcon for blank or invalid icons", () => {
+        expect(makeIconClass("", false, { defaultIcon: "terminal" })).toContain("fa-terminal");
+        expect(makeIconClass("not-valid!", false, { defaultIcon: "terminal" })).toContain("fa-terminal");
+    });
+
+    it("returns null for blank icon without default", () => {
+        expect(makeIconClass("", false)).toBe(null);
+    });
+
     it("builds extern redirect links", () => {
         expect(makeExternLink("https://example.com")).toBe("https://extern?https%3A%2F%2Fexample.com");
     });
@@ -208,6 +235,93 @@ describe("makeIconClass and makeExternLink", () => {
 describe("base64ToArray", () => {
     it("decodes base64 to bytes ignoring whitespace", () => {
         expect(Array.from(base64ToArray("aGVs bG8="))).toEqual([104, 101, 108, 108, 111]);
+    });
+});
+
+describe("arrayToBase64 and base64ToArrayBuffer", () => {
+    it("encodes bytes to base64", () => {
+        expect(arrayToBase64(new Uint8Array([104, 101, 108, 108, 111]))).toBe("aGVsbG8=");
+    });
+
+    it("decodes base64 to array buffer", () => {
+        const buf = base64ToArrayBuffer("aGVsbG8=");
+        expect(new TextDecoder().decode(buf)).toBe("hello");
+    });
+});
+
+describe("base64ToString edge cases", () => {
+    it("returns null for null input", () => {
+        expect(base64ToString(null)).toBe(null);
+    });
+
+    it("returns empty string for empty input", () => {
+        expect(base64ToString("")).toBe("");
+    });
+});
+
+describe("deepCompareReturnPrev", () => {
+    it("returns previous value when deep equal", () => {
+        const key = {};
+        const first = { a: 1 };
+        const second = { a: 1 };
+        const cached = deepCompareReturnPrev(key, first);
+        expect(deepCompareReturnPrev(key, second)).toBe(cached);
+    });
+
+    it("returns new value when not equal", () => {
+        const key = {};
+        deepCompareReturnPrev(key, { a: 1 });
+        expect(deepCompareReturnPrev(key, { a: 2 })).toEqual({ a: 2 });
+    });
+});
+
+describe("fireAndForget", () => {
+    it("runs async work without throwing", async () => {
+        let resolved = false;
+        fireAndForget(async () => {
+            resolved = true;
+        });
+        await new Promise((r) => setTimeout(r, 10));
+        expect(resolved).toBe(true);
+    });
+
+    it("swallows rejected promises", async () => {
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        fireAndForget(async () => {
+            throw new Error("boom");
+        });
+        await new Promise((r) => setTimeout(r, 10));
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
+    });
+});
+
+describe("getPromiseState and getPromiseValue", () => {
+    it("tracks pending then resolved promise state", async () => {
+        let resolveFn: (v: string) => void;
+        const promise = new Promise<string>((resolve) => {
+            resolveFn = resolve;
+        });
+        const [, pending] = getPromiseState(promise);
+        expect(pending).toBe(true);
+        resolveFn!("done");
+        await promise;
+        const [value, pendingAfter] = getPromiseState(promise);
+        expect(pendingAfter).toBe(false);
+        expect(value).toBe("done");
+    });
+
+    it("returns default while pending or on error", async () => {
+        const pendingPromise = new Promise<string>(() => {});
+        expect(getPromiseValue(pendingPromise, "default")).toBe("default");
+
+        const rejectedPromise = Promise.reject(new Error("fail"));
+        await rejectedPromise.catch(() => {});
+        expect(getPromiseValue(rejectedPromise, "default")).toBe("default");
+    });
+
+    it("returns null state for null promise", () => {
+        expect(getPromiseState(null)).toEqual([null, false, null]);
     });
 });
 
@@ -224,5 +338,23 @@ describe("formatRelativeTime", () => {
     it("formats singular minute", () => {
         const oneMinuteAgo = Date.now() - 61 * 1000;
         expect(formatRelativeTime(oneMinuteAgo)).toBe("1 min ago");
+    });
+
+    it("formats hours and days", () => {
+        const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+        expect(formatRelativeTime(twoHoursAgo)).toBe("2 hrs ago");
+
+        const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+        expect(formatRelativeTime(threeDaysAgo)).toBe("3 days ago");
+    });
+
+    it("formats older timestamps as locale date", () => {
+        const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+        expect(formatRelativeTime(twoWeeksAgo)).toBe(new Date(twoWeeksAgo).toLocaleDateString());
+    });
+
+    it("returns Just now for sub-minute timestamps", () => {
+        const thirtySecondsAgo = Date.now() - 30 * 1000;
+        expect(formatRelativeTime(thirtySecondsAgo)).toBe("Just now");
     });
 });
