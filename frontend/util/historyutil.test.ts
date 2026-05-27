@@ -54,4 +54,12 @@ describe("goHistoryForward", () => {
     it("returns null when forward history is empty", () => {
         expect(goHistoryForward("url", "https://a", {})).toBe(null);
     });
+
+    it("trims history to max length", () => {
+        const longHistory = Array.from({ length: 20 }, (_, i) => `/path/${i}`);
+        const result = goHistory("file", "/current", "/next", { history: longHistory });
+        expect(result.history.length).toBe(20);
+        expect(result.history[0]).toBe("/path/1");
+        expect(result.history[19]).toBe("/current");
+    });
 });

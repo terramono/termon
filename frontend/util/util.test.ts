@@ -1,10 +1,13 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import { createStore } from "jotai";
 
 import {
     arrayToBase64,
+    atomWithDebounce,
+    atomWithThrottle,
     base64ToArray,
     base64ToArrayBuffer,
     base64ToString,
@@ -356,5 +359,39 @@ describe("formatRelativeTime", () => {
     it("returns Just now for sub-minute timestamps", () => {
         const thirtySecondsAgo = Date.now() - 30 * 1000;
         expect(formatRelativeTime(thirtySecondsAgo)).toBe("Just now");
+    });
+});
+
+describe("atomWithDebounce", () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("debounces value propagation", () => {
+        vi.useFakeTimers();
+        const store = createStore();
+        const { currentValueAtom, debouncedValueAtom } = atomWithDebounce("start", 100);
+        store.set(debouncedValueAtom, "updated");
+        expect(store.get(currentValueAtom)).toBe("updated");
+        expect(store.get(debouncedValueAtom)).toBe("start");
+        vi.advanceTimersByTime(100);
+        expect(store.get(debouncedValueAtom)).toBe("updated");
+    });
+});
+
+describe("atomWithThrottle", () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("throttles value propagation", () => {
+        vi.useFakeTimers();
+        const store = createStore();
+        const { currentValueAtom, throttledValueAtom } = atomWithThrottle("start", 100);
+        store.set(throttledValueAtom, "first");
+        store.set(throttledValueAtom, "second");
+        expect(store.get(currentValueAtom)).toBe("second");
+        vi.advanceTimersByTime(100);
+        expect(store.get(throttledValueAtom)).toBe("second");
     });
 });

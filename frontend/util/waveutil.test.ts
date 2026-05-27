@@ -43,6 +43,22 @@ describe("processBackgroundUrls", () => {
         expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
         expect(result).toContain(encodeURIComponent("wsh://local//tmp/bg.png"));
     });
+
+    it("rewrites file:// absolute paths", () => {
+        const css = 'url("file:///tmp/bg.png")';
+        const result = processBackgroundUrls(css);
+        expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
+    });
+
+    it("rejects non-absolute file:// urls", () => {
+        expect(processBackgroundUrls('url("file://relative.png")')).toBe(null);
+    });
+
+    it("rewrites home directory paths", () => {
+        const css = 'url("~/Pictures/bg.png")';
+        const result = processBackgroundUrls(css);
+        expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
+    });
 });
 
 describe("computeBgStyleFromMeta", () => {
