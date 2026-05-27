@@ -31,7 +31,7 @@
                 "./pkg/util/utilfn"
             ],
             "metric": "statements",
-            "minPercent": 30,
+            "minPercent": 35,
             "targetPercent": 65
         }
     ]

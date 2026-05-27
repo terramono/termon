@@ -91,17 +91,29 @@ func TestParseByteRange(t *testing.T) {
 func TestIsInitScriptPath(t *testing.T) {
 	t.Parallel()
 
-	if !IsInitScriptPath("/home/user/init.sh") {
-		t.Fatal("expected absolute path to be treated as script path")
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{"absolute script", "/home/user/init.sh", true},
+		{"home path", "~/scripts/init.sh", true},
+		{"absolute etc", "/etc/myapp/init.sh", true},
+		{"inline script", "echo hello; rm -rf /", false},
+		{"system bin with flags", "/usr/bin/bash --login", false},
+		{"empty", "", false},
+		{"multiline", "line1\nline2", false},
+		{"relative", "scripts/init.sh", false},
+		{"system bin", "/usr/bin/bash", false},
 	}
-	if !IsInitScriptPath("~/scripts/init.sh") {
-		t.Fatal("expected home path to be treated as script path")
-	}
-	if IsInitScriptPath("echo hello; rm -rf /") {
-		t.Fatal("expected suspicious inline script to be rejected")
-	}
-	if IsInitScriptPath("/usr/bin/bash --login") {
-		t.Fatal("expected system bin path with flags to be rejected")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := IsInitScriptPath(tt.input); got != tt.want {
+				t.Fatalf("IsInitScriptPath(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
