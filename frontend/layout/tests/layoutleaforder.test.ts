@@ -32,3 +32,10 @@ test("getLeafOrder preserves input order when treeKey missing", () => {
     assert.equal(order[0].blockid, "a");
     assert.equal(order[1].blockid, "b");
 });
+
+test("getLeafOrder includes nodeid in entries", () => {
+    const node = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const order = getLeafOrder([node], { [node.id]: { treeKey: "0" } });
+    assert.equal(order[0].nodeid, node.id);
+    assert.equal(order[0].blockid, "solo");
+});

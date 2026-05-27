@@ -286,3 +286,85 @@ test("computeMove - returns undefined for missing nodes", () => {
     assert(action == null);
 });
 
+test("computeMove - top and bottom on column layout", () => {
+    const nodeA = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "nodeA" });
+    const nodeB = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "nodeB" });
+    const nodeC = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "nodeC" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Column, undefined, [nodeA, nodeB, nodeC]));
+
+    const topMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeB.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Top,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(topMove.parentId, nodeB.id);
+    assert.equal(topMove.index, 0);
+
+    const bottomMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeA.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Bottom,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(bottomMove.parentId, nodeA.id);
+    assert.equal(bottomMove.index, 1);
+});
+
+test("computeMove - outer directions on nested layout", () => {
+    const inner = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "inner" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const outer = newLayoutNode(FlexDirection.Column, undefined, [inner, sibling]);
+    const mover = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "mover" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [outer, mover]);
+    const treeState = newLayoutTreeState(root);
+
+    const outerTop = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: inner.id,
+        nodeToMoveId: mover.id,
+        direction: DropDirection.OuterTop,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(outerTop.parentId, root.id);
+    assert.equal(outerTop.index, 0);
+});
+
+test("moveNode reorders siblings under same parent", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const nodeC = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB, nodeC]);
+    const treeState = newLayoutTreeState(root);
+
+    moveNode(treeState, {
+        type: LayoutTreeActionType.Move,
+        node: nodeC,
+        parentId: root.id,
+        index: 0,
+    });
+    assert.equal(treeState.rootNode.children![0].data!.blockId, "c");
+    assert.equal(treeState.rootNode.children!.length, 3);
+});
+
+test("insertNode sets magnified and focused ids", () => {
+    const existing = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "first" });
+    const treeState = newLayoutTreeState(existing);
+    const node = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "focused" });
+    insertNode(treeState, {
+        type: LayoutTreeActionType.InsertNode,
+        node,
+        focused: true,
+        magnified: true,
+    });
+    assert.equal(treeState.focusedNodeId, node.id);
+    assert.equal(treeState.magnifiedNodeId, node.id);
+});
+
+test("deleteNode leaves empty children on parent", () => {
+    const child = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "only" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child]);
+    const treeState = newLayoutTreeState(root);
+    deleteNode(treeState, { type: LayoutTreeActionType.DeleteNode, nodeId: child.id });
+    assert.equal(treeState.rootNode.children!.length, 0);
+});
+

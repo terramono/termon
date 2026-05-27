@@ -107,6 +107,17 @@ test("determineDropDirection", () => {
         }),
         undefined
     );
+
+    assert.equal(determineDropDirection(undefined, { x: 1, y: 1 }), undefined);
+    assert.equal(determineDropDirection(dimensions, null), undefined);
+    assert.equal(determineDropDirection(dimensions, { x: -1, y: 2.5 }), undefined);
+});
+
+test("setTransform preserves fractional values when not rounding", () => {
+    const style = setTransform({ top: 10.7, left: 5.2, width: 100.1, height: 50.9 }, false, false);
+    assert.equal(style.transform, "translate3d(5.2px,10.7px, 0)");
+    assert(style.width == null);
+    assert(style.height == null);
 });
 
 test("reverseFlexDirection", () => {

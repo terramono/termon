@@ -370,3 +370,38 @@ test("findInsertLocationFromIndexArr returns undefined for empty indexArr", () =
     const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
     assert(findInsertLocationFromIndexArr(root, []) == null);
 });
+
+test("addChildAt flattens same-flexDirection children", () => {
+    const leaf1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "l1" });
+    const leaf2 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "l2" });
+    const wrapper = newLayoutNode(FlexDirection.Row, undefined, [leaf1, leaf2]);
+    const parent = newLayoutNode(FlexDirection.Row, undefined, [newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "existing" })]);
+    addChildAt(parent, 1, wrapper);
+    assert.equal(parent.children!.length, 3);
+    assert(parent.children!.some((c) => c.data?.blockId === "l1"));
+    assert(parent.children!.some((c) => c.data?.blockId === "l2"));
+});
+
+test("addChildAt no-ops for empty children list", () => {
+    const parent = newLayoutNode(FlexDirection.Row, undefined, [newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "x" })]);
+    const beforeLen = parent.children!.length;
+    addChildAt(parent, 0);
+    assert.equal(parent.children!.length, beforeLen);
+});
+
+test("balanceNode collapses single-child wrapper", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const wrapper = newLayoutNode(FlexDirection.Column, undefined, [leaf]);
+    const root = newLayoutNode(FlexDirection.Row, undefined, [wrapper]);
+    const balanced = balanceNode(root);
+    assert.equal(balanced.data?.blockId, "leaf");
+    assert(balanced.children == null);
+});
+
+test("findInsertLocationFromIndexArr handles negative index", () => {
+    const child0 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c0" });
+    const child1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c1" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child0, child1]);
+    const loc = findInsertLocationFromIndexArr(root, [-1]);
+    assert.equal(loc.index, 3);
+});
