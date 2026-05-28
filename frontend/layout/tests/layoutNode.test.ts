@@ -398,10 +398,21 @@ test("balanceNode collapses single-child wrapper", () => {
     assert(balanced.children == null);
 });
 
-test("findInsertLocationFromIndexArr handles negative index", () => {
+test("findNode returns undefined for null node", () => {
+    assert(findNode(null as any, "any") == null);
+});
+
+test("findInsertLocationFromIndexArr clamps large positive index", () => {
     const child0 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c0" });
     const child1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c1" });
     const root = newLayoutNode(FlexDirection.Row, undefined, [child0, child1]);
-    const loc = findInsertLocationFromIndexArr(root, [-1]);
-    assert.equal(loc.index, 3);
+    const loc = findInsertLocationFromIndexArr(root, [99]);
+    assert.equal(loc.index, 1);
+});
+
+test("findNextInsertLocation on leaf node", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const loc = findNextInsertLocation(leaf, 5);
+    assert.equal(loc.node.id, leaf.id);
+    assert.equal(loc.index, 1);
 });
