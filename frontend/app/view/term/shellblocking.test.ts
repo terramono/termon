@@ -34,6 +34,17 @@ describe("getBlockingCommand", () => {
         expect(getBlockingCommand("docker exec mycontainer ls", false)).toBeNull();
     });
 
+    it("blocks kubectl and podman attach-like commands", () => {
+        expect(getBlockingCommand("kubectl exec -it pod bash", false)).toBe("kubectl");
+        expect(getBlockingCommand("podman attach mycontainer", false)).toBe("podman");
+        expect(getBlockingCommand("kubectl logs pod", false)).toBeNull();
+    });
+
+    it("unwraps wrapper commands before blocking", () => {
+        expect(getBlockingCommand("sudo vim /etc/hosts", false)).toBe("vim");
+        expect(getBlockingCommand("sudo htop", false)).toBe("htop");
+    });
+
     it("blocks ssh when interactive", () => {
         expect(getBlockingCommand("ssh user@host", false)).toBe("ssh");
         expect(getBlockingCommand("ssh -t user@host", false)).toBe("ssh");

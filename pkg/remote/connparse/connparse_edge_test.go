@@ -102,3 +102,48 @@ func TestParseURI_WSHWavesrvHost(t *testing.T) {
 		t.Fatalf("path: got %q want %q", c.Path, "tmp/log.txt")
 	}
 }
+
+func TestParseURI_WSHEmptyHostDefaultsLocal(t *testing.T) {
+	t.Parallel()
+
+	c, err := connparse.ParseURI("wsh:///tmp/file.txt")
+	if err != nil {
+		t.Fatalf("ParseURI: %v", err)
+	}
+	if c.Host != "local" {
+		t.Fatalf("host: got %q want local", c.Host)
+	}
+	if c.Path != "/tmp/file.txt" {
+		t.Fatalf("path: got %q", c.Path)
+	}
+}
+
+func TestConnectionGetPathWithHostEmptyPath(t *testing.T) {
+	t.Parallel()
+
+	c, err := connparse.ParseURI("wsh://myhost")
+	if err != nil {
+		t.Fatalf("ParseURI: %v", err)
+	}
+	if got := c.GetPathWithHost(); got != "myhost" {
+		t.Fatalf("GetPathWithHost empty path: got %q", got)
+	}
+	if got := c.GetSchemeAndHost(); got != "wsh://myhost" {
+		t.Fatalf("GetSchemeAndHost: got %q", got)
+	}
+}
+
+func TestParseURI_WSHRelativeDotPath(t *testing.T) {
+	t.Parallel()
+
+	c, err := connparse.ParseURI("./relative/path")
+	if err != nil {
+		t.Fatalf("ParseURI: %v", err)
+	}
+	if c.Host != connparse.ConnHostCurrent {
+		t.Fatalf("host: got %q", c.Host)
+	}
+	if c.Path != "./relative/path" {
+		t.Fatalf("path: got %q", c.Path)
+	}
+}

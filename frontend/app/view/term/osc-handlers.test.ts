@@ -18,6 +18,10 @@ describe("normalizeCmd", () => {
         expect(normalizeCmd("tail -f /var/log/syslog")).toBe("tail -f /var/log/syslog");
         expect(normalizeCmd("opencode run")).toBe("opencode run");
     });
+
+    it("handles single-quoted env assignments", () => {
+        expect(normalizeCmd("FOO='bar baz' claude")).toBe("claude");
+    });
 });
 
 describe("isClaudeCodeCommand", () => {
