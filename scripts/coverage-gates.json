@@ -5,7 +5,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/util/",
             "metric": "lines",
-            "minPercent": 79,
+            "minPercent": 80,
             "targetPercent": 80
         },
         {
@@ -13,8 +13,16 @@
             "kind": "lcov",
             "pathPrefix": "frontend/layout/lib/",
             "metric": "lines",
-            "minPercent": 31,
+            "minPercent": 32,
             "targetPercent": 70
+        },
+        {
+            "name": "frontend/app/sshpanel",
+            "kind": "lcov",
+            "pathPrefix": "frontend/app/sshpanel/",
+            "metric": "lines",
+            "minPercent": 95,
+            "targetPercent": 98
         },
         {
             "name": "pkg/util",
