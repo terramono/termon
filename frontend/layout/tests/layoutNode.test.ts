@@ -402,12 +402,21 @@ test("findNode returns undefined for null node", () => {
     assert(findNode(null as any, "any") == null);
 });
 
-test("findInsertLocationFromIndexArr clamps large positive index", () => {
+test("findInsertLocationFromIndexArr handles negative index", () => {
     const child0 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c0" });
     const child1 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c1" });
     const root = newLayoutNode(FlexDirection.Row, undefined, [child0, child1]);
-    const loc = findInsertLocationFromIndexArr(root, [99]);
-    assert.equal(loc.index, 1);
+    const loc = findInsertLocationFromIndexArr(root, [-1]);
+    assert.equal(loc.index, 3);
+});
+
+test("removeChild respects startingIndex", () => {
+    const dup = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "dup" });
+    const other = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "other" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [dup, other, dup]);
+    removeChild(root, dup, 1);
+    assert.equal(root.children!.length, 2);
+    assert.equal(root.children![0].data!.blockId, "dup");
 });
 
 test("findNextInsertLocation on leaf node", () => {

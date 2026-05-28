@@ -682,3 +682,142 @@ test("splitHorizontal and splitVertical handle missing target", () => {
     assert.equal(treeState.rootNode.data!.blockId, "solo");
 });
 
+test("computeMove - left and right on column layout use parent", () => {
+    const nodeA = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "b" });
+    const nodeC = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [nodeA, nodeB, nodeC]);
+    const treeState = newLayoutTreeState(root);
+
+    const leftMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeB.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Left,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(leftMove.parentId, root.id);
+    assert.equal(leftMove.index, 1);
+
+    const rightMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeA.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Right,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(rightMove.parentId, root.id);
+    assert.equal(rightMove.index, 1);
+});
+
+test("computeMove - bottom on row non-root uses parent index", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const nodeC = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB, nodeC]);
+    const treeState = newLayoutTreeState(root);
+
+    const bottomMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeB.id,
+        nodeToMoveId: nodeA.id,
+        direction: DropDirection.Bottom,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(bottomMove.parentId, root.id);
+    assert.equal(bottomMove.index, 2);
+});
+
+test("computeMove - top on row non-root uses parent index", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const nodeC = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB, nodeC]);
+    const treeState = newLayoutTreeState(root);
+
+    const topMove = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: nodeB.id,
+        nodeToMoveId: nodeC.id,
+        direction: DropDirection.Top,
+    }) as LayoutTreeMoveNodeAction;
+    assert.equal(topMove.parentId, root.id);
+    assert.equal(topMove.index, 1);
+});
+
+test("computeMove - invalid direction throws", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB]));
+    assert.throws(
+        () =>
+            computeMoveNode(treeState, {
+                type: LayoutTreeActionType.ComputeMove,
+                nodeId: nodeA.id,
+                nodeToMoveId: nodeB.id,
+                direction: 99 as DropDirection,
+            }),
+        "Invalid direction"
+    );
+});
+
+test("moveNode no-ops on missing action", () => {
+    const node = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const treeState = newLayoutTreeState(node);
+    moveNode(treeState, null as any);
+    assert.equal(treeState.rootNode.id, node.id);
+});
+
+test("insertNodeAtIndex sets magnified and focused ids", () => {
+    const child0 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c0" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child0]);
+    const treeState = newLayoutTreeState(root);
+    const node = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "inserted" });
+    insertNodeAtIndex(treeState, {
+        type: LayoutTreeActionType.InsertNodeAtIndex,
+        node,
+        indexArr: [0],
+        focused: true,
+        magnified: true,
+    });
+    assert.equal(treeState.focusedNodeId, node.id);
+    assert.equal(treeState.magnifiedNodeId, node.id);
+});
+
+test("deleteNode guard paths", () => {
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" }));
+    deleteNode(treeState, { type: LayoutTreeActionType.DeleteNode, nodeId: "" });
+
+    const emptyState = newLayoutTreeState(null as any);
+    emptyState.rootNode = undefined;
+    deleteNode(emptyState, { type: LayoutTreeActionType.DeleteNode, nodeId: "any" });
+    assert(emptyState.rootNode == null);
+});
+
+test("splitHorizontal before position wraps column parent", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const treeState = newLayoutTreeState(target);
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode,
+        position: "before",
+    });
+    assert.equal(treeState.rootNode.flexDirection, FlexDirection.Row);
+    assert.equal(treeState.rootNode.children![0].data!.blockId, "new");
+});
+
+test("splitVertical after position splices into column parent", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "new" });
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode,
+        position: "after",
+    });
+    assert.equal(treeState.rootNode.children!.length, 3);
+    assert.equal(treeState.rootNode.children![1].data!.blockId, "new");
+});
+
