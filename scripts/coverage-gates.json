@@ -37,10 +37,11 @@
                 "./pkg/util/packetparser",
                 "./pkg/util/pamparse",
                 "./pkg/util/shellutil",
-                "./pkg/util/utilfn"
+                "./pkg/util/utilfn",
+                "./pkg/util/readutil"
             ],
             "metric": "statements",
-            "minPercent": 44,
+            "minPercent": 45,
             "targetPercent": 65
         }
     ]
