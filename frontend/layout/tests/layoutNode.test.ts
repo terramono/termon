@@ -324,6 +324,13 @@ test("removeChild removes matching child", () => {
     assert.equal(root.children?.length, 0);
 });
 
+test("validateNode accepts valid leaf and branch nodes", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    assert(validateNode(leaf) === true, "leaf node with data only is valid");
+    const branch = newLayoutNode(FlexDirection.Row, undefined, [leaf]);
+    assert(validateNode(branch) === true, "branch node with children is valid");
+});
+
 test("validateNode rejects invalid nodes", () => {
     const both: LayoutNode = {
         id: "bad",

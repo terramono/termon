@@ -7,22 +7,23 @@ import { NodeRefMap } from "../lib/nodeRefMap";
 
 test("NodeRefMap set get delete and generation", () => {
     const map = new NodeRefMap();
-    assert.equal(map.generation, 0);
-
     const refA = createRef<HTMLDivElement>();
+    const refB = createRef<HTMLDivElement>();
+
+    assert.equal(map.generation, 0);
     map.set("a", refA);
     assert.equal(map.generation, 1);
     assert.equal(map.get("a"), refA);
 
-    const refB = createRef<HTMLDivElement>();
     map.set("b", refB);
     assert.equal(map.generation, 2);
+    assert.equal(map.get("b"), refB);
+    assert(map.get("missing") == null);
 
     map.delete("a");
     assert.equal(map.generation, 3);
     assert(map.get("a") == null);
 
-    const genBefore = map.generation;
     map.delete("missing");
-    assert.equal(map.generation, genBefore);
+    assert.equal(map.generation, 3);
 });
