@@ -765,6 +765,140 @@ test("moveNode no-ops on missing action", () => {
     assert.equal(treeState.rootNode.id, node.id);
 });
 
+test("moveNode throws when parent and insertAtRoot are both absent", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB]);
+    const treeState = newLayoutTreeState(root);
+
+    assert.throws(
+        () =>
+            moveNode(treeState, {
+                type: LayoutTreeActionType.Move,
+                node: nodeB,
+                index: 0,
+            }),
+        "Invalid InsertOperation"
+    );
+});
+
+test("insertNodeAtIndex sets root on empty tree", () => {
+    const treeState = newLayoutTreeState(null as any);
+    treeState.rootNode = undefined;
+    const node = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    insertNodeAtIndex(treeState, {
+        type: LayoutTreeActionType.InsertNodeAtIndex,
+        node,
+        indexArr: [0],
+        focused: true,
+    });
+    assert.equal(treeState.rootNode?.id, node.id);
+    assert.equal(treeState.focusedNodeId, node.id);
+});
+
+test("insertNodeAtIndex skips empty indexArr", () => {
+    const solo = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const treeState = newLayoutTreeState(solo);
+    insertNodeAtIndex(treeState, {
+        type: LayoutTreeActionType.InsertNodeAtIndex,
+        node: newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" }),
+        indexArr: [],
+    });
+    assert.equal(treeState.rootNode.data!.blockId, "solo");
+});
+
+test("resizeNode throws when resizeOperations missing", () => {
+    const node = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "n" });
+    const treeState = newLayoutTreeState(node);
+    assert.throws(
+        () =>
+            resizeNode(treeState, {
+                type: LayoutTreeActionType.ResizeNode,
+                resizeOperations: undefined as any,
+            }),
+        /not iterable/
+    );
+});
+
+test("replaceNode skips when target missing from parent children", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    root.children = [sibling];
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    replaceNode(treeState, {
+        type: LayoutTreeActionType.ReplaceNode,
+        targetNodeId: target.id,
+        newNode,
+    });
+    assert.equal(treeState.rootNode.children![0].data!.blockId, "sibling");
+});
+
+test("splitHorizontal skips when target missing from row parent children", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    root.children = [sibling];
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode,
+        position: "before",
+    });
+    assert.equal(treeState.rootNode.children!.length, 1);
+});
+
+test("splitVertical skips when target missing from column parent children", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    root.children = [sibling];
+    const newNode = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "new" });
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode,
+        position: "after",
+    });
+    assert.equal(treeState.rootNode.children!.length, 1);
+});
+
+test("splitHorizontal wrap path skips when target missing from parent", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    root.children = [sibling];
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode,
+        position: "before",
+    });
+    assert.equal(treeState.rootNode.children!.length, 1);
+});
+
+test("splitVertical wrap path skips when target missing from parent", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    root.children = [sibling];
+    const newNode = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "new" });
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode,
+        position: "after",
+    });
+    assert.equal(treeState.rootNode.children!.length, 1);
+});
+
 test("insertNodeAtIndex sets magnified and focused ids", () => {
     const child0 = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c0" });
     const root = newLayoutNode(FlexDirection.Row, undefined, [child0]);
