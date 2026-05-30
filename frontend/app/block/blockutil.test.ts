@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { blockViewToIcon, blockViewToName, computeConnColorNum, processTitleString } from "./blockutil";
+import { blockViewToIcon, blockViewToName, computeConnColorNum, getBlockHeaderIcon, processTitleString } from "./blockutil";
 
 describe("blockViewToIcon", () => {
     it("maps known view types", () => {
@@ -55,5 +55,45 @@ describe("computeConnColorNum", () => {
         expect(computeConnColorNum({ activeconnnum: 8 })).toBe(8);
         expect(computeConnColorNum({ activeconnnum: 9 })).toBe(1);
         expect(computeConnColorNum(null)).toBe(1);
+    });
+});
+
+describe("blockViewMappings", () => {
+    it("maps help and tips views", () => {
+        expect(blockViewToIcon("help")).toBe("circle-question");
+        expect(blockViewToIcon("tips")).toBe("lightbulb");
+        expect(blockViewToName("help")).toBe("Help");
+        expect(blockViewToName("tips")).toBe("Tips");
+        expect(blockViewToName("web")).toBe("Web");
+    });
+});
+
+describe("processTitleString tags", () => {
+    it("parses icon tags in titles", () => {
+        const parts = processTitleString('status<icon:terminal>ok');
+        expect(parts.length).toBeGreaterThan(1);
+    });
+
+    it("parses bold and italic tags", () => {
+        const parts = processTitleString("plain<b>bold</b>tail");
+        expect(parts.length).toBeGreaterThan(1);
+    });
+
+    it("ignores invalid color tags", () => {
+        const parts = processTitleString("bad<c:not-a-color>text</c>");
+        expect(parts[0]).toBe("bad");
+        expect(parts).toContain("text");
+    });
+});
+
+describe("getBlockHeaderIcon", () => {
+    it("returns icon element for known icon", () => {
+        const elem = getBlockHeaderIcon("terminal");
+        expect(elem).not.toBeNull();
+    });
+
+    it("rejects invalid override colors", () => {
+        const elem = getBlockHeaderIcon("terminal", "not-a-color");
+        expect(elem).not.toBeNull();
     });
 });

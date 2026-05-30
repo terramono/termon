@@ -50,7 +50,25 @@ describe("getBlockingCommand", () => {
         expect(getBlockingCommand("ssh -t user@host", false)).toBe("ssh");
     });
 
-    it("returns first token in alt buffer", () => {
-        expect(getBlockingCommand("ls -la", true)).toBe("ls");
+    it("blocks multiplexers and pagers", () => {
+        expect(getBlockingCommand("tmux attach", false)).toBe("tmux");
+        expect(getBlockingCommand("screen -r", false)).toBe("screen");
+        expect(getBlockingCommand("less file.txt", false)).toBe("less");
+    });
+
+    it("allows non-interactive kubectl commands", () => {
+        expect(getBlockingCommand("kubectl get pods", false)).toBeNull();
+    });
+
+    it("blocks su without args", () => {
+        expect(getBlockingCommand("su", false)).toBe("su");
+    });
+
+    it("allows su with non-shell trailing command", () => {
+        expect(getBlockingCommand("su -c whoami", false)).toBeNull();
+    });
+
+    it("allows bare REPL when args provided", () => {
+        expect(getBlockingCommand("ruby -e 'puts 1'", false)).toBeNull();
     });
 });
