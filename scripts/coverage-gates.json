@@ -29,6 +29,7 @@
             "kind": "go",
             "goPackages": [
                 "./pkg/util/daystr",
+                "./pkg/util/dbutil",
                 "./pkg/util/ds",
                 "./pkg/util/envutil",
                 "./pkg/util/fileutil",
@@ -37,11 +38,12 @@
                 "./pkg/util/packetparser",
                 "./pkg/util/pamparse",
                 "./pkg/util/shellutil",
+                "./pkg/util/syncbuf",
                 "./pkg/util/utilfn",
                 "./pkg/util/readutil"
             ],
             "metric": "statements",
-            "minPercent": 45,
+            "minPercent": 49,
             "targetPercent": 65
         }
     ]
