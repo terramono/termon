@@ -21,7 +21,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/app/sshpanel/",
             "metric": "lines",
-            "minPercent": 95,
+            "minPercent": 96,
             "targetPercent": 98
         },
         {
