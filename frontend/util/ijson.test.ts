@@ -63,5 +63,44 @@ describe("applyCommand", () => {
     it("throws for invalid commands", () => {
         expect(() => applyCommand({}, null)).toThrow("Invalid command (null)");
         expect(() => applyCommand({}, { type: "noop" })).toThrow("Invalid command type: noop");
+        expect(() => applyCommand({}, { path: ["a"], value: 1 })).toThrow("Invalid command (no type)");
+        expect(() => applyCommand({}, "bad")).toThrow("Invalid command (not an object)");
+    });
+
+    it("rejects invalid command paths", () => {
+        expect(() => applyCommand({}, { type: "set", path: [null], value: 1 })).toThrow("Invalid command path");
+    });
+});
+
+describe("setPath edge cases", () => {
+    it("sets array indices and removes array elements", () => {
+        const result = setPath({ items: ["a", "b", "c"] }, ["items", 1], null, { remove: true });
+        expect(result).toEqual({ items: ["a", null, "c"] });
+    });
+
+    it("replaces root value with empty path", () => {
+        expect(setPath({ old: true }, [], { new: true }, {})).toEqual({ new: true });
+    });
+
+    it("uses force to replace non-object targets", () => {
+        expect(setPath("text", ["a"], 1, { force: true })).toEqual({ a: 1 });
+    });
+
+    it("throws on invalid path parts", () => {
+        expect(() => setPath({}, [Symbol("x") as any], 1, {})).toThrow("Invalid path");
+    });
+
+    it("throws when appending to non-array without force", () => {
+        expect(() => combineFn_arrayAppend("not-array", "x", {})).toThrow("Cannot append to non-array");
+    });
+});
+
+describe("getPath edge cases", () => {
+    it("returns null when traversing through null", () => {
+        expect(getPath({ a: null }, ["a", "b"])).toBeNull();
+    });
+
+    it("returns null when indexing non-array", () => {
+        expect(getPath({ a: { b: 1 } }, ["a", 0])).toBeNull();
     });
 });

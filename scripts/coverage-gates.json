@@ -5,7 +5,7 @@
             "kind": "lcov",
             "pathPrefix": "frontend/util/",
             "metric": "lines",
-            "minPercent": 80,
+            "minPercent": 83,
             "targetPercent": 80
         },
         {
