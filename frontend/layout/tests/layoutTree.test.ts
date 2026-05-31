@@ -955,3 +955,106 @@ test("splitVertical after position splices into column parent", () => {
     assert.equal(treeState.rootNode.children![1].data!.blockId, "new");
 });
 
+test("swapNode swaps nodes in different parents", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 20, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 80, undefined, { blockId: "b" });
+    const parentA = newLayoutNode(FlexDirection.Row, undefined, [leafA]);
+    const parentB = newLayoutNode(FlexDirection.Row, undefined, [leafB]);
+    const root = newLayoutNode(FlexDirection.Column, undefined, [parentA, parentB]);
+    const treeState = newLayoutTreeState(root);
+
+    swapNode(treeState, { type: LayoutTreeActionType.Swap, node1Id: leafA.id, node2Id: leafB.id });
+    assert.equal(parentA.children![0].data!.blockId, "b");
+    assert.equal(parentB.children![0].data!.blockId, "a");
+    assert.equal(leafA.size, 80);
+    assert.equal(leafB.size, 20);
+});
+
+test("magnifyNodeToggle sets focus when magnifying new node", () => {
+    const childA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const childB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [childA, childB]);
+    const treeState = newLayoutTreeState(root);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: childA.id });
+    assert.equal(treeState.magnifiedNodeId, childA.id);
+    assert.equal(treeState.focusedNodeId, childA.id);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: childB.id });
+    assert.equal(treeState.magnifiedNodeId, childB.id);
+    assert.equal(treeState.focusedNodeId, childB.id);
+});
+
+test("moveNode adjusts startingIndex when reordering within same parent", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const nodeC = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [nodeA, nodeB, nodeC]);
+    const treeState = newLayoutTreeState(root);
+
+    moveNode(treeState, {
+        type: LayoutTreeActionType.Move,
+        node: nodeC,
+        parentId: root.id,
+        index: 0,
+    });
+    assert.equal(treeState.rootNode.children![0].data!.blockId, "c");
+    assert.equal(treeState.rootNode.children!.length, 3);
+});
+
+test("insertNodeAtIndex skips empty indexArr without inserting", () => {
+    const solo = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const treeState = newLayoutTreeState(solo);
+    insertNodeAtIndex(treeState, {
+        type: LayoutTreeActionType.InsertNodeAtIndex,
+        node: newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" }),
+        indexArr: [],
+    });
+    assert.equal(treeState.rootNode.data!.blockId, "solo");
+});
+
+test("deleteNode warns when node not found in tree", () => {
+    const child = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "child" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child]);
+    const treeState = newLayoutTreeState(root);
+    deleteNode(treeState, { type: LayoutTreeActionType.DeleteNode, nodeId: "missing" });
+    assert.equal(treeState.rootNode.children!.length, 1);
+});
+
+test("splitHorizontal wrap replaces target in parent", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode,
+        position: "after",
+        focused: true,
+    });
+    assert.equal(treeState.rootNode.children!.length, 2);
+    assert.equal(treeState.rootNode.children![0].flexDirection, FlexDirection.Row);
+    assert.equal(treeState.focusedNodeId, newNode.id);
+});
+
+test("splitVertical wrap replaces target in parent", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "new" });
+
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode,
+        position: "before",
+    });
+    assert.equal(treeState.rootNode.children!.length, 2);
+    assert.equal(treeState.rootNode.children![0].flexDirection, FlexDirection.Column);
+    assert.equal(treeState.rootNode.children![0].children![0].data!.blockId, "new");
+});
+

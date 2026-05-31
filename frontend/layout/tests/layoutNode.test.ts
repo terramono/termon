@@ -432,3 +432,35 @@ test("findNextInsertLocation on leaf node", () => {
     assert.equal(loc.node.id, leaf.id);
     assert.equal(loc.index, 1);
 });
+
+test("balanceNode runs walk callbacks", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leaf]);
+    const visited: string[] = [];
+    balanceNode(
+        root,
+        (node) => visited.push(`pre:${node.id}`),
+        (node) => visited.push(`post:${node.id}`)
+    );
+    assert(visited.includes(`pre:${leaf.id}`));
+    assert(visited.includes(`post:${leaf.id}`));
+});
+
+test("findInsertLocationFromIndexArr descends with remaining indices", () => {
+    const inner = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "inner" });
+    const mid = newLayoutNode(FlexDirection.Row, undefined, [inner]);
+    const root = newLayoutNode(FlexDirection.Row, undefined, [mid]);
+    const loc = findInsertLocationFromIndexArr(root, [0, 0, 0]);
+    assert.equal(loc.node.id, inner.id);
+    assert.equal(loc.index, 0);
+});
+
+test("findNextInsertLocationHelper prefers deeper insert when full", () => {
+    const children = Array.from({ length: 5 }, (_, i) =>
+        newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: `c${i}` })
+    );
+    const root = newLayoutNode(FlexDirection.Row, undefined, children);
+    const loc = findNextInsertLocation(root, 5);
+    assert.equal(loc.node.id, children[4].id);
+    assert.equal(loc.index, 1);
+});
