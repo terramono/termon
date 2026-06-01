@@ -43,7 +43,7 @@
                 "./pkg/util/readutil"
             ],
             "metric": "statements",
-            "minPercent": 56,
+            "minPercent": 58,
             "targetPercent": 65
         }
     ]
