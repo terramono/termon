@@ -464,3 +464,30 @@ test("findNextInsertLocationHelper prefers deeper insert when full", () => {
     assert.equal(loc.node.id, children[4].id);
     assert.equal(loc.index, 1);
 });
+
+test("addChildAt no-op with zero children", () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, [
+        newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" }),
+    ]);
+    const before = root.children!.length;
+    addChildAt(root, 0);
+    assert.equal(root.children!.length, before);
+});
+
+test("addChildAt inserts at index in existing children", () => {
+    const a = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const b = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const c = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [a, b]);
+    addChildAt(root, 1, c);
+    assert.equal(root.children!.length, 3);
+    assert.equal(root.children![1].data!.blockId, "c");
+});
+
+test("addChildAt ignores negative index", () => {
+    const a = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const b = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [a]);
+    addChildAt(root, -1, b);
+    assert.equal(root.children!.length, 1);
+});

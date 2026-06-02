@@ -523,6 +523,65 @@ test("LayoutModel processes backend split horizontal action", async () => {
     assert.equal(model.getNodeByBlockId("split-block")?.data?.blockId, "split-block");
 });
 
+test("LayoutModel processes backend split vertical action", async () => {
+    const root = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    globalStore.set(layoutStateAtom, {
+        rootnode: root,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+    });
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    globalStore.set(layoutStateAtom, {
+        rootnode: model.treeState.rootNode,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "split-v-1",
+                actiontype: LayoutTreeActionType.SplitVertical,
+                blockid: "split-block-v",
+                targetblockid: "target",
+                position: "before",
+                focused: true,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+
+    assert.equal(model.getNodeByBlockId("split-block-v")?.data?.blockId, "split-block-v");
+});
+
+test("LayoutModel onResizeEnd no-op without active resize context", () => {
+    const model = makeModel();
+    model.onResizeEnd();
+    assert.equal(model.treeState.rootNode?.data?.blockId, "block-1");
+});
+
 function findLeaf(model: LayoutModel, blockId: string) {
     return model.treeState.rootNode?.children?.find((child) => child.data?.blockId === blockId) ?? model.treeState.rootNode;
 }
+
+test("LayoutModel geometry getters read additional props", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "geo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    const rect = { top: 1, left: 2, width: 100, height: 50 };
+    const transform = { transform: "translate3d(2px,1px, 0)" };
+    globalStore.set(model.additionalProps, {
+        [leaf.id]: { rect, transform, treeKey: leaf.id },
+    });
+
+    assert.equal(model.getNodeRect(leaf).width, 100);
+    assert.equal(model.getNodeRectById(leaf.id).height, 50);
+    assert.equal(model.getNodeTransform(leaf).transform, "translate3d(2px,1px, 0)");
+    assert.equal(model.getNodeAdditionalPropertiesById(leaf.id).treeKey, leaf.id);
+    assert.equal(globalStore.get(model.getNodeAdditionalPropertiesAtom(leaf.id)).rect.left, 2);
+});

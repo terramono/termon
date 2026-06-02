@@ -111,6 +111,8 @@ test("determineDropDirection", () => {
     assert.equal(determineDropDirection(undefined, { x: 1, y: 1 }), undefined);
     assert.equal(determineDropDirection(dimensions, null), undefined);
     assert.equal(determineDropDirection(dimensions, { x: -1, y: 2.5 }), undefined);
+    assert.equal(determineDropDirection(dimensions, { x: 2.5, y: 6 }), undefined);
+    assert.equal(determineDropDirection(dimensions, { x: 6, y: 2.5 }), undefined);
 });
 
 test("setTransform preserves fractional values when not rounding", () => {
