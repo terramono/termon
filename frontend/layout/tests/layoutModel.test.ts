@@ -4,7 +4,7 @@
 import { atom } from "jotai";
 import { assert, expect, test, vi } from "vitest";
 import { newLayoutNode } from "../lib/layoutNode";
-import { FlexDirection, LayoutTreeActionType, NavigateDirection } from "../lib/types";
+import { FlexDirection, LayoutTreeActionType, NavigateDirection, DropDirection } from "../lib/types";
 
 const layoutStateAtom = atom<LayoutState>({
     rootnode: undefined,
@@ -430,6 +430,82 @@ test("LayoutModel ephemeral node lifecycle", async () => {
     model.addEphemeralNodeToLayout();
     assert(globalStore.get(model.ephemeralNode) == null);
     assert.equal(model.getNodeByBlockId("preview-block")?.data?.blockId, "preview-block");
+});
+
+test("LayoutModel closeNode removes ephemeral node outside tree", async () => {
+    const model = makeModel();
+    attachDisplayContainer(model);
+    model.newEphemeralNode("eph-close");
+    const eph = globalStore.get(model.ephemeralNode)!;
+    const onNodeDelete = vi.fn(async () => {});
+    model.onNodeDelete = onNodeDelete;
+
+    await model.closeNode(eph.id);
+
+    assert(globalStore.get(model.ephemeralNode) == null);
+    assert.equal(onNodeDelete.mock.calls.length, 1);
+});
+
+test("LayoutModel ephemeral layout shrinks when a node is magnified", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model, 1000, 1000);
+    model.updateTree();
+    model.magnifyNodeToggle(leaf.id);
+    model.newEphemeralNode("eph");
+    model.addEphemeralNodeToLayout();
+
+    const props = model.getNodeAdditionalProperties(model.getNodeByBlockId("eph"));
+    assert(props.transform != null);
+});
+
+test("LayoutModel onDrop no-op without pending action", () => {
+    const model = makeModel();
+    model.onDrop();
+    assert.equal(model.treeState.rootNode?.data?.blockId, "block-1");
+});
+
+test("LayoutModel treeReducer covers insert at index and compute move", () => {
+    const empty = makeEmptyModel();
+    const atIndex = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "at-index" });
+    empty.treeReducer(
+        {
+            type: LayoutTreeActionType.InsertNodeAtIndex,
+            node: atIndex,
+            indexArr: [0],
+            focused: true,
+        },
+        false
+    );
+    assert.equal(empty.treeState.rootNode?.data?.blockId, "at-index");
+    assert.equal(empty.treeState.focusedNodeId, atIndex.id);
+
+    const leafA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const moveModel = makeModel(root);
+    moveModel.treeReducer(
+        {
+            type: LayoutTreeActionType.ComputeMove,
+            nodeId: leafB.id,
+            nodeToMoveId: leafA.id,
+            direction: DropDirection.OuterRight,
+        },
+        false
+    );
+    assert(globalStore.get(moveModel.pendingTreeAction.throttledValueAtom) != null);
+
+    const insertModel = makeEmptyModel();
+    const focusedNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "focused-insert" });
+    insertModel.treeReducer(
+        {
+            type: LayoutTreeActionType.InsertNode,
+            node: focusedNode,
+            focused: true,
+        },
+        false
+    );
+    assert.equal(insertModel.treeState.rootNode?.data?.blockId, "focused-insert");
 });
 
 test("LayoutModel focusFirstNode and onTreeStateAtomUpdated", () => {
