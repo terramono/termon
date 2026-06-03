@@ -8,40 +8,33 @@ import (
 	"time"
 )
 
-func TestExpMapSetGetAndExpire(t *testing.T) {
+func TestExpMap_SetGet(t *testing.T) {
 	t.Parallel()
-
 	em := MakeExpMap[string]()
-	em.Set("a", "alpha", time.Now().Add(50*time.Millisecond))
-	em.Set("b", "beta", time.Now().Add(time.Hour))
-
-	val, ok := em.Get("a")
-	if !ok || val != "alpha" {
-		t.Fatalf("Get(a) = %q, ok=%v", val, ok)
-	}
-
-	time.Sleep(60 * time.Millisecond)
-
-	_, ok = em.Get("a")
-	if ok {
-		t.Fatal("expected key a to expire")
-	}
-
-	val, ok = em.Get("b")
-	if !ok || val != "beta" {
-		t.Fatalf("Get(b) after expire = %q, ok=%v", val, ok)
+	em.Set("k", "v", time.Now().Add(time.Hour))
+	v, ok := em.Get("k")
+	if !ok || v != "v" {
+		t.Fatalf("got %q ok=%v", v, ok)
 	}
 }
 
-func TestExpMapOverwriteUpdatesExpiry(t *testing.T) {
+func TestExpMap_ExpiresStaleKeys(t *testing.T) {
 	t.Parallel()
-
 	em := MakeExpMap[int]()
-	em.Set("k", 1, time.Now().Add(20*time.Millisecond))
-	em.Set("k", 2, time.Now().Add(time.Hour))
+	em.Set("old", 1, time.Now().Add(-time.Second))
+	_, ok := em.Get("old")
+	if ok {
+		t.Fatal("expected expired key missing")
+	}
+}
 
-	val, ok := em.Get("k")
-	if !ok || val != 2 {
-		t.Fatalf("Get(k) = %d, ok=%v", val, ok)
+func TestExpMap_UpdateKeyRefreshesExpiry(t *testing.T) {
+	t.Parallel()
+	em := MakeExpMap[int]()
+	em.Set("k", 1, time.Now().Add(-time.Hour))
+	em.Set("k", 2, time.Now().Add(time.Hour))
+	v, ok := em.Get("k")
+	if !ok || v != 2 {
+		t.Fatalf("got %d ok=%v", v, ok)
 	}
 }
