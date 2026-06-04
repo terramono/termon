@@ -43,3 +43,13 @@ test("getLeafOrder sorts partial treeKey coverage", () => {
     assert.equal(order[0].blockid, "a");
     assert.equal(order[1].blockid, "b");
 });
+
+test("getLeafOrder stable when only one node has treeKey", () => {
+    const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const order = getLeafOrder([nodeB, nodeA], {
+        [nodeB.id]: { treeKey: "z" },
+    });
+    assert.equal(order[0].blockid, "b");
+    assert.equal(order[1].blockid, "a");
+});

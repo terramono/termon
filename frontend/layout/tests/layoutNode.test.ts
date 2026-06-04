@@ -491,3 +491,9 @@ test("addChildAt ignores negative index", () => {
     addChildAt(root, -1, b);
     assert.equal(root.children!.length, 1);
 });
+
+test("findParent returns undefined when id matches root", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "leaf" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leaf]);
+    assert(findParent(root, root.id) == null);
+});

@@ -122,6 +122,13 @@ test("setTransform preserves fractional values when not rounding", () => {
     assert(style.height == null);
 });
 
+test("setTransform omits size without zIndex when setSize false", () => {
+    const style = setTransform({ top: 0, left: 0, width: 10, height: 10 }, false, true);
+    assert.equal(style.position, "absolute");
+    assert(style.zIndex == null);
+    assert(style.width == null);
+});
+
 test("reverseFlexDirection", () => {
     assert.equal(reverseFlexDirection(FlexDirection.Row), FlexDirection.Column);
     assert.equal(reverseFlexDirection(FlexDirection.Column), FlexDirection.Row);
