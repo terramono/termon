@@ -1058,3 +1058,18 @@ test("splitVertical wrap replaces target in parent", () => {
     assert.equal(treeState.rootNode.children![0].children![0].data!.blockId, "new");
 });
 
+test("resizeNode skips invalid size values", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "leaf" });
+    const treeState = newLayoutTreeState(leaf);
+    resizeNode(treeState, {
+        type: LayoutTreeActionType.Resize,
+        resizeOperations: [{ nodeId: leaf.id, size: 150 }],
+    });
+    assert.equal(leaf.size, 50);
+    resizeNode(treeState, {
+        type: LayoutTreeActionType.Resize,
+        resizeOperations: [{ nodeId: leaf.id, size: -1 }],
+    });
+    assert.equal(leaf.size, 50);
+});
+
