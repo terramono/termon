@@ -44,4 +44,10 @@ describe("transformBlocks", () => {
         const { blocks } = transformBlocks(input);
         expect(blocks.get('note["n1"]')?.content).toBe('@@@end chart "n1"\ntail');
     });
+
+    it("ignores invalid JSON options on start markers", () => {
+        const input = ['@@@start note "n1" not-json', "body", '@@@end note "n1"'].join("\n");
+        const { blocks } = transformBlocks(input);
+        expect(blocks.get('note["n1"]')?.opts == null).toBe(true);
+    });
 });
