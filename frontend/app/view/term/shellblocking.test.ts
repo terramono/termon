@@ -71,4 +71,29 @@ describe("getBlockingCommand", () => {
     it("allows bare REPL when args provided", () => {
         expect(getBlockingCommand("ruby -e 'puts 1'", false)).toBeNull();
     });
+
+    it("blocks any command while in alt buffer", () => {
+        expect(getBlockingCommand("ls -la", true)).toBe("ls");
+        expect(getBlockingCommand("echo hi", true)).toBe("echo");
+    });
+
+    it("blocks mosh and telnet interactive sessions", () => {
+        expect(getBlockingCommand("mosh user@host", false)).toBe("mosh");
+        expect(getBlockingCommand("telnet host", false)).toBe("telnet");
+    });
+
+    it("blocks fish and pwsh shells when interactive", () => {
+        expect(getBlockingCommand("fish", false)).toBe("fish");
+        expect(getBlockingCommand("pwsh", false)).toBe("pwsh");
+        expect(getBlockingCommand("pwsh -c Write-Host hi", false)).toBeNull();
+    });
+
+    it("strips path prefix before matching command", () => {
+        expect(getBlockingCommand("/usr/bin/vim file.txt", false)).toBe("vim");
+    });
+
+    it("blocks lxc exec with tty flags", () => {
+        expect(getBlockingCommand("lxc exec -t c1 bash", false)).toBe("lxc");
+        expect(getBlockingCommand("lxc exec c1 ls", false)).toBeNull();
+    });
 });
