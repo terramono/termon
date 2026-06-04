@@ -27,6 +27,17 @@ func TestSoftQuoteTable(t *testing.T) {
 	}
 }
 
+func TestSoftQuoteTildePaths(t *testing.T) {
+	t.Parallel()
+
+	if got := SoftQuote("~"); got != "~" {
+		t.Fatalf("SoftQuote(~) = %q", got)
+	}
+	if got := SoftQuote("~/projects"); got != "~/projects" {
+		t.Fatalf("SoftQuote(~/projects) = %q", got)
+	}
+}
+
 func TestHardQuoteEmptyAndSafe(t *testing.T) {
 	t.Parallel()
 
