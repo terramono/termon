@@ -97,3 +97,12 @@ describe("getBlockHeaderIcon", () => {
         expect(elem).not.toBeNull();
     });
 });
+
+describe("block view coverage", () => {
+    it("maps processviewer and returns square for unknown views", () => {
+        expect(blockViewToIcon("processviewer")).toBe("microchip");
+        expect(blockViewToName("processviewer")).toBe("Processes");
+        expect(blockViewToIcon("customview")).toBe("square");
+        expect(blockViewToName("customview")).toBe("customview");
+    });
+});
