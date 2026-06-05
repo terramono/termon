@@ -985,6 +985,30 @@ test("magnifyNodeToggle sets focus when magnifying new node", () => {
     assert.equal(treeState.focusedNodeId, childB.id);
 });
 
+test("magnifyNodeToggle clears magnification when toggling same node", () => {
+    const child = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child]);
+    const treeState = newLayoutTreeState(root);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: child.id });
+    assert.equal(treeState.magnifiedNodeId, child.id);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: child.id });
+    assert.equal(treeState.magnifiedNodeId, undefined);
+});
+
+test("magnifyNodeToggle ignores empty nodeId and root node", () => {
+    const child = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [child]);
+    const treeState = newLayoutTreeState(root);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: "" });
+    assert.equal(treeState.magnifiedNodeId, undefined);
+
+    magnifyNodeToggle(treeState, { type: LayoutTreeActionType.MagnifyNodeToggle, nodeId: root.id });
+    assert.equal(treeState.magnifiedNodeId, undefined);
+});
+
 test("moveNode adjusts startingIndex when reordering within same parent", () => {
     const nodeA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
     const nodeB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });

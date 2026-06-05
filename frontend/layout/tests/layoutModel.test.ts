@@ -643,6 +643,42 @@ function findLeaf(model: LayoutModel, blockId: string) {
     return model.treeState.rootNode?.children?.find((child) => child.data?.blockId === blockId) ?? model.treeState.rootNode;
 }
 
+test("LayoutModel onBackendUpdate processes pending replace action", async () => {
+    const root = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "old-block" });
+    globalStore.set(layoutStateAtom, {
+        rootnode: root,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+    });
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    globalStore.set(layoutStateAtom, {
+        rootnode: root,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "replace-1",
+                actiontype: LayoutTreeActionType.ReplaceNode,
+                blockid: "new-block",
+                targetblockid: "old-block",
+                nodesize: 75,
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+
+    assert(model.getNodeByBlockId("old-block") == null);
+    assert.equal(model.getNodeByBlockId("new-block")?.data?.blockId, "new-block");
+    assert.equal(model.getNodeByBlockId("new-block")?.size, 50);
+});
+
 test("LayoutModel geometry getters read additional props", () => {
     const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "geo" });
     const model = makeModel(leaf);
