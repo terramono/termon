@@ -13,7 +13,7 @@ cd "$ROOT_DIR"
 RECORD=1
 DURATION=45
 OUT_DIR="${ROOT_DIR}/artifacts/agent-demo"
-LOG_FILE="/tmp/termon-dev.log"
+LOG_FILE="/tmp/termon-agent.log"
 SESSION_NAME="termon-agent-demo"
 
 while [[ $# -gt 0 ]]; do
@@ -44,29 +44,51 @@ export WAVETERM_NOCONFIRMQUIT="${WAVETERM_NOCONFIRMQUIT:-1}"
 
 mkdir -p "$OUT_DIR"
 
-pkill -f 'electron-vite dev' 2>/dev/null || true
+if [[ ! -f "$ROOT_DIR/dist/frontend/index.html" ]]; then
+    echo "missing dist/frontend — run scripts/agent-setup.sh first"
+    exit 1
+fi
+
+pkill -f 'electron-vite' 2>/dev/null || true
 pkill -f 'electron.*dist/main' 2>/dev/null || true
+pkill -f 'electron \.' 2>/dev/null || true
 sleep 1
 rm -f "$LOG_FILE"
 
 tmux -f /exec-daemon/tmux.portal.conf kill-session -t "$SESSION_NAME" 2>/dev/null || true
 tmux -f /exec-daemon/tmux.portal.conf new-session -d -s "$SESSION_NAME" -c "$ROOT_DIR" -- "${SHELL:-bash}" -l
 tmux -f /exec-daemon/tmux.portal.conf send-keys -t "$SESSION_NAME:0.0" \
-    "cd '$ROOT_DIR' && export DISPLAY='${DISPLAY}' WAVETERM_ENVFILE='$ROOT_DIR/.env' WAVETERM_NOCONFIRMQUIT=1 WCLOUD_PING_ENDPOINT='${WCLOUD_PING_ENDPOINT}' WCLOUD_ENDPOINT='${WCLOUD_ENDPOINT}' WCLOUD_WS_ENDPOINT='${WCLOUD_WS_ENDPOINT}' && npm run dev 2>&1 | tee '$LOG_FILE'" C-m
+    "cd '$ROOT_DIR' && export DISPLAY='${DISPLAY}' WAVETERM_ENVFILE='$ROOT_DIR/.env' WAVETERM_NOCONFIRMQUIT=1 WCLOUD_PING_ENDPOINT='${WCLOUD_PING_ENDPOINT}' WCLOUD_ENDPOINT='${WCLOUD_ENDPOINT}' WCLOUD_WS_ENDPOINT='${WCLOUD_WS_ENDPOINT}' && npm run start 2>&1 | tee '$LOG_FILE'" C-m
 
 log_wait() { printf '[agent-demo] %s\n' "$*"; }
 
-log_wait "waiting for Termon window (up to 90s)..."
-WIN_ID=""
-for _ in $(seq 1 90); do
-    WIN_ID="$(xdotool search --name 'Termon' 2>/dev/null | head -1 || true)"
-    if [[ -n "$WIN_ID" ]]; then
+log_wait "waiting for renderer init (up to 120s)..."
+READY=0
+for _ in $(seq 1 120); do
+    if [[ -f "$LOG_FILE" ]] && grep -q "wave-ready init time" "$LOG_FILE"; then
+        READY=1
         break
     fi
     if [[ -f "$LOG_FILE" ]] && tail -5 "$LOG_FILE" | grep -q "wavesrv exited, shutting down"; then
         log_wait "wavesrv failed — tail of log:"
         tail -20 "$LOG_FILE"
         exit 1
+    fi
+    sleep 1
+done
+
+if [[ "$READY" -eq 0 ]]; then
+    log_wait "renderer never reached wave-ready — tail of log:"
+    tail -30 "$LOG_FILE" || true
+    exit 1
+fi
+
+log_wait "waiting for Termon window..."
+WIN_ID=""
+for _ in $(seq 1 30); do
+    WIN_ID="$(xdotool search --name 'Termon' 2>/dev/null | head -1 || true)"
+    if [[ -n "$WIN_ID" ]]; then
+        break
     fi
     sleep 1
 done
@@ -79,7 +101,7 @@ fi
 
 log_wait "found window $WIN_ID"
 xdotool windowactivate --sync "$WIN_ID"
-sleep 2
+sleep 4
 
 if [[ "$RECORD" -eq 0 ]]; then
     log_wait "Termon running (no recording). Logs: $LOG_FILE"

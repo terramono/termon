@@ -17,11 +17,13 @@ Guide for running Termon from a **cloud agent** or CI environment with a virtual
 
 ```bash
 ./scripts/agent-setup.sh
-./scripts/agent-demo.sh          # launch + 45s screen recording
+./scripts/agent-demo.sh               # launch + 45s screen recording
 ./scripts/agent-demo.sh --no-record   # launch only
 ```
 
-Setup installs npm deps, runs code generation, builds `wavesrv` and a local `wsh` binary, and creates `.env` from `.env.example`.
+Setup installs npm deps (with a **react/react-dom version check**), runs code generation, builds `wavesrv` and `wsh`, **prebuilds the frontend** (`npm run build:dev`), seeds cloud-friendly settings, and creates `.env` from `.env.example`.
+
+The demo script launches via `npm run start` (prebuilt assets) and waits for `wave-ready` in logs before recording — avoids the Vite dev-server race and blank renderer window.
 
 ## Manual dev server
 
@@ -58,11 +60,20 @@ See [agent-backlog.md](./agent-backlog.md) for follow-up work items.
 
 `scripts/agent-demo.sh` writes recordings to `artifacts/agent-demo/termon-agent-demo.mp4` (gitignored via `artifacts/`).
 
+## Cloud VM settings
+
+First run copies `config/agent-settings.json` to `~/.termon-dev/config/settings.json` if missing:
+
+- `window:disablehardwareacceleration` — software rendering in VMs without GPU
+- `term:disablewebgl` — xterm DOM renderer when WebGL is blocklisted
+
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
+| **Black window / blank UI** | Usually **react vs react-dom version mismatch** (React error #527). Run `npm install` and confirm versions match, then `npm run build:dev` |
+| `initPromise timed out` in logs | Renderer JS crashed or never loaded — check react versions and rebuild frontend |
 | `invalid wcloud endpoint` | Create `.env` from `.env.example` or export `WCLOUD_ENDPOINT` |
 | `WaveDevViteVarName is not exported` | Pull latest — export lives in `frontend/util/isdev.ts` |
-| Electron window not found | Confirm `DISPLAY` and wait for Vite + wavesrv ready (~30s) |
+| Electron window not found | Confirm `DISPLAY`; demo waits for `wave-ready init time` in logs |
 | `zig: command not found` | Re-run `agent-setup.sh` or install Zig manually |

@@ -66,6 +66,28 @@ write_env_file() {
     log "created .env from .env.example"
 }
 
+check_react_versions() {
+    local react_ver react_dom_ver
+    react_ver="$(node -e "console.log(require('react/package.json').version)")"
+    react_dom_ver="$(node -e "console.log(require('react-dom/package.json').version)")"
+    if [[ "$react_ver" != "$react_dom_ver" ]]; then
+        log "react (${react_ver}) and react-dom (${react_dom_ver}) must match — run npm install"
+        exit 1
+    fi
+    log "react ${react_ver} / react-dom ${react_dom_ver} aligned"
+}
+
+seed_cloud_settings() {
+    local settings_dir="${HOME}/.termon-dev/config"
+    local settings_file="${settings_dir}/settings.json"
+    if [[ -f "$settings_file" ]]; then
+        return
+    fi
+    mkdir -p "$settings_dir"
+    cp "$ROOT_DIR/config/agent-settings.json" "$settings_file"
+    log "seeded cloud VM settings at ${settings_file}"
+}
+
 log "Termon agent setup (root: $ROOT_DIR)"
 
 need_cmd go
@@ -78,8 +100,10 @@ install_zig
 
 log "npm install..."
 npm install --no-audit --no-fund
+check_react_versions
 
 write_env_file
+seed_cloud_settings
 
 log "code generation..."
 task generate
@@ -94,6 +118,9 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -o "dist/bin/wsh-${VERSION}-linux.x64" \
     cmd/wsh/main-wsh.go
 
+log "building frontend (required for agent demo — avoids vite dev race)..."
+npm run build:dev
+
 log "setup complete"
-log "start dev:  task dev   (or:  scripts/agent-demo.sh --no-record)"
+log "launch:  scripts/agent-demo.sh --no-record"
 log "DISPLAY=${DISPLAY:-unset}"
