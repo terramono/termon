@@ -18,8 +18,10 @@ import {
 } from "@floating-ui/react";
 import clsx from "clsx";
 import { useAtomValue } from "jotai";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import AnthropicIcon from "../asset/claude-color.svg";
+import CodexIcon from "../asset/codex-color.svg";
+import CursorIcon from "../asset/cursor-color.svg";
 import CogSolidIcon from "../asset/cog-solid.svg";
 import PerplexityIcon from "../asset/perplexity.svg";
 import PixelIconLibraryIcon from "../asset/pixel-icon-library.svg";
@@ -66,12 +68,54 @@ async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
     env.createBlock(blockDef, widget.magnified);
 }
 
-const CLAUDE_RECENTS_KEY = "waveterm:claude-launcher-recents";
-const MAX_CLAUDE_RECENTS = 8;
+type CliLauncherId = "claude" | "cursor" | "codex";
 
-function isClaudeLauncherWidget(widget: WidgetConfigType): boolean {
+type CliLauncherConfig = {
+    recentsKey: string;
+    cmd: string;
+    title: string;
+    description: string;
+    metaKey: string;
+    Icon: ComponentType<{ className?: string }>;
+};
+
+const MAX_CLI_LAUNCHER_RECENTS = 8;
+
+const CLI_LAUNCHERS: Record<CliLauncherId, CliLauncherConfig> = {
+    claude: {
+        recentsKey: "waveterm:claude-launcher-recents",
+        cmd: "claude",
+        title: "Open Claude Code",
+        description: "Open Claude Code",
+        metaKey: "claude:launcher",
+        Icon: AnthropicIcon,
+    },
+    cursor: {
+        recentsKey: "waveterm:cursor-launcher-recents",
+        cmd: "agent",
+        title: "Open Cursor Agent",
+        description: "Open Cursor Agent",
+        metaKey: "cursor:launcher",
+        Icon: CursorIcon,
+    },
+    codex: {
+        recentsKey: "waveterm:codex-launcher-recents",
+        cmd: "codex",
+        title: "Open Codex",
+        description: "Open Codex",
+        metaKey: "codex:launcher",
+        Icon: CodexIcon,
+    },
+};
+
+function getCliLauncherId(widget: WidgetConfigType): CliLauncherId | null {
     const meta = widget?.blockdef?.meta ?? {};
-    return meta["claude:launcher"] === true;
+    for (const [id, config] of Object.entries(CLI_LAUNCHERS) as [CliLauncherId, CliLauncherConfig][]) {
+        if (meta[config.metaKey] === true) {
+            return id;
+        }
+    }
+    return null;
 }
 
 function isTerminalWidget(widget: WidgetConfigType): boolean {
@@ -89,8 +133,8 @@ function isTerminalWidget(widget: WidgetConfigType): boolean {
     );
 }
 
-function loadClaudeRecents(): string[] {
-    const raw = localStorage.getItem(CLAUDE_RECENTS_KEY);
+function loadCliLauncherRecents(recentsKey: string): string[] {
+    const raw = localStorage.getItem(recentsKey);
     if (raw == null) {
         return [];
     }
@@ -105,31 +149,34 @@ function loadClaudeRecents(): string[] {
     }
 }
 
-function saveClaudeRecents(recents: string[]) {
-    localStorage.setItem(CLAUDE_RECENTS_KEY, JSON.stringify(recents.slice(0, MAX_CLAUDE_RECENTS)));
+function saveCliLauncherRecents(recentsKey: string, recents: string[]) {
+    localStorage.setItem(recentsKey, JSON.stringify(recents.slice(0, MAX_CLI_LAUNCHER_RECENTS)));
 }
 
-function updateClaudeRecents(dir: string): string[] {
+function updateCliLauncherRecents(recentsKey: string, dir: string): string[] {
     const trimmedDir = dir.trim();
     if (isBlank(trimmedDir)) {
-        return loadClaudeRecents();
+        return loadCliLauncherRecents(recentsKey);
     }
-    const existing = loadClaudeRecents().filter((entry) => entry !== trimmedDir);
-    const next = [trimmedDir, ...existing].slice(0, MAX_CLAUDE_RECENTS);
-    saveClaudeRecents(next);
+    const existing = loadCliLauncherRecents(recentsKey).filter((entry) => entry !== trimmedDir);
+    const next = [trimmedDir, ...existing].slice(0, MAX_CLI_LAUNCHER_RECENTS);
+    saveCliLauncherRecents(recentsKey, next);
     return next;
 }
 
 const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     const widgetMeta = widget?.blockdef?.meta ?? {};
-    const isClaudeWidget = isClaudeLauncherWidget(widget) || isTerminalWidget(widget);
+    const launcherId = getCliLauncherId(widget);
+    const isClaudeWidget = launcherId === "claude" || (launcherId == null && isTerminalWidget(widget));
+    const launcherConfig = launcherId != null ? CLI_LAUNCHERS[launcherId] : isClaudeWidget ? CLI_LAUNCHERS.claude : null;
     const isFilesWidget = widgetMeta.view === "preview" && widgetMeta.file === "~";
     const isBrowserWidget = widgetMeta.view === "web";
     const isSysinfoWidget = widgetMeta.view === "sysinfo";
     const fallbackWidgetColor =
         isFilesWidget || isBrowserWidget || isSysinfoWidget ? "#2eff6a" : undefined;
     const widgetColor = !isBlank(widget.color) ? widget.color : fallbackWidgetColor;
-    const displayDescription = isClaudeWidget ? "Open Claude Code" : widget.description;
+    const displayDescription = launcherConfig?.description ?? widget.description;
+    const LauncherIcon = launcherConfig?.Icon;
 
     return (
         <Tooltip
@@ -144,8 +191,8 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
             divOnClick={() => (onSelect ? onSelect(widget) : handleWidgetSelect(widget, env))}
         >
             <div style={{ color: widgetColor }}>
-                {isClaudeWidget ? (
-                    <AnthropicIcon className="w-[1em] h-[1em]" />
+                {LauncherIcon != null ? (
+                    <LauncherIcon className="w-[1em] h-[1em]" />
                 ) : isFilesWidget ? (
                     <PixelIconLibraryIcon className="w-[1em] h-[1em]" />
                 ) : isBrowserWidget ? (
@@ -158,13 +205,16 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     );
 });
 
-type ClaudeLauncherFloatingWindowProps = {
+type CliLauncherFloatingWindowProps = {
+    launcherId: CliLauncherId;
     isOpen: boolean;
     onClose: () => void;
 };
 
-const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFloatingWindowProps) => {
+const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLauncherFloatingWindowProps) => {
     const env = useWaveEnv<WidgetsEnv>();
+    const launcherConfig = CLI_LAUNCHERS[launcherId];
+    const LauncherIcon = launcherConfig.Icon;
     const [recents, setRecents] = useState<string[]>([]);
     const [customPath, setCustomPath] = useState("");
     const folderInputRef = useRef<HTMLInputElement>(null);
@@ -173,8 +223,8 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
         if (!isOpen) {
             return;
         }
-        setRecents(loadClaudeRecents());
-    }, [isOpen]);
+        setRecents(loadCliLauncherRecents(launcherConfig.recentsKey));
+    }, [isOpen, launcherConfig.recentsKey]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -189,7 +239,7 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [isOpen, onClose]);
 
-    const launchClaudeForDir = useCallback(
+    const launchCliForDir = useCallback(
         (dir: string) => {
             const targetDir = dir.trim();
             if (isBlank(targetDir)) {
@@ -199,17 +249,17 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
                 meta: {
                     view: "term",
                     controller: "cmd",
-                    cmd: "claude",
+                    cmd: launcherConfig.cmd,
                     "cmd:interactive": true,
                     "cmd:cwd": targetDir,
                 },
             };
             env.createBlock(blockDef, true);
-            setRecents(updateClaudeRecents(targetDir));
+            setRecents(updateCliLauncherRecents(launcherConfig.recentsKey, targetDir));
             setCustomPath("");
             onClose();
         },
-        [env, onClose]
+        [env, launcherConfig.cmd, launcherConfig.recentsKey, onClose]
     );
 
     const handleBrowseFolder = useCallback(() => {
@@ -229,11 +279,11 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
             const normalizedPath = firstFilePath.replace(/\\/g, "/");
             const parentDir = normalizedPath.substring(0, normalizedPath.lastIndexOf("/"));
             if (!isBlank(parentDir)) {
-                launchClaudeForDir(parentDir);
+                launchCliForDir(parentDir);
             }
             event.target.value = "";
         },
-        [env, launchClaudeForDir]
+        [env, launchCliForDir]
     );
 
     if (!isOpen) {
@@ -252,8 +302,8 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
                 >
                     <div className="flex items-center justify-between gap-2 text-primary mb-2">
                         <div className="flex items-center gap-2">
-                            <AnthropicIcon className="w-4 h-4" />
-                            <div className="font-medium text-sm">Open Claude Code</div>
+                            <LauncherIcon className="w-4 h-4" />
+                            <div className="font-medium text-sm">{launcherConfig.title}</div>
                         </div>
                         <button type="button" className="text-secondary hover:text-primary text-sm px-1" onClick={onClose}>
                             <i className="fa fa-solid fa-xmark" />
@@ -269,7 +319,7 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
                                 <button
                                     key={dir}
                                     type="button"
-                                    onClick={() => launchClaudeForDir(dir)}
+                                    onClick={() => launchCliForDir(dir)}
                                     className="w-full text-left px-3 py-2.5 hover:bg-hoverbg transition-colors border-b border-border last:border-b-0"
                                 >
                                     <div className="text-[11px] text-secondary">Recent</div>
@@ -305,14 +355,14 @@ const ClaudeLauncherFloatingWindow = memo(({ isOpen, onClose }: ClaudeLauncherFl
                             onChange={(e) => setCustomPath(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                    launchClaudeForDir(customPath);
+                                    launchCliForDir(customPath);
                                 }
                             }}
                             className="flex-1 h-8 px-2.5 rounded-md bg-[var(--app-bg-color)] border border-border text-xs text-primary placeholder:text-secondary outline-none focus:border-accent"
                         />
                         <button
                             type="button"
-                            onClick={() => launchClaudeForDir(customPath)}
+                            onClick={() => launchCliForDir(customPath)}
                             className="px-3 py-2 text-xs rounded-md bg-accent text-black hover:brightness-95 disabled:opacity-50"
                             disabled={isBlank(customPath.trim())}
                         >
@@ -613,7 +663,7 @@ const Widgets = memo(() => {
     const appsButtonRef = useRef<HTMLDivElement>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const settingsButtonRef = useRef<HTMLDivElement>(null);
-    const [isClaudeLauncherOpen, setIsClaudeLauncherOpen] = useState(false);
+    const [activeCliLauncher, setActiveCliLauncher] = useState<CliLauncherId | null>(null);
 
     const checkModeNeeded = useCallback(() => {
         if (!containerRef.current || !measurementRef.current) return;
@@ -683,8 +733,13 @@ const Widgets = memo(() => {
 
     const handleWidgetPress = useCallback(
         (widget: WidgetConfigType) => {
-            if (isClaudeLauncherWidget(widget) || isTerminalWidget(widget)) {
-                setIsClaudeLauncherOpen(true);
+            const launcherId = getCliLauncherId(widget);
+            if (launcherId != null) {
+                setActiveCliLauncher(launcherId);
+                return;
+            }
+            if (isTerminalWidget(widget)) {
+                setActiveCliLauncher("claude");
                 return;
             }
             handleWidgetSelect(widget, env);
@@ -801,10 +856,11 @@ const Widgets = memo(() => {
                     hasConfigErrors={hasConfigErrors}
                 />
             )}
-            {isClaudeLauncherOpen && (
-                <ClaudeLauncherFloatingWindow
-                    isOpen={isClaudeLauncherOpen}
-                    onClose={() => setIsClaudeLauncherOpen(false)}
+            {activeCliLauncher != null && (
+                <CliLauncherFloatingWindow
+                    launcherId={activeCliLauncher}
+                    isOpen={activeCliLauncher != null}
+                    onClose={() => setActiveCliLauncher(null)}
                 />
             )}
 
