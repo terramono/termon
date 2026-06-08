@@ -1,0 +1,4 @@
+{
+    "window:disablehardwareacceleration": true,
+    "term:disablewebgl": true
+}
