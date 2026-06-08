@@ -248,5 +248,5 @@ function applyCommand(data: any, command: any): any {
     }
 }
 
-export { applyCommand, combineFn_arrayAppend, getPath, setPath };
+export { applyCommand, combineFn_arrayAppend, formatPath, getPath, isEmpty, setPath, setPathInternal };
 export type { PathType, SetPathOpts };

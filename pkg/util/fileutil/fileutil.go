@@ -19,6 +19,16 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
 )
 
+var (
+	typeByExtensionFn = mime.TypeByExtension
+	fixPathAbsFn      = filepath.Abs
+	readFileFn             = os.ReadFile
+	writeFileFn            = os.WriteFile
+	detectMimeReadAtLeast  = io.ReadAtLeast
+	atomicWriteRenameFn    = os.Rename
+	atomicWriteRemoveFn    = os.Remove
+)
+
 type ByteRangeType struct {
 	All     bool
 	Start   int64
@@ -57,7 +67,7 @@ func FixPath(path string) (string, error) {
 	if strings.HasPrefix(path, "~") {
 		path = filepath.Join(wavebase.GetHomeDir(), path[1:])
 	} else if !filepath.IsAbs(path) {
-		path, err = filepath.Abs(path)
+		path, err = fixPathAbsFn(path)
 		if err != nil {
 			return "", err
 		}
@@ -124,7 +134,7 @@ func DetectMimeType(path string, fileInfo fs.FileInfo, extended bool) string {
 	if mimeType, ok := StaticMimeTypeMap[ext]; ok {
 		return mimeType
 	}
-	if mimeType := mime.TypeByExtension(ext); mimeType != "" {
+	if mimeType := typeByExtensionFn(ext); mimeType != "" {
 		return mimeType
 	}
 	if fileInfo.Size() == 0 {
@@ -140,7 +150,7 @@ func DetectMimeType(path string, fileInfo fs.FileInfo, extended bool) string {
 	defer fd.Close()
 	buf := make([]byte, 512)
 	// ignore the error (EOF / UnexpectedEOF is fine, just process how much we got back)
-	n, _ := io.ReadAtLeast(fd, buf, 512)
+	n, _ := detectMimeReadAtLeast(fd, buf, 512)
 	if n == 0 {
 		return ""
 	}
@@ -184,8 +194,8 @@ func AtomicWriteFile(fileName string, data []byte, perm os.FileMode) error {
 		}
 		return err
 	}
-	if err := os.Rename(tmpFileName, fileName); err != nil {
-		if removeErr := os.Remove(tmpFileName); removeErr != nil && !os.IsNotExist(removeErr) {
+	if err := atomicWriteRenameFn(tmpFileName, fileName); err != nil {
+		if removeErr := atomicWriteRemoveFn(tmpFileName); removeErr != nil && !os.IsNotExist(removeErr) {
 			return fmt.Errorf("failed to rename temp file %q to %q: %w (also failed to remove temp file: %v)", tmpFileName, fileName, err, removeErr)
 		}
 		return err
@@ -349,7 +359,7 @@ func ReplaceInFile(filePath string, edits []EditSpec) error {
 		return fmt.Errorf("file too large for editing: %d bytes (max: %d)", fileInfo.Size(), MaxEditFileSize)
 	}
 
-	contents, err := os.ReadFile(filePath)
+	contents, err := readFileFn(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
@@ -359,7 +369,7 @@ func ReplaceInFile(filePath string, edits []EditSpec) error {
 		return err
 	}
 
-	if err := os.WriteFile(filePath, modifiedContents, fileInfo.Mode()); err != nil {
+	if err := writeFileFn(filePath, modifiedContents, fileInfo.Mode()); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -382,14 +392,14 @@ func ReplaceInFilePartial(filePath string, edits []EditSpec) ([]EditResult, erro
 		return nil, fmt.Errorf("file too large for editing: %d bytes (max: %d)", fileInfo.Size(), MaxEditFileSize)
 	}
 
-	contents, err := os.ReadFile(filePath)
+	contents, err := readFileFn(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	modifiedContents, results := ApplyEditsPartial(contents, edits)
 
-	if err := os.WriteFile(filePath, modifiedContents, fileInfo.Mode()); err != nil {
+	if err := writeFileFn(filePath, modifiedContents, fileInfo.Mode()); err != nil {
 		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
 

@@ -330,6 +330,7 @@ export {
     isInputEvent,
     keyboardEventToASCII,
     keydownWrapper,
+    parseKey,
     parseKeyDescription,
     setKeyUtilPlatform,
     waveEventToKeyDesc,

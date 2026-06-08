@@ -63,4 +63,9 @@ describe("makeNativeLabel", () => {
         setPlatform("darwin");
         expect(makeNativeLabel(false)).toBe("Open File in Default Application");
     });
+
+    it("uses File Manager on Linux for directories", () => {
+        setPlatform("linux");
+        expect(makeNativeLabel(true)).toBe("Reveal in File Manager");
+    });
 });

@@ -278,14 +278,7 @@ const DisplayNode = ({ layoutModel, node }: DisplayNodeProps) => {
                 dragPreview(img, { offsetY, offsetX });
             });
         }
-    }, [
-        dragPreview,
-        previewRef.current,
-        previewElementGeneration,
-        previewImageGeneration,
-        previewImage,
-        devicePixelRatio,
-    ]);
+    }, [dragPreview, previewElementGeneration, previewImageGeneration, previewImage, devicePixelRatio]);
 
     const leafContent = useMemo(() => {
         return (

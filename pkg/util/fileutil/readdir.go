@@ -4,6 +4,7 @@
 package fileutil
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -13,6 +14,12 @@ import (
 
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
+)
+
+var (
+	expandHomeDirFn = wavebase.ExpandHomeDir
+	walkDirFn       = filepath.WalkDir
+	readDirFn       = os.ReadDir
 )
 
 type DirEntryOut struct {
@@ -36,7 +43,7 @@ type ReadDirResult struct {
 }
 
 func ReadDir(path string, maxEntries int) (*ReadDirResult, error) {
-	expandedPath, err := wavebase.ExpandHomeDir(path)
+	expandedPath, err := expandHomeDirFn(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -50,7 +57,7 @@ func ReadDir(path string, maxEntries int) (*ReadDirResult, error) {
 		return nil, fmt.Errorf("path is not a directory")
 	}
 
-	entries, err := os.ReadDir(expandedPath)
+	entries, err := readDirFn(expandedPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
@@ -137,7 +144,7 @@ func ReadDir(path string, maxEntries int) (*ReadDirResult, error) {
 }
 
 func ReadDirRecursive(path string, maxEntries int) (*ReadDirResult, error) {
-	expandedPath, err := wavebase.ExpandHomeDir(path)
+	expandedPath, err := expandHomeDirFn(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to expand path: %w", err)
 	}
@@ -155,7 +162,7 @@ func ReadDirRecursive(path string, maxEntries int) (*ReadDirResult, error) {
 	isDirMap := make(map[string]bool)
 	var truncated bool
 
-	err = filepath.WalkDir(expandedPath, func(fullPath string, d fs.DirEntry, err error) error {
+	err = walkDirFn(expandedPath, func(fullPath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -203,7 +210,7 @@ func ReadDirRecursive(path string, maxEntries int) (*ReadDirResult, error) {
 		return nil
 	})
 
-	if err != nil && err != fs.SkipAll {
+	if err != nil && err != fs.SkipAll && !errors.Is(err, fs.SkipDir) {
 		return nil, fmt.Errorf("failed to walk directory: %w", err)
 	}
 

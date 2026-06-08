@@ -35,12 +35,18 @@ import (
 var HexDigits = []byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
 var PTLoc *time.Location
 
-func init() {
-	loc, err := time.LoadLocation("America/Los_Angeles")
+var timeLoadLocation = time.LoadLocation
+
+func loadPTLoc() *time.Location {
+	loc, err := timeLoadLocation("America/Los_Angeles")
 	if err != nil {
-		loc = time.FixedZone("PT", -8*60*60)
+		return time.FixedZone("PT", -8*60*60)
 	}
-	PTLoc = loc
+	return loc
+}
+
+func init() {
+	PTLoc = loadPTLoc()
 }
 
 func GetStrArr(v interface{}, field string) []string {
@@ -267,7 +273,7 @@ func Sha1Hash(data []byte) string {
 
 func ChunkSlice[T any](s []T, chunkSize int) [][]T {
 	var rtn [][]T
-	for len(rtn) > 0 {
+	for len(s) > 0 {
 		if len(s) <= chunkSize {
 			rtn = append(rtn, s)
 			break
@@ -330,12 +336,6 @@ func StrMapsEqual(m1 map[string]string, m2 map[string]string) bool {
 			return false
 		}
 	}
-	for key := range m2 {
-		_, found := m1[key]
-		if !found {
-			return false
-		}
-	}
 	return true
 }
 
@@ -346,12 +346,6 @@ func ByteMapsEqual(m1 map[string][]byte, m2 map[string][]byte) bool {
 	for key, val1 := range m1 {
 		val2, found := m2[key]
 		if !found || !bytes.Equal(val1, val2) {
-			return false
-		}
-	}
-	for key := range m2 {
-		_, found := m1[key]
-		if !found {
 			return false
 		}
 	}
@@ -683,7 +677,7 @@ func GetCmdExitCode(cmd *exec.Cmd, err error) int {
 	if cmd == nil || cmd.ProcessState == nil {
 		return GetExitCode(err)
 	}
-	status, ok := cmd.ProcessState.Sys().(syscall.WaitStatus)
+	status, ok := getCmdWaitStatusFn(cmd.ProcessState)
 	if !ok {
 		return cmd.ProcessState.ExitCode()
 	}
@@ -723,8 +717,10 @@ func JsonMapToStruct(m map[string]any, v interface{}) error {
 	return json.Unmarshal(barr, v)
 }
 
+var structToJsonMapMarshal = json.Marshal
+
 func StructToJsonMap(v interface{}) (map[string]any, error) {
-	barr, err := json.Marshal(v)
+	barr, err := structToJsonMapMarshal(v)
 	if err != nil {
 		return nil, err
 	}
@@ -830,6 +826,17 @@ func MergeStrMaps[T any](m1 map[string]T, m2 map[string]T) map[string]T {
 	return rtn
 }
 
+var (
+	ioCopyFn              = io.Copy
+	atomicRenameCloseFn   = func(f *os.File) error { return f.Close() }
+	atomicRenameChmodFn   = os.Chmod
+	atomicRenameRenameFn  = os.Rename
+	getCmdWaitStatusFn    = func(ps *os.ProcessState) (syscall.WaitStatus, bool) {
+		s, ok := ps.Sys().(syscall.WaitStatus)
+		return s, ok
+	}
+)
+
 func AtomicRenameCopy(dstPath string, srcPath string, perms os.FileMode) error {
 	// first copy the file to dstPath.new, then rename into place
 	srcFd, err := os.Open(srcPath)
@@ -842,20 +849,20 @@ func AtomicRenameCopy(dstPath string, srcPath string, perms os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(dstFd, srcFd)
+	_, err = ioCopyFn(dstFd, srcFd)
 	if err != nil {
 		dstFd.Close()
 		return err
 	}
-	err = dstFd.Close()
+	err = atomicRenameCloseFn(dstFd)
 	if err != nil {
 		return err
 	}
-	err = os.Chmod(tempName, perms)
+	err = atomicRenameChmodFn(tempName, perms)
 	if err != nil {
 		return err
 	}
-	err = os.Rename(tempName, dstPath)
+	err = atomicRenameRenameFn(tempName, dstPath)
 	if err != nil {
 		return err
 	}
@@ -880,7 +887,7 @@ func WriteTemplateToFile(fileName string, templateText string, vars map[string]s
 func RandomHexString(numHexDigits int) (string, error) {
 	numBytes := (numHexDigits + 1) / 2 // Calculate the number of bytes needed
 	bytes := make([]byte, numBytes)
-	if _, err := rand.Read(bytes); err != nil {
+	if _, err := randReadFn(bytes); err != nil {
 		return "", err
 	}
 
@@ -1081,8 +1088,11 @@ func GracefulClose(closer io.Closer, debugName, closerName string) bool {
 }
 
 // DrainChannelSafe will drain a channel until it is empty or until a timeout is reached.
+var drainChannelSafeTimeout = 5 * time.Second
+var randReadFn = rand.Read
+
 func DrainChannelSafe[T any](ch <-chan T, debugName string) {
-	drainTimeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	drainTimeoutCtx, cancel := context.WithTimeout(context.Background(), drainChannelSafeTimeout)
 	go func() {
 		defer cancel()
 	outer:

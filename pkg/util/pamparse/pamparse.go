@@ -51,9 +51,6 @@ func ParseEnvironmentConfFile(path string, opts *PamParseOpts) (map[string]strin
 			return nil, err
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -73,7 +70,7 @@ func ParseEnvironmentConfFile(path string, opts *PamParseOpts) (map[string]strin
 
 // Gets the home directory and shell from /etc/passwd for the current user.
 func ParsePasswd() (*PamParseOpts, error) {
-	file, err := os.Open("/etc/passwd")
+	file, err := os.Open(passwdPath)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +116,8 @@ func replaceHomeAndShell(val string, home string, shell string) string {
 }
 
 // Regex to parse a line from /etc/environment. Follows the guidance from https://wiki.archlinux.org/title/Environment_variables#Using_pam_env
+var passwdPath = "/etc/passwd"
+
 var envFileLineRe = regexp.MustCompile(`^(?:export\s+)?([A-Z0-9_]+[A-Za-z0-9]*)=(.*)$`)
 
 func parseEnvironmentLine(line string) (string, string) {

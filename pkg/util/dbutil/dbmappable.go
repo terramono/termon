@@ -70,9 +70,13 @@ func GetMappable[PT DBMappablePtr[T], T any](tx *txwrap.TxWrap, query string, ar
 	return rtn
 }
 
+var dbSelectMaps = func(tx *txwrap.TxWrap, query string, args ...interface{}) []map[string]interface{} {
+	return tx.SelectMaps(query, args...)
+}
+
 func SelectMappable[PT DBMappablePtr[T], T any](tx *txwrap.TxWrap, query string, args ...interface{}) []PT {
 	var rtn []PT
-	marr := tx.SelectMaps(query, args...)
+	marr := dbSelectMaps(tx, query, args...)
 	for _, m := range marr {
 		if len(m) == 0 {
 			continue

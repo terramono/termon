@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from "vitest";
-import { isAllowedExternalUrl, isAllowedRemoteFetchUrl } from "./urlutil";
+import { isAllowedExternalUrl, isAllowedRemoteFetchUrl, isPrivateOrLoopbackHost } from "./urlutil";
 
 describe("isAllowedExternalUrl", () => {
     it("allows http and https", () => {
@@ -47,6 +47,10 @@ describe("isAllowedRemoteFetchUrl", () => {
         expect(isAllowedRemoteFetchUrl("data:text/css,body{}", false)).toBe(true);
     });
 
+    it("blocks invalid ipv4 octets", () => {
+        expect(isAllowedRemoteFetchUrl("http://256.0.0.1/x", false)).toBe(false);
+    });
+
     it("blocks private IPv4 ranges when localhost disallowed", () => {
         expect(isAllowedRemoteFetchUrl("http://10.0.0.1/x", false)).toBe(false);
         expect(isAllowedRemoteFetchUrl("http://172.16.0.1/x", false)).toBe(false);
@@ -68,5 +72,24 @@ describe("isAllowedRemoteFetchUrl", () => {
     it("rejects empty and malformed input", () => {
         expect(isAllowedRemoteFetchUrl("", false)).toBe(false);
         expect(isAllowedRemoteFetchUrl("not-a-url", false)).toBe(false);
+    });
+
+    it("rejects invalid IPv4 octets and link-local addresses", () => {
+        expect(isAllowedRemoteFetchUrl("http://999.0.0.1/x", false)).toBe(false);
+        expect(isAllowedRemoteFetchUrl("http://169.254.1.1/x", false)).toBe(false);
+        expect(isAllowedRemoteFetchUrl("http://8.8.8.8/x", false)).toBe(true);
+    });
+});
+
+describe("isPrivateOrLoopbackHost", () => {
+    it("rejects invalid IPv4 octets", () => {
+        expect(isPrivateOrLoopbackHost("256.0.0.1")).toBe(false);
+        expect(isPrivateOrLoopbackHost("999.0.0.1")).toBe(false);
+    });
+
+    it("detects loopback and private hosts", () => {
+        expect(isPrivateOrLoopbackHost("127.0.0.1")).toBe(true);
+        expect(isPrivateOrLoopbackHost("10.1.2.3")).toBe(true);
+        expect(isPrivateOrLoopbackHost("8.8.8.8")).toBe(false);
     });
 });

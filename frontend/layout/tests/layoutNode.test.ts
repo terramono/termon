@@ -13,6 +13,11 @@ import {
 } from "../lib/layoutNode";
 import { FlexDirection, LayoutNode } from "../lib/types";
 
+test("newLayoutNode defaults flex direction to row", () => {
+    const node = newLayoutNode(undefined, undefined, undefined, { blockId: "default-flex" });
+    assert.equal(node.flexDirection, FlexDirection.Row);
+});
+
 test("newLayoutNode", () => {
     assert.throws(
         () => newLayoutNode(FlexDirection.Column),

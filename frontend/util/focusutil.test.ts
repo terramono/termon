@@ -112,6 +112,23 @@ describe("focusedBlockId", () => {
         block.remove();
     });
 
+    it("resolves text node selection anchors via parent element", () => {
+        const block = document.createElement("div");
+        block.setAttribute("data-blockid", "block-text-sel");
+        const text = document.createTextNode("selected");
+        block.appendChild(text);
+        document.body.appendChild(block);
+        const range = document.createRange();
+        range.setStart(text, 0);
+        range.setEnd(text, 4);
+        const sel = document.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        expect(focusedBlockId()).toBe("block-text-sel");
+        sel?.removeAllRanges();
+        block.remove();
+    });
+
     it("returns null when no block context exists", () => {
         const el = document.createElement("span");
         document.body.appendChild(el);

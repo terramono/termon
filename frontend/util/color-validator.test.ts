@@ -52,4 +52,11 @@ describe("validateCssColor", () => {
         vi.stubGlobal("CSS", undefined);
         expect(() => validateCssColor("red")).toThrow("Invalid CSS color");
     });
+
+    it("returns generic color type for supported non-keyword values", () => {
+        vi.stubGlobal("CSS", {
+            supports: (_property: string, value: string) => value === "123",
+        });
+        expect(validateCssColor("123")).toBe("color");
+    });
 });

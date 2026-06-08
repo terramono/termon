@@ -59,6 +59,17 @@ describe("processBackgroundUrls", () => {
         const result = processBackgroundUrls(css);
         expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
     });
+
+    it("rewrites windows drive paths", () => {
+        const css = 'url("C:\\\\Users\\\\bg.png")';
+        const result = processBackgroundUrls(css);
+        expect(result).toContain("http://127.0.0.1:8080/wave/stream-file");
+    });
+
+    it("strips trailing semicolon from css text", () => {
+        const css = 'url("https://example.com/bg.png");';
+        expect(processBackgroundUrls(css)).toContain("https://example.com/bg.png");
+    });
 });
 
 describe("computeBgStyleFromMeta", () => {
@@ -80,4 +91,12 @@ describe("computeBgStyleFromMeta", () => {
         expect(style.backgroundBlendMode).toBe("multiply");
         expect(style.background).toContain("https://example.com/bg.png");
     });
+
+    it("returns null when background processing throws", () => {
+        const style = computeBgStyleFromMeta({
+            bg: "url(",
+        });
+        expect(style.background).toBeNull();
+    });
+
 });
