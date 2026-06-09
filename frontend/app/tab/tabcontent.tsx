@@ -5,12 +5,51 @@ import { Block } from "@/app/block/block";
 import { CenteredDiv } from "@/element/quickelems";
 import { ContentRenderer, NodeModel, PreviewRenderer, TileLayout } from "@/layout/index";
 import { TileLayoutContents } from "@/layout/lib/types";
-import { atoms, getApi } from "@/store/global";
+import { atoms, createBlock, getApi } from "@/store/global";
 import * as services from "@/store/services";
 import * as WOS from "@/store/wos";
+import { cn, fireAndForget } from "@/util/util";
 import { atom, useAtomValue } from "jotai";
 import * as React from "react";
 import { useMemo } from "react";
+
+const EMPTY_TAB_BLOCK_DEFS: { label: string; blockDef: BlockDef }[] = [
+    {
+        label: "Terminal",
+        blockDef: { meta: { view: "term", controller: "shell" } },
+    },
+    {
+        label: "Preview",
+        blockDef: { meta: { view: "preview", file: "~" } },
+    },
+    {
+        label: "Web",
+        blockDef: { meta: { view: "web" } },
+    },
+];
+
+const accentButtonClass =
+    "px-4 py-2 text-sm font-medium bg-accent/80 text-primary rounded hover:bg-accent transition-colors cursor-pointer";
+
+function EmptyTabCreationStrip() {
+    return (
+        <div className="flex flex-col items-center gap-4">
+            <div className="text-secondary text-sm">New block</div>
+            <div className="flex flex-row flex-wrap items-center justify-center gap-2">
+                {EMPTY_TAB_BLOCK_DEFS.map(({ label, blockDef }) => (
+                    <button
+                        key={label}
+                        type="button"
+                        className={cn(accentButtonClass)}
+                        onClick={() => fireAndForget(() => createBlock(blockDef))}
+                    >
+                        + {label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 const tileGapSizeAtom = atom((get) => {
     const settings = get(atoms.settingsAtom);
@@ -54,7 +93,7 @@ const TabContent = React.memo(({ tabId, noTopPadding }: { tabId: string; noTopPa
     } else if (!tabData) {
         innerContent = <CenteredDiv>Tab Not Found</CenteredDiv>;
     } else if (tabData?.blockids?.length == 0) {
-        innerContent = null;
+        innerContent = <EmptyTabCreationStrip />;
     } else {
         innerContent = (
             <TileLayout
