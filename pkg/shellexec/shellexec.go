@@ -36,6 +36,21 @@ import (
 
 const DefaultGracefulKillWait = 400 * time.Millisecond
 
+func appendShellLoginOpts(shellOpts []string, cmdOpts CommandOptsType) []string {
+	if cmdOpts.Login {
+		shellOpts = append(shellOpts, "-l")
+	}
+	if cmdOpts.Interactive {
+		shellOpts = append(shellOpts, "-i")
+	}
+	return shellOpts
+}
+
+func appendShellCommandOpts(shellOpts []string, cmdStr string, cmdOpts CommandOptsType) []string {
+	shellOpts = appendShellLoginOpts(shellOpts, cmdOpts)
+	return append(shellOpts, "-c", cmdStr)
+}
+
 type CommandOptsType struct {
 	Interactive bool                      `json:"interactive,omitempty"`
 	Login       bool                      `json:"login,omitempty"`
@@ -249,8 +264,7 @@ func StartWslShellProc(ctx context.Context, termSize waveobj.TermSize, cmdStr st
 		}
 		cmdCombined = fmt.Sprintf("%s %s", shellPath, strings.Join(shellOpts, " "))
 	} else {
-		// TODO check quoting of cmdStr
-		shellOpts = append(shellOpts, "-c", cmdStr)
+		shellOpts = appendShellCommandOpts(shellOpts, cmdStr, cmdOpts)
 		cmdCombined = fmt.Sprintf("%s %s", shellPath, strings.Join(shellOpts, " "))
 	}
 	conn.Infof(ctx, "starting shell, using command: %s\n", cmdCombined)
@@ -407,8 +421,7 @@ func StartRemoteShellProc(ctx context.Context, logCtx context.Context, termSize 
 		}
 		cmdCombined = fmt.Sprintf("%s %s", shellPath, strings.Join(shellOpts, " "))
 	} else {
-		// TODO check quoting of cmdStr
-		shellOpts = append(shellOpts, "-c", cmdStr)
+		shellOpts = appendShellCommandOpts(shellOpts, cmdStr, cmdOpts)
 		cmdCombined = fmt.Sprintf("%s %s", shellPath, strings.Join(shellOpts, " "))
 	}
 	conn.Infof(logCtx, "starting shell, using command: %s\n", cmdCombined)
@@ -528,7 +541,7 @@ func StartRemoteShellJob(ctx context.Context, logCtx context.Context, termSize w
 			}
 		}
 	} else {
-		shellOpts = append(shellOpts, "-c", cmdStr)
+		shellOpts = appendShellCommandOpts(shellOpts, cmdStr, cmdOpts)
 	}
 	conn.Infof(logCtx, "starting shell job, using command: %s %s\n", shellPath, strings.Join(shellOpts, " "))
 
@@ -625,9 +638,12 @@ func StartLocalShellProc(logCtx context.Context, termSize waveobj.TermSize, cmdS
 		}
 	} else {
 		isShell = false
-		shellOpts = append(shellOpts, "-c", cmdStr)
+		shellOpts = appendShellCommandOpts(shellOpts, cmdStr, cmdOpts)
 		ecmd = exec.Command(shellPath, shellOpts...)
 		ecmd.Env = os.Environ()
+		if shellType == shellutil.ShellType_zsh && (cmdOpts.Login || cmdOpts.Interactive) {
+			shellutil.UpdateCmdEnv(ecmd, map[string]string{"ZDOTDIR": shellutil.GetLocalZshZDotDir()})
+		}
 	}
 
 	packedToken, err := cmdOpts.SwapToken.PackForClient()

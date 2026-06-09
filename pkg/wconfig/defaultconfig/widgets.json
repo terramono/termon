@@ -16,6 +16,7 @@
     },
     "defwidget@cursor": {
         "display:order": -4.9,
+        "display:hidden": true,
         "icon": "cursor",
         "label": "cursor",
         "description": "Launch Cursor Agent",
