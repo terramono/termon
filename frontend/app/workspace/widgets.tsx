@@ -548,6 +548,14 @@ const SettingsFloatingWindow = memo(
 
         const menuItems = [
             {
+                icon: "sliders",
+                label: "Preferences",
+                onClick: () => {
+                    modalsModel.pushModal("PreferencesModal");
+                    onClose();
+                },
+            },
+            {
                 icon: "gear",
                 label: "Settings",
                 hasError: hasConfigErrors,
