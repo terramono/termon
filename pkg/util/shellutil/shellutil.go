@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -18,12 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
 	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
 	"github.com/wavetermdev/waveterm/pkg/wavebase"
 	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
 )
 
 var (
@@ -58,13 +54,16 @@ const DefaultTermType = "xterm-256color"
 const DefaultTermRows = 24
 const DefaultTermCols = 80
 
-var cachedMacUserShell string
-var macUserShellOnce = &sync.Once{}
-var userShellRegexp = regexp.MustCompile(`^UserShell: (.*)$`)
-
-var gitBashCache = utilds.MakeSyncCache(findInstalledGitBash)
-
 const DefaultShellPath = "/bin/bash"
+
+var (
+	writeTemplateToFile       = utilfn.WriteTemplateToFile
+	writeStartupScriptFile    = os.WriteFile
+	getLocalWshBinaryPathFn     = GetLocalWshBinaryPath
+	atomicRenameCopyFn          = utilfn.AtomicRenameCopy
+	localShellPathTestOverride  string
+	initRcFilesCacheEnsureDirFn = wavebase.CacheEnsureDir
+)
 
 const (
 	ShellType_bash    = "bash"
@@ -85,14 +84,11 @@ const (
 )
 
 func DetectLocalShellPath() string {
-	if runtime.GOOS == "windows" {
-		if pwshPath, lpErr := exec.LookPath("pwsh"); lpErr == nil {
-			return pwshPath
-		}
-		if powershellPath, lpErr := exec.LookPath("powershell"); lpErr == nil {
-			return powershellPath
-		}
-		return "powershell.exe"
+	if localShellPathTestOverride != "" {
+		return localShellPathTestOverride
+	}
+	if shellPath := detectLocalShellPathOverride(); shellPath != "" {
+		return shellPath
 	}
 	shellPath := GetMacUserShell()
 	if shellPath == "" {
@@ -105,35 +101,7 @@ func DetectLocalShellPath() string {
 }
 
 func GetMacUserShell() string {
-	if runtime.GOOS != "darwin" {
-		return ""
-	}
-	macUserShellOnce.Do(func() {
-		cachedMacUserShell = internalMacUserShell()
-	})
-	return cachedMacUserShell
-}
-
-// dscl . -read /Users/[username] UserShell
-// defaults to /bin/bash
-func internalMacUserShell() string {
-	osUser, err := user.Current()
-	if err != nil {
-		return DefaultShellPath
-	}
-	ctx, cancelFn := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancelFn()
-	userStr := "/Users/" + osUser.Username
-	out, err := exec.CommandContext(ctx, "dscl", ".", "-read", userStr, "UserShell").CombinedOutput()
-	if err != nil {
-		return DefaultShellPath
-	}
-	outStr := strings.TrimSpace(string(out))
-	m := userShellRegexp.FindStringSubmatch(outStr)
-	if m == nil {
-		return DefaultShellPath
-	}
-	return m[1]
+	return platformGetMacUserShell()
 }
 
 func hasDirPart(dir string, part string) bool {
@@ -151,64 +119,6 @@ func hasDirPart(dir string, part string) bool {
 		dir = parent
 	}
 	return false
-}
-
-func FindGitBash(config *wconfig.FullConfigType, rescan bool) string {
-	if runtime.GOOS != "windows" {
-		return ""
-	}
-
-	if config != nil && config.Settings.TermGitBashPath != "" {
-		return config.Settings.TermGitBashPath
-	}
-
-	path, _ := gitBashCache.Get(rescan)
-	return path
-}
-
-func findInstalledGitBash() (string, error) {
-	// Try PATH first (skip system32, and only accept if in a Git directory)
-	pathEnv := os.Getenv("PATH")
-	pathDirs := filepath.SplitList(pathEnv)
-	for _, dir := range pathDirs {
-		dir = strings.Trim(dir, `"`)
-		if hasDirPart(dir, "system32") {
-			continue
-		}
-		if !hasDirPart(dir, "git") {
-			continue
-		}
-		bashPath := filepath.Join(dir, "bash.exe")
-		if _, err := os.Stat(bashPath); err == nil {
-			return bashPath, nil
-		}
-	}
-
-	// Try scoop location
-	userProfile := os.Getenv("USERPROFILE")
-	if userProfile != "" {
-		scoopPath := filepath.Join(userProfile, "scoop", "apps", "git", "current", "bin", "bash.exe")
-		if _, err := os.Stat(scoopPath); err == nil {
-			return scoopPath, nil
-		}
-	}
-
-	// Try LocalAppData\programs\git\bin
-	localAppData := os.Getenv("LOCALAPPDATA")
-	if localAppData != "" {
-		localPath := filepath.Join(localAppData, "programs", "git", "bin", "bash.exe")
-		if _, err := os.Stat(localPath); err == nil {
-			return localPath, nil
-		}
-	}
-
-	// Try C:\Program Files\Git\bin
-	programFilesPath := filepath.Join("C:\\", "Program Files", "Git", "bin", "bash.exe")
-	if _, err := os.Stat(programFilesPath); err == nil {
-		return programFilesPath, nil
-	}
-
-	return "", nil
 }
 
 func DefaultTermSize() waveobj.TermSize {
@@ -357,32 +267,27 @@ func GetLocalWshBinaryPath(version string, goos string, goarch string) (string, 
 func InitRcFiles(waveHome string, absWshBinDir string) error {
 	// ensure directories exist
 	zshDir := filepath.Join(waveHome, ZshIntegrationDir)
-	err := wavebase.CacheEnsureDir(zshDir, ZshIntegrationDir, 0755, ZshIntegrationDir)
+	err := initRcFilesCacheEnsureDirFn(zshDir, ZshIntegrationDir, 0755, ZshIntegrationDir)
 	if err != nil {
 		return err
 	}
 	bashDir := filepath.Join(waveHome, BashIntegrationDir)
-	err = wavebase.CacheEnsureDir(bashDir, BashIntegrationDir, 0755, BashIntegrationDir)
+	err = initRcFilesCacheEnsureDirFn(bashDir, BashIntegrationDir, 0755, BashIntegrationDir)
 	if err != nil {
 		return err
 	}
 	fishDir := filepath.Join(waveHome, FishIntegrationDir)
-	err = wavebase.CacheEnsureDir(fishDir, FishIntegrationDir, 0755, FishIntegrationDir)
+	err = initRcFilesCacheEnsureDirFn(fishDir, FishIntegrationDir, 0755, FishIntegrationDir)
 	if err != nil {
 		return err
 	}
 	pwshDir := filepath.Join(waveHome, PwshIntegrationDir)
-	err = wavebase.CacheEnsureDir(pwshDir, PwshIntegrationDir, 0755, PwshIntegrationDir)
+	err = initRcFilesCacheEnsureDirFn(pwshDir, PwshIntegrationDir, 0755, PwshIntegrationDir)
 	if err != nil {
 		return err
 	}
 
-	var pathSep string
-	if runtime.GOOS == "windows" {
-		pathSep = ";"
-	} else {
-		pathSep = ":"
-	}
+	pathSep := shellPathSeparator()
 	params := map[string]string{
 		"WSHBINDIR":      HardQuote(absWshBinDir),
 		"WSHBINDIR_PWSH": HardQuotePowerShell(absWshBinDir),
@@ -390,35 +295,35 @@ func InitRcFiles(waveHome string, absWshBinDir string) error {
 	}
 
 	// write files to directory
-	err = utilfn.WriteTemplateToFile(filepath.Join(zshDir, ".zprofile"), ZshStartup_Zprofile, params)
+	err = writeTemplateToFile(filepath.Join(zshDir, ".zprofile"), ZshStartup_Zprofile, params)
 	if err != nil {
 		return fmt.Errorf("error writing zsh-integration .zprofile: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(zshDir, ".zshrc"), ZshStartup_Zshrc, params)
+	err = writeTemplateToFile(filepath.Join(zshDir, ".zshrc"), ZshStartup_Zshrc, params)
 	if err != nil {
 		return fmt.Errorf("error writing zsh-integration .zshrc: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(zshDir, ".zlogin"), ZshStartup_Zlogin, params)
+	err = writeTemplateToFile(filepath.Join(zshDir, ".zlogin"), ZshStartup_Zlogin, params)
 	if err != nil {
 		return fmt.Errorf("error writing zsh-integration .zlogin: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(zshDir, ".zshenv"), ZshStartup_Zshenv, params)
+	err = writeTemplateToFile(filepath.Join(zshDir, ".zshenv"), ZshStartup_Zshenv, params)
 	if err != nil {
 		return fmt.Errorf("error writing zsh-integration .zshenv: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(bashDir, ".bashrc"), BashStartup_Bashrc, params)
+	err = writeTemplateToFile(filepath.Join(bashDir, ".bashrc"), BashStartup_Bashrc, params)
 	if err != nil {
 		return fmt.Errorf("error writing bash-integration .bashrc: %v", err)
 	}
-	err = os.WriteFile(filepath.Join(bashDir, "bash_preexec.sh"), []byte(BashStartup_Preexec), 0644)
+	err = writeStartupScriptFile(filepath.Join(bashDir, "bash_preexec.sh"), []byte(BashStartup_Preexec), 0644)
 	if err != nil {
 		return fmt.Errorf("error writing bash-integration bash_preexec.sh: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(fishDir, "wave.fish"), FishStartup_Wavefish, params)
+	err = writeTemplateToFile(filepath.Join(fishDir, "wave.fish"), FishStartup_Wavefish, params)
 	if err != nil {
 		return fmt.Errorf("error writing fish-integration wave.fish: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(pwshDir, "wavepwsh.ps1"), PwshStartup_wavepwsh, params)
+	err = writeTemplateToFile(filepath.Join(pwshDir, "wavepwsh.ps1"), PwshStartup_wavepwsh, params)
 	if err != nil {
 		return fmt.Errorf("error writing pwsh-integration wavepwsh.ps1: %v", err)
 	}
@@ -435,13 +340,16 @@ func initCustomShellStartupFilesInternal() error {
 		return err
 	}
 
-	err = wavebase.CacheEnsureDir(binDir, WaveHomeBinDir, 0755, WaveHomeBinDir)
+	err = initRcFilesCacheEnsureDirFn(binDir, WaveHomeBinDir, 0755, WaveHomeBinDir)
 	if err != nil {
 		return err
 	}
 
-	// copy the correct binary to bin
-	wshFullPath, err := GetLocalWshBinaryPath(wavebase.WaveVersion, runtime.GOOS, runtime.GOARCH)
+	return copyLocalWshToBin(binDir)
+}
+
+func copyLocalWshToBin(binDir string) error {
+	wshFullPath, err := getLocalWshBinaryPathFn(wavebase.WaveVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		log.Printf("error (non-fatal), could not resolve wsh binary path: %v\n", err)
 	}
@@ -449,11 +357,8 @@ func initCustomShellStartupFilesInternal() error {
 		log.Printf("error (non-fatal), could not resolve wsh binary %q: %v\n", wshFullPath, err)
 		return nil
 	}
-	wshDstPath := filepath.Join(binDir, "wsh")
-	if runtime.GOOS == "windows" {
-		wshDstPath = wshDstPath + ".exe"
-	}
-	err = utilfn.AtomicRenameCopy(wshDstPath, wshFullPath, 0755)
+	wshDstPath := localWshDstPath(binDir)
+	err = atomicRenameCopyFn(wshDstPath, wshFullPath, 0755)
 	if err != nil {
 		return fmt.Errorf("error copying wsh binary to bin: %v", err)
 	}
@@ -549,77 +454,7 @@ func getShellVersion(shellPath string, shellType string) (string, error) {
 }
 
 func FixupWaveZshHistory() error {
-	if runtime.GOOS != "darwin" {
-		return nil
-	}
-
-	hasHistory, size := HasWaveZshHistory()
-	if !hasHistory {
-		return nil
-	}
-
-	zshDir := GetLocalZshZDotDir()
-	waveHistFile := filepath.Join(zshDir, ZshHistoryFileName)
-
-	if size == 0 {
-		err := os.Remove(waveHistFile)
-		if err != nil {
-			log.Printf("error removing wave zsh history file %s: %v\n", waveHistFile, err)
-		}
-		return nil
-	}
-
-	log.Printf("merging wave zsh history %s into ~/.zsh_history\n", waveHistFile)
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("error getting home directory: %w", err)
-	}
-	realHistFile := filepath.Join(homeDir, ".zsh_history")
-
-	isExtended, err := IsExtendedZshHistoryFile(realHistFile)
-	if err != nil {
-		return fmt.Errorf("error checking if history is extended: %w", err)
-	}
-
-	hasExtendedStr := "false"
-	if isExtended {
-		hasExtendedStr = "true"
-	}
-
-	quotedWaveHistFile := utilfn.ShellQuote(waveHistFile, true, -1)
-
-	script := fmt.Sprintf(`
-		HISTFILE=~/.zsh_history
-		HISTSIZE=999999
-		SAVEHIST=999999
-		has_extended_history=%s
-		[[ $has_extended_history == true ]] && setopt EXTENDED_HISTORY
-		fc -RI
-		fc -RI %s
-		fc -W
-	`, hasExtendedStr, quotedWaveHistFile)
-
-	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelFn()
-
-	cmd := exec.CommandContext(ctx, "zsh", "-f", "-i", "-c", script)
-	cmd.Stdin = nil
-	envStr := envutil.SliceToEnv(os.Environ())
-	envStr = envutil.RmEnv(envStr, "ZDOTDIR")
-	cmd.Env = envutil.EnvToSlice(envStr)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("error executing zsh history fixup script: %w, output: %s", err, string(output))
-	}
-
-	err = os.Remove(waveHistFile)
-	if err != nil {
-		log.Printf("error removing wave zsh history file %s: %v\n", waveHistFile, err)
-	}
-	log.Printf("successfully merged wave zsh history %s into ~/.zsh_history\n", waveHistFile)
-
-	return nil
+	return platformFixupWaveZshHistory()
 }
 
 func GetTerminalResetSeq() string {

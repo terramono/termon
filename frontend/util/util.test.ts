@@ -25,13 +25,16 @@ import {
     isLocalConnName,
     isSshConnName,
     isWslConnName,
+    jotaiLoadableValue,
     jsonDeepEqual,
     lazy,
     makeConnRoute,
     makeExternLink,
     makeIconClass,
     mergeMeta,
+    NullAtom,
     parseDataUrl,
+    sleep,
     sortByDisplayOrder,
     stringToBase64,
 } from "./util";
@@ -96,6 +99,15 @@ describe("jsonDeepEqual", () => {
         expect(jsonDeepEqual({ a: [1, { b: 2 }] }, { a: [1, { b: 2 }] })).toBe(true);
         expect(jsonDeepEqual({ a: 1 }, { a: 2 })).toBe(false);
         expect(jsonDeepEqual([1, 2], [1])).toBe(false);
+    });
+
+    it("handles primitives and mismatched types", () => {
+        expect(jsonDeepEqual(1, 1)).toBe(true);
+        expect(jsonDeepEqual(1, "1")).toBe(false);
+        expect(jsonDeepEqual(null, undefined)).toBe(false);
+        expect(jsonDeepEqual(null, {})).toBe(false);
+        expect(jsonDeepEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false);
+        expect(jsonDeepEqual([1, 2], [1, 3])).toBe(false);
     });
 });
 
@@ -203,6 +215,37 @@ describe("countGraphemes", () => {
     });
 });
 
+describe("countGraphemes null input", () => {
+    it("returns zero for null", () => {
+        expect(countGraphemes(null)).toBe(0);
+    });
+});
+
+describe("escapeBytes control characters", () => {
+    it("escapes carriage return, backspace, form feed, esc, and low codes", () => {
+        expect(escapeBytes("\r\b\f\x1b\x07")).toBe("\\r\\b\\f\\x1b\\x07");
+    });
+});
+
+describe("mergeMeta section clearing", () => {
+    it("clears unprefixed section keys when section:* is true", () => {
+        const merged = mergeMeta({ ai: "old", "ai:model": "gpt" }, { "ai:*": true, ai: "new" });
+        expect(merged).toEqual({ ai: "new" });
+    });
+
+    it("filters unprefixed keys when prefix is empty string", () => {
+        const merged = mergeMeta({ plain: 1, "term:x": 2 }, { plain: 3 }, "");
+        expect(merged).toEqual({ plain: 3 });
+    });
+
+    it("skips falsy section wildcards and unrelated prefixed keys", () => {
+        expect(mergeMeta({ a: 1 }, { "term:*": false, "ai:x": 2 }, "term")).toEqual({});
+        expect(mergeMeta({ a: 1, "term:x": 2 }, { ":*": true }, "")).toEqual({ a: 1 });
+        expect(mergeMeta({}, { "ai:*": true }, "term")).toEqual({});
+        expect(mergeMeta({ a: 1, b: 2 }, { c: 3 }, "term")).toEqual({});
+    });
+});
+
 describe("makeIconClass and makeExternLink", () => {
     it("builds font-awesome class names", () => {
         expect(makeIconClass("terminal", true)).toContain("fa-terminal");
@@ -218,6 +261,7 @@ describe("makeIconClass and makeExternLink", () => {
     it("applies animation and fw modifiers from icon suffix", () => {
         expect(makeIconClass("terminal+spin", false)).toContain("fa-spin");
         expect(makeIconClass("terminal+beat", false)).toContain("fa-beat");
+        expect(makeIconClass("terminal+fade", false)).toContain("fa-fade");
         expect(makeIconClass("terminal+fw", false)).toContain("fa-fw");
     });
 
@@ -228,6 +272,7 @@ describe("makeIconClass and makeExternLink", () => {
 
     it("returns null for blank icon without default", () => {
         expect(makeIconClass("", false)).toBe(null);
+        expect(makeIconClass("not-valid!", false)).toBe(null);
     });
 
     it("builds extern redirect links", () => {
@@ -276,6 +321,10 @@ describe("deepCompareReturnPrev", () => {
         deepCompareReturnPrev(key, { a: 1 });
         expect(deepCompareReturnPrev(key, { a: 2 })).toEqual({ a: 2 });
     });
+
+    it("returns new value when key is null", () => {
+        expect(deepCompareReturnPrev(null, { a: 1 })).toEqual({ a: 1 });
+    });
 });
 
 describe("fireAndForget", () => {
@@ -321,6 +370,13 @@ describe("getPromiseState and getPromiseValue", () => {
         const rejectedPromise = Promise.reject(new Error("fail"));
         await rejectedPromise.catch(() => {});
         expect(getPromiseValue(rejectedPromise, "default")).toBe("default");
+    });
+
+    it("returns resolved promise value", async () => {
+        const resolvedPromise = Promise.resolve("ok");
+        getPromiseState(resolvedPromise);
+        await resolvedPromise;
+        expect(getPromiseValue(resolvedPromise, "default")).toBe("ok");
     });
 
     it("returns null state for null promise", () => {
@@ -376,6 +432,30 @@ describe("atomWithDebounce", () => {
         expect(store.get(debouncedValueAtom)).toBe("start");
         vi.advanceTimersByTime(100);
         expect(store.get(debouncedValueAtom)).toBe("updated");
+    });
+});
+
+describe("jotaiLoadableValue", () => {
+    it("returns data or default based on loadable state", () => {
+        expect(jotaiLoadableValue({ state: "hasData", data: "ok" }, "def")).toBe("ok");
+        expect(jotaiLoadableValue({ state: "loading" }, "def")).toBe("def");
+    });
+});
+
+describe("sleep", () => {
+    it("resolves after the requested delay", async () => {
+        vi.useFakeTimers();
+        const promise = sleep(50);
+        vi.advanceTimersByTime(50);
+        await promise;
+        vi.useRealTimers();
+    });
+});
+
+describe("NullAtom", () => {
+    it("is a null atom", () => {
+        const store = createStore();
+        expect(store.get(NullAtom)).toBeNull();
     });
 });
 

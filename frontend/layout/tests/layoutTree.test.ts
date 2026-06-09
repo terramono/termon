@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { assert, test } from "vitest";
+import { assert, test, vi } from "vitest";
 import { addChildAt, newLayoutNode } from "../lib/layoutNode";
 import {
     clearTree,
@@ -1064,6 +1064,36 @@ test("splitHorizontal wrap replaces target in parent", () => {
     assert.equal(treeState.focusedNodeId, newNode.id);
 });
 
+test("replaceNode and split helpers handle missing parent child index via findIndex", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    const findIndexSpy = vi.spyOn(Array.prototype, "findIndex").mockReturnValue(-1);
+
+    replaceNode(treeState, {
+        type: LayoutTreeActionType.ReplaceNode,
+        targetNodeId: target.id,
+        newNode,
+    });
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode: newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "h" }),
+        position: "before",
+    });
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode: newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "v" }),
+        position: "after",
+    });
+
+    findIndexSpy.mockRestore();
+    assert.equal(treeState.rootNode.children!.length, 2);
+});
+
 test("splitVertical wrap replaces target in parent", () => {
     const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
     const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
@@ -1080,6 +1110,48 @@ test("splitVertical wrap replaces target in parent", () => {
     assert.equal(treeState.rootNode.children!.length, 2);
     assert.equal(treeState.rootNode.children![0].flexDirection, FlexDirection.Column);
     assert.equal(treeState.rootNode.children![0].children![0].data!.blockId, "new");
+});
+
+test("splitHorizontal wrap logs when parent child index is missing", () => {
+    const target = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "new" });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const findIndexSpy = vi.spyOn(Array.prototype, "findIndex").mockReturnValue(-1);
+
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: target.id,
+        newNode,
+        position: "before",
+    });
+
+    findIndexSpy.mockRestore();
+    errorSpy.mockRestore();
+    assert.equal(treeState.rootNode.children!.length, 2);
+});
+
+test("splitVertical column parent logs when child index is missing", () => {
+    const target = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "target" });
+    const sibling = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "sibling" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [target, sibling]);
+    const treeState = newLayoutTreeState(root);
+    const newNode = newLayoutNode(FlexDirection.Column, undefined, undefined, { blockId: "new" });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const findIndexSpy = vi.spyOn(Array.prototype, "findIndex").mockReturnValue(-1);
+
+    splitVertical(treeState, {
+        type: LayoutTreeActionType.SplitVertical,
+        targetNodeId: target.id,
+        newNode,
+        position: "after",
+    });
+
+    findIndexSpy.mockRestore();
+    errorSpy.mockRestore();
+    assert.equal(treeState.rootNode.children!.length, 2);
 });
 
 test("resizeNode skips invalid size values", () => {

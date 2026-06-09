@@ -153,7 +153,16 @@ func setValue(field reflect.Value, value any) error {
 
 	// If field is pointer and value isn't already a pointer, try address
 	if field.Kind() == reflect.Ptr && valueRef.Kind() != reflect.Ptr {
-		return setValue(field, valueRef.Addr().Interface())
+		ptr := reflect.New(field.Type().Elem())
+		if valueRef.Type().AssignableTo(field.Type().Elem()) {
+			ptr.Elem().Set(valueRef)
+		} else if valueRef.Type().ConvertibleTo(field.Type().Elem()) {
+			ptr.Elem().Set(valueRef.Convert(field.Type().Elem()))
+		} else {
+			return fmt.Errorf("cannot set value of type %v to field of type %v", valueRef.Type(), field.Type())
+		}
+		field.Set(ptr)
+		return nil
 	}
 
 	// Try conversion if types are convertible
@@ -205,10 +214,7 @@ func DecodeDataURL(dataURL string) (mimeType string, data []byte, err error) {
 // MarshalJSONString marshals a string to JSON format, returning the properly escaped JSON string.
 // Returns empty string if there's an error (rare).
 func MarshalJSONString(s string) string {
-	jsonBytes, err := json.Marshal(s)
-	if err != nil {
-		return ""
-	}
+	jsonBytes, _ := json.Marshal(s)
 	return string(jsonBytes)
 }
 

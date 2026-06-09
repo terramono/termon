@@ -283,6 +283,12 @@ func EnsureWaveCachesDir() error {
 	return CacheEnsureDir(GetWaveCachesDir(), "wavecaches", 0700, "wave caches directory")
 }
 
+func ResetEnsureDirCache() {
+	baseLock.Lock()
+	ensureDirCache = map[string]bool{}
+	baseLock.Unlock()
+}
+
 func CacheEnsureDir(dirName string, cacheKey string, perm os.FileMode, dirDesc string) error {
 	baseLock.Lock()
 	ok := ensureDirCache[cacheKey]

@@ -11,6 +11,7 @@ import {
     isInputEvent,
     keyboardEventToASCII,
     keydownWrapper,
+    parseKey,
     parseKeyDescription,
     setKeyUtilPlatform,
     waveEventToKeyDesc,
@@ -18,6 +19,18 @@ import {
 
 afterEach(() => {
     setKeyUtilPlatform("darwin");
+});
+
+describe("parseKey", () => {
+    it("parses code keys and logs malformed regex matches", () => {
+        expect(parseKey("c{Enter}")).toEqual({ key: "Enter", type: "code" });
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const matchSpy = vi.spyOn(String.prototype, "match").mockReturnValue(["c{"] as RegExpMatchArray);
+        expect(parseKey("c{")).toEqual({ key: "c{", type: "key" });
+        expect(errorSpy).toHaveBeenCalled();
+        matchSpy.mockRestore();
+        errorSpy.mockRestore();
+    });
 });
 
 describe("parseKeyDescription", () => {
@@ -242,5 +255,267 @@ describe("keyboardEventToASCII special keys", () => {
             key: "ArrowUp",
         } as WaveKeyboardEvent;
         expect(keyboardEventToASCII(event)).toBe("\x1b[A");
+    });
+
+    it("returns empty string for empty keys and alt-modified input", () => {
+        expect(
+            keyboardEventToASCII({
+                alt: true,
+                control: false,
+                meta: false,
+                key: "a",
+            } as WaveKeyboardEvent)
+        ).toBe("");
+        expect(
+            keyboardEventToASCII({
+                alt: false,
+                control: false,
+                meta: false,
+                key: "",
+            } as WaveKeyboardEvent)
+        ).toBe("");
+    });
+
+    it("logs and returns empty for unsupported multi-char keys", () => {
+        const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+        expect(
+            keyboardEventToASCII({
+                alt: false,
+                control: false,
+                meta: false,
+                key: "F13",
+            } as WaveKeyboardEvent)
+        ).toBe("");
+        expect(logSpy).toHaveBeenCalled();
+        logSpy.mockRestore();
+    });
+});
+
+describe("parseKeyDescription modifier mappings", () => {
+    it("maps Option and Meta on macOS", () => {
+        setKeyUtilPlatform("darwin");
+        expect(parseKeyDescription("Option:a").mods.Alt).toBe(true);
+        expect(parseKeyDescription("Meta:a").mods.Cmd).toBe(true);
+    });
+
+    it("maps Option and Meta on Windows", () => {
+        setKeyUtilPlatform("win32");
+        expect(parseKeyDescription("Option:a").mods.Meta).toBe(true);
+        expect(parseKeyDescription("Meta:a").mods.Option).toBe(true);
+    });
+
+    it("maps Alt on macOS and Windows", () => {
+        setKeyUtilPlatform("darwin");
+        expect(parseKeyDescription("Alt:a").mods.Option).toBe(true);
+        setKeyUtilPlatform("win32");
+        expect(parseKeyDescription("Alt:a").mods.Cmd).toBe(true);
+    });
+
+    it("maps space key token to Space", () => {
+        expect(parseKeyDescription(" ").key).toBe("Space");
+    });
+
+    it("maps Shift Ctrl and standalone modifiers", () => {
+        const parsed = parseKeyDescription("Shift:Ctrl:Enter");
+        expect(parsed.mods.Shift).toBe(true);
+        expect(parsed.mods.Ctrl).toBe(true);
+        expect(parsed.key).toBe("Enter");
+    });
+});
+
+describe("waveEventToKeyDesc modifiers", () => {
+    it("includes all modifier labels", () => {
+        const desc = waveEventToKeyDesc({
+            cmd: true,
+            option: true,
+            meta: true,
+            control: true,
+            shift: true,
+            alt: true,
+            key: "k",
+            code: "KeyK",
+        } as WaveKeyboardEvent);
+        expect(desc).toBe("Cmd:Option:Meta:Ctrl:Shift:k");
+    });
+});
+
+describe("checkKeyPressed edge cases", () => {
+    it("matches uppercase keys with shift descriptions", () => {
+        const event = {
+            cmd: false,
+            option: false,
+            meta: false,
+            control: false,
+            shift: true,
+            alt: false,
+            key: "E",
+            code: "KeyE",
+        } as WaveKeyboardEvent;
+        expect(checkKeyPressed(event, "E")).toBe(true);
+        expect(checkKeyPressed(event, "Space")).toBe(false);
+    });
+
+    it("matches code-based key descriptions", () => {
+        const event = {
+            cmd: false,
+            option: false,
+            meta: false,
+            control: false,
+            shift: false,
+            alt: false,
+            key: "",
+            code: "F1",
+        } as WaveKeyboardEvent;
+        expect(checkKeyPressed(event, "c{F1}")).toBe(true);
+    });
+
+    it("rejects modifier mismatches", () => {
+        const event = {
+            cmd: false,
+            option: true,
+            meta: false,
+            control: false,
+            shift: false,
+            alt: false,
+            key: "a",
+            code: "KeyA",
+        } as WaveKeyboardEvent;
+        expect(checkKeyPressed(event, "a")).toBe(false);
+    });
+
+    it("rejects individual modifier mismatches and matches space keys", () => {
+        const base = {
+            cmd: false,
+            option: false,
+            meta: false,
+            control: false,
+            shift: false,
+            alt: false,
+            key: "a",
+            code: "KeyA",
+        } as WaveKeyboardEvent;
+        expect(checkKeyPressed({ ...base, cmd: true }, "Ctrl:a")).toBe(false);
+        expect(checkKeyPressed({ ...base, control: true }, "Cmd:a")).toBe(false);
+        expect(checkKeyPressed({ ...base, control: false }, "Ctrl:a")).toBe(false);
+        expect(checkKeyPressed({ ...base, alt: true }, "Option:a")).toBe(false);
+        setKeyUtilPlatform("win32");
+        expect(checkKeyPressed({ ...base, cmd: true, alt: false }, "Alt:a")).toBe(false);
+        setKeyUtilPlatform("darwin");
+        expect(checkKeyPressed({ ...base, option: true, alt: false }, "Alt:a")).toBe(false);
+        setKeyUtilPlatform("darwin");
+        expect(checkKeyPressed({ ...base, cmd: true, meta: false }, "Meta:a")).toBe(false);
+        setKeyUtilPlatform("win32");
+        expect(checkKeyPressed({ ...base, option: true, meta: false }, "Meta:a")).toBe(false);
+        setKeyUtilPlatform("darwin");
+        expect(
+            checkKeyPressed({ ...base, key: " ", code: "Space" }, "Space")
+        ).toBe(true);
+    });
+});
+
+describe("adaptFromReactOrNativeKeyEvent", () => {
+    it("maps Windows modifier keys", () => {
+        setKeyUtilPlatform("win32");
+        const waveEvent = adaptFromReactOrNativeKeyEvent({
+            type: "keyup",
+            ctrlKey: true,
+            shiftKey: false,
+            metaKey: false,
+            altKey: true,
+            code: "KeyB",
+            key: "b",
+            location: 0,
+            repeat: false,
+        } as React.KeyboardEvent);
+        expect(waveEvent.cmd).toBe(true);
+        expect(waveEvent.option).toBe(false);
+        expect(waveEvent.type).toBe("keyup");
+    });
+
+    it("defaults unknown event types", () => {
+        const waveEvent = adaptFromReactOrNativeKeyEvent({
+            type: "custom",
+            ctrlKey: false,
+            shiftKey: false,
+            metaKey: false,
+            altKey: false,
+            code: "KeyC",
+            key: "c",
+            location: 0,
+            repeat: false,
+        } as React.KeyboardEvent);
+        expect(waveEvent.type).toBe("unknown");
+    });
+});
+
+describe("adaptFromElectronKeyEvent", () => {
+    it("maps keyUp and Windows modifiers", () => {
+        setKeyUtilPlatform("win32");
+        const waveEvent = adaptFromElectronKeyEvent({
+            type: "keyUp",
+            control: false,
+            meta: false,
+            alt: true,
+            shift: false,
+            isAutoRepeat: true,
+            location: 0,
+            code: "Space",
+            key: " ",
+        });
+        expect(waveEvent.type).toBe("keyup");
+        expect(waveEvent.cmd).toBe(true);
+        expect(waveEvent.repeat).toBe(true);
+    });
+
+    it("defaults unknown electron event types", () => {
+        const waveEvent = adaptFromElectronKeyEvent({
+            type: "other",
+            control: false,
+            meta: false,
+            alt: false,
+            shift: false,
+            isAutoRepeat: false,
+            location: 0,
+            code: "KeyZ",
+            key: "z",
+        });
+        expect(waveEvent.type).toBe("unknown");
+    });
+});
+
+describe("keydownWrapper", () => {
+    it("does not prevent default when handler returns false", () => {
+        const event = {
+            type: "keydown",
+            ctrlKey: false,
+            shiftKey: false,
+            metaKey: false,
+            altKey: false,
+            code: "KeyX",
+            key: "x",
+            location: 0,
+            repeat: false,
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+        } as unknown as KeyboardEvent;
+        keydownWrapper(() => false)(event);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+});
+
+describe("isInputEvent", () => {
+    it("detects character input events", () => {
+        expect(
+            isInputEvent({
+                cmd: false,
+                option: false,
+                meta: false,
+                control: false,
+                shift: false,
+                alt: false,
+                key: "z",
+                code: "KeyZ",
+            } as WaveKeyboardEvent)
+        ).toBe(true);
     });
 });

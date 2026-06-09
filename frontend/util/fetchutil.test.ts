@@ -14,4 +14,5 @@ describe("fetchutil", () => {
         expect(result).toBe(response);
         vi.unstubAllGlobals();
     });
+
 });

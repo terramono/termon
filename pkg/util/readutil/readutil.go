@@ -16,6 +16,11 @@ const (
 	StopReasonReadLimit = "read_limit"
 )
 
+var (
+	readLinesInternalFn = ReadLines
+	readTailInitialBytes int64 = 1024 * 1024
+)
+
 // ReadLines reads lines from the reader, optionally skipping the first skipLines lines.
 // If lineCount is 0, no line limit is applied. If readLimit is 0, no byte limit is applied.
 // Stops when either limit is reached or EOF.
@@ -131,7 +136,7 @@ func readTailLinesInternal(rs io.ReadSeeker, lineCount int, lineOffset int, keep
 		return nil, false, err
 	}
 
-	lines, _, err := ReadLines(rs, linesToRead, 0, 0)
+	lines, _, err := readLinesInternalFn(rs, linesToRead, 0, 0)
 	if err != nil {
 		return nil, false, err
 	}
@@ -155,7 +160,7 @@ func ReadTailLines(file *os.File, lineCount int, lineOffset int, readLimit int64
 	}
 	fileSize := fileInfo.Size()
 
-	readBytes := int64(1024 * 1024)
+	readBytes := readTailInitialBytes
 	if readLimit < readBytes {
 		readBytes = readLimit
 	}

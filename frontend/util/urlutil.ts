@@ -15,7 +15,7 @@ export function isAllowedExternalUrl(url: string): boolean {
     }
 }
 
-function isPrivateOrLoopbackHost(hostname: string): boolean {
+function isPrivateOrLoopbackHostImpl(hostname: string): boolean {
     const host = hostname.toLowerCase();
     if (host === "localhost" || host.endsWith(".localhost")) {
         return true;
@@ -56,6 +56,10 @@ function isPrivateOrLoopbackHost(hostname: string): boolean {
     return false;
 }
 
+export function isPrivateOrLoopbackHost(hostname: string): boolean {
+    return isPrivateOrLoopbackHostImpl(hostname);
+}
+
 export function isAllowedRemoteFetchUrl(url: string, allowLocalhost: boolean): boolean {
     if (!url || typeof url !== "string") {
         return false;
@@ -68,7 +72,7 @@ export function isAllowedRemoteFetchUrl(url: string, allowLocalhost: boolean): b
         if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
             return false;
         }
-        if (!allowLocalhost && isPrivateOrLoopbackHost(parsed.hostname)) {
+        if (!allowLocalhost && isPrivateOrLoopbackHostImpl(parsed.hostname)) {
             return false;
         }
         return true;

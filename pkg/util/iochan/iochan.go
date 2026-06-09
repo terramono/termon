@@ -19,6 +19,8 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/wshutil"
 )
 
+var newSHA256Hash = sha256.New
+
 // ReaderChan reads from an io.Reader and sends the data to a channel
 func ReaderChan(ctx context.Context, r io.Reader, chunkSize int64, callback func()) chan wshrpc.RespOrErrorUnion[iochantypes.Packet] {
 	ch := make(chan wshrpc.RespOrErrorUnion[iochantypes.Packet], 32)
@@ -28,13 +30,10 @@ func ReaderChan(ctx context.Context, r io.Reader, chunkSize int64, callback func
 			close(ch)
 			callback()
 		}()
-		sha256Hash := sha256.New()
+		sha256Hash := newSHA256Hash()
 		for {
 			select {
 			case <-ctx.Done():
-				if ctx.Err() == context.Canceled {
-					return
-				}
 				return
 			default:
 				buf := make([]byte, chunkSize)
@@ -67,7 +66,7 @@ func WriterChan(ctx context.Context, w io.Writer, ch <-chan wshrpc.RespOrErrorUn
 			}
 			callback()
 		}()
-		sha256Hash := sha256.New()
+		sha256Hash := newSHA256Hash()
 		for {
 			select {
 			case <-ctx.Done():

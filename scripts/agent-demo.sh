@@ -101,6 +101,19 @@ fi
 
 log_wait "found window $WIN_ID"
 xdotool windowactivate --sync "$WIN_ID"
+
+# Small centered window so all corners are visible in recordings (not maximized/fullscreen)
+SCREEN_W="$(xdotool getdisplaygeometry 2>/dev/null | awk '{print $1}')"
+SCREEN_H="$(xdotool getdisplaygeometry 2>/dev/null | awk '{print $2}')"
+WIN_W=1280
+WIN_H=800
+if [[ -n "$SCREEN_W" && -n "$SCREEN_H" ]]; then
+    WIN_X=$(( (SCREEN_W - WIN_W) / 2 ))
+    WIN_Y=$(( (SCREEN_H - WIN_H) / 2 ))
+    xdotool windowsize --sync "$WIN_ID" "$WIN_W" "$WIN_H" 2>/dev/null || true
+    xdotool windowmove --sync "$WIN_ID" "$WIN_X" "$WIN_Y" 2>/dev/null || true
+    log_wait "window ${WIN_W}x${WIN_H} centered at ${WIN_X},${WIN_Y}"
+fi
 sleep 4
 
 if [[ "$RECORD" -eq 0 ]]; then

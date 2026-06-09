@@ -15,6 +15,7 @@ import (
 
 var tokenSwapMap map[string]*TokenSwapEntry = make(map[string]*TokenSwapEntry)
 var tokenMapLock = &sync.Mutex{}
+var unpackedTokenMarshal = json.Marshal
 
 type TokenSwapEntry struct {
 	Token      string             `json:"token"`
@@ -31,7 +32,7 @@ type UnpackedTokenType struct {
 
 func (t *UnpackedTokenType) Pack() (string, error) {
 	// convert to json, and then base64 encode
-	barr, err := json.Marshal(t)
+	barr, err := unpackedTokenMarshal(t)
 	if err != nil {
 		return "", err
 	}

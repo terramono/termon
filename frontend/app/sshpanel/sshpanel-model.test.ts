@@ -121,4 +121,19 @@ describe("groupHosts", () => {
         expect(connectionMetaFromSshHost(groups[0].hosts[0])).toBe("alice@shared");
         expect(connectionMetaFromSshHost(groups[0].hosts[1])).toBe("bob@shared:2222");
     });
+
+    it("sorts by port when pattern and user match", () => {
+        const groups = groupHosts([
+            host({ pattern: "acme-srv", user: "deploy", port: "2222" }),
+            host({ pattern: "acme-srv", user: "deploy", port: "22" }),
+            host({ pattern: "acme-srv", user: "deploy", port: "8022" }),
+        ]);
+        const acme = groups.find((g) => g.name === "acme");
+        expect(acme?.hosts.map((h) => h.port)).toEqual(["22", "2222", "8022"]);
+    });
+
+    it("places other before named groups in sort comparator", () => {
+        const groups = groupHosts([host({ pattern: "solo" }), host({ pattern: "grp-a" })]);
+        expect(groups.map((g) => g.name)).toEqual(["grp", "other"]);
+    });
 });

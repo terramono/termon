@@ -36,6 +36,15 @@ describe("goHistoryBack", () => {
     it("returns null when already at root with empty history", () => {
         expect(goHistoryBack("file", "/", {}, true)).toBe(null);
     });
+
+    it("returns null when history is empty and backToParent is false", () => {
+        expect(goHistoryBack("file", "/a/b", {}, false)).toBe(null);
+    });
+
+    it("returns root when navigating up from single-segment path", () => {
+        const result = goHistoryBack("file", "/only", {}, true);
+        expect(result).toEqual({ file: "/", "history:forward": ["/only"] });
+    });
 });
 
 describe("goHistoryForward", () => {
@@ -61,5 +70,11 @@ describe("goHistoryForward", () => {
         expect(result.history.length).toBe(20);
         expect(result.history[0]).toBe("/path/1");
         expect(result.history[19]).toBe("/current");
+    });
+
+    it("trims forward history when navigating back to parent", () => {
+        const longForward = Array.from({ length: 25 }, (_, i) => `/fwd/${i}`);
+        const result = goHistoryBack("file", "/a/b/c", { "history:forward": longForward }, true);
+        expect(result["history:forward"].length).toBe(20);
     });
 });

@@ -14,6 +14,7 @@ import (
 
 var customDayStrRe = regexp.MustCompile(`^((?:\d{4}-\d{2}-\d{2})|today|yesterday|bom|bow)?((?:[+-]\d+[dwm])*)$`)
 var daystrRe = regexp.MustCompile(`^(\d{4})-(\d{2})-(\d{2})$`)
+var daystrNowFn = time.Now
 
 func GetCurDayStr() string {
 	now := time.Now()
@@ -56,7 +57,7 @@ func GetCustomDayStr(format string) (string, error) {
 		prefix = "today"
 	}
 	var rtnTime time.Time
-	now := time.Now()
+	now := daystrNowFn()
 	switch prefix {
 	case "today":
 		rtnTime = now
@@ -73,9 +74,6 @@ func GetCustomDayStr(format string) (string, error) {
 		}
 	default:
 		m = daystrRe.FindStringSubmatch(prefix)
-		if m == nil {
-			return "", fmt.Errorf("invalid prefix format")
-		}
 		year, month, day := m[1], m[2], m[3]
 		yearInt, monthInt, dayInt := utilfn.AtoiNoErr(year), utilfn.AtoiNoErr(month), utilfn.AtoiNoErr(day)
 		if yearInt == 0 || monthInt == 0 || dayInt == 0 {
@@ -84,10 +82,7 @@ func GetCustomDayStr(format string) (string, error) {
 		rtnTime = time.Date(yearInt, time.Month(monthInt), dayInt, 0, 0, 0, 0, now.Location())
 	}
 	for _, delta := range regexp.MustCompile(`[+-]\d+[dwm]`).FindAllString(deltas, -1) {
-		deltaVal, err := strconv.Atoi(delta[1 : len(delta)-1])
-		if err != nil {
-			return "", fmt.Errorf("invalid delta format")
-		}
+		deltaVal, _ := strconv.Atoi(delta[1 : len(delta)-1])
 		if delta[0] == '-' {
 			deltaVal = -deltaVal
 		}

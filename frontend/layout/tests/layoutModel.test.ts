@@ -697,3 +697,856 @@ test("LayoutModel geometry getters read additional props", () => {
     assert.equal(model.getNodeAdditionalPropertiesById(leaf.id).treeKey, leaf.id);
     assert.equal(globalStore.get(model.getNodeAdditionalPropertiesAtom(leaf.id)).rect.left, 2);
 });
+
+test("LayoutModel derived atoms expose resize handles and overlay state", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    const resizeHandleAtom = globalStore.get(model.resizeHandles)[0];
+    assert(resizeHandleAtom != null);
+    assert.equal(globalStore.get(resizeHandleAtom).flexDirection, FlexDirection.Row);
+
+    globalStore.set(model.isContainerResizing, true);
+    assert.equal(globalStore.get(model.isResizing), true);
+
+    globalStore.set(model.activeDrag, true);
+    const overlay = globalStore.get(model.overlayTransform);
+    assert.equal(overlay.top, 0);
+
+    globalStore.set(model.showOverlay, true);
+    assert.equal(globalStore.get(model.overlayTransform).top, 0);
+});
+
+test("LayoutModel focusedNode prefers ephemeral node", () => {
+    const model = makeModel();
+    attachDisplayContainer(model);
+    model.newEphemeralNode("eph-focus");
+    const focused = globalStore.get(model.focusedNode);
+    assert.equal(focused?.data?.blockId, "eph-focus");
+});
+
+test("LayoutModel placeholderTransform handles move and swap actions", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 400, 200);
+    model.updateTree();
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 200, height: 200 },
+        [leafB.id]: { top: 0, left: 200, width: 200, height: 200 },
+        [root.id]: { top: 0, left: 0, width: 400, height: 200 },
+    });
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafA,
+        parentId: root.id,
+        index: 1,
+        insertAtRoot: false,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Swap,
+        node1Id: leafA.id,
+        node2Id: leafB.id,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+});
+
+test("LayoutModel backend action handlers cover error and cleanup paths", async () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "keep" });
+    globalStore.set(layoutStateAtom, {
+        rootnode: root,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "",
+                actiontype: LayoutTreeActionType.InsertNode,
+                blockid: "skip",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "eph-1",
+                actiontype: LayoutTreeActionType.InsertNode,
+                blockid: "eph-block",
+                focused: false,
+                magnified: false,
+                ephemeral: true,
+            },
+            {
+                actionid: "del-missing",
+                actiontype: LayoutTreeActionType.DeleteNode,
+                blockid: "missing",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "idx-missing",
+                actiontype: LayoutTreeActionType.InsertNodeAtIndex,
+                blockid: "idx-block",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "cleanup-1",
+                actiontype: "cleanuporphaned",
+                blockid: "",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "noop-1",
+                actiontype: "unsupported" as any,
+                blockid: "",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    const tabAtom = atom<Tab>({
+        oid: "tab-cleanup",
+        layoutstate: "layout-cleanup",
+        blockids: ["orphan-block", "keep"],
+    } as Tab);
+    const model = new LayoutModel(tabAtom, globalStore.get, globalStore.set);
+    attachDisplayContainer(model);
+    model.onNodeDelete = vi.fn(async () => {});
+    model.updateTree();
+    model.onBackendUpdate();
+    await flushAsync();
+    assert.equal(globalStore.get(model.ephemeralNode)?.data?.blockId, "eph-block");
+});
+
+test("LayoutModel treeReducer warns on empty pending action and failed commit", () => {
+    const model = makeModel();
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    model.treeReducer({ type: LayoutTreeActionType.SetPendingAction, action: null }, false);
+    model.treeReducer({ type: LayoutTreeActionType.CommitPendingAction }, false);
+    expect(warnSpy).toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+});
+
+test("LayoutModel focus and close handle missing nodes", () => {
+    const model = makeModel();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    model.focusNode("missing-node");
+    model.closeNode("missing-node");
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+});
+
+test("LayoutModel node model atoms and callbacks", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 100, height: 100 },
+        [leafB.id]: { top: 0, left: 100, width: 100, height: 100 },
+    });
+    globalStore.set(model.additionalProps, {
+        ...globalStore.get(model.additionalProps),
+        [leafA.id]: {
+            rect: { top: 0, left: 0, width: 100, height: 100 },
+            transform: { width: "100px", height: "100px" },
+            treeKey: leafA.id,
+        },
+        [leafB.id]: {
+            rect: { top: 0, left: 100, width: 100, height: 100 },
+            transform: { width: "100px", height: "100px" },
+            treeKey: leafB.id,
+        },
+    });
+    const nodeModel = model.getNodeModel(leafA);
+    assert(globalStore.get(nodeModel.innerRect) != null);
+    assert.equal(globalStore.get(nodeModel.blockNum), 1);
+    assert.equal(globalStore.get(nodeModel.isFocused), false);
+    model.focusNode(leafA.id);
+    assert.equal(globalStore.get(nodeModel.isFocused), true);
+    nodeModel.toggleMagnify();
+    nodeModel.focusNode();
+});
+
+test("LayoutModel onResizeMove rejects invalid handles and min sizes", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 400, 200);
+    model.updateTree();
+    const addlProps = globalStore.get(model.additionalProps);
+    const resizeHandle = addlProps[root.id]?.resizeHandles?.[0];
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    model.onResizeMove({ ...resizeHandle, parentIndex: 99 } as any, 0, 0);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+});
+
+test("LayoutModel closeFocusedNode closes current focus", async () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "close-me" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+    model.onNodeDelete = vi.fn(async () => {});
+    model.focusNode(leaf.id);
+    await model.closeFocusedNode();
+    assert(model.getNodeByBlockId("close-me") == null);
+});
+
+test("LayoutModel newEphemeralNode replaces existing ephemeral node", async () => {
+    const model = makeModel();
+    attachDisplayContainer(model);
+    model.onNodeDelete = vi.fn(async () => {});
+    model.newEphemeralNode("first-eph");
+    model.newEphemeralNode("second-eph");
+    assert.equal(globalStore.get(model.ephemeralNode)?.data?.blockId, "second-eph");
+});
+
+test("LayoutModel cleanupNodeModels removes stale node models", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    model.getNodeModel(leafA);
+    model.getNodeModel(leafB);
+    globalStore.set(model.leafOrder, [{ nodeid: leafA.id, blockid: "a" }]);
+    model.updateTree();
+    assert(model.getNodeModel(leafB) != null);
+});
+
+test("LayoutModel focusedNode returns null when focus id missing", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    globalStore.set(model.localTreeStateAtom, {
+        rootnode: leaf,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+    });
+    assert(globalStore.get(model.focusedNode) == null);
+});
+
+test("LayoutModel focusedNode resolves focused tree node", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    model.focusNode(leaf.id);
+    assert.equal(globalStore.get(model.focusedNode)?.id, leaf.id);
+});
+
+test("LayoutModel getFirstBlockId returns undefined for empty layout", () => {
+    const model = makeEmptyModel();
+    assert(model.getFirstBlockId() == undefined);
+});
+
+test("LayoutModel persistToBackend writes wave object state", async () => {
+    vi.useFakeTimers();
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "persist" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.onNodeDelete = vi.fn(async () => {});
+    model.newEphemeralNode("eph-persist");
+    await model.closeNode(globalStore.get(model.ephemeralNode).id);
+    vi.advanceTimersByTime(150);
+    const waveObj = globalStore.get(layoutStateAtom);
+    assert(waveObj != null);
+    vi.useRealTimers();
+});
+
+test("LayoutModel treeReducer handles Move action", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    model.treeReducer(
+        {
+            type: LayoutTreeActionType.Move,
+            node: leafB,
+            parentId: root.id,
+            index: 0,
+            insertAtRoot: false,
+        },
+        false
+    );
+    assert.equal(model.treeState.rootNode!.children![0].data!.blockId, "b");
+});
+
+test("LayoutModel placeholder move variants cover insert positions", () => {
+    const leafA = newLayoutNode(FlexDirection.Column, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Column, 50, undefined, { blockId: "b" });
+    const leafC = newLayoutNode(FlexDirection.Column, 50, undefined, { blockId: "c" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [leafA, leafB, leafC]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 200, 600);
+    model.updateTree();
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 200, height: 200 },
+        [leafB.id]: { top: 200, left: 0, width: 200, height: 200 },
+        [leafC.id]: { top: 400, left: 0, width: 200, height: 200 },
+        [root.id]: { top: 0, left: 0, width: 200, height: 600 },
+    });
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafC,
+        parentId: root.id,
+        index: 2,
+        insertAtRoot: false,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafA,
+        parentId: root.id,
+        index: 0,
+        insertAtRoot: true,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+});
+
+test("LayoutModel updateTree restores focus from stack and z-index flags", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 400, 200);
+    model.focusNode(leafB.id);
+    model.focusedNodeIdStack = [leafA.id];
+    model.treeState.focusedNodeId = undefined;
+    model.updateTree();
+    assert(model.treeState.focusedNodeId != null);
+
+    model.magnifyNodeToggle(leafA.id);
+    model.updateTree();
+    model.magnifyNodeToggle(leafA.id);
+    model.lastMagnifiedNodeId = leafA.id;
+    model.updateTree();
+    const zProps = globalStore.get(model.additionalProps)[leafA.id];
+    assert.equal(zProps?.transform?.zIndex, "var(--zindex-layout-last-magnified-node)");
+
+    model.lastEphemeralNodeId = leafB.id;
+    model.updateTree();
+    const ephProps = globalStore.get(model.additionalProps)[leafB.id];
+    assert.equal(ephProps?.transform?.zIndex, "var(--zindex-layout-last-ephemeral-node)");
+});
+
+test("LayoutModel switchNodeFocusInDirection scans layout and hits boundaries", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 200, 100);
+    seedLeafOrder(model, leafA);
+    globalStore.set(model.leafs, [leafA, leafB]);
+    globalStore.set(model.leafOrder, [
+        { nodeid: leafA.id, blockid: "a" },
+        { nodeid: leafB.id, blockid: "b" },
+    ]);
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 80, height: 80 },
+        [leafB.id]: { top: 0, left: 100, width: 80, height: 80 },
+    });
+
+    const noFocus = model.switchNodeFocusInDirection(NavigateDirection.Right, false);
+    assert.equal(noFocus.success, true);
+
+    model.focusNode(leafA.id);
+    const found = model.switchNodeFocusInDirection(NavigateDirection.Right, false);
+    assert.equal(found.success, true);
+    assert.equal(model.treeState.focusedNodeId, leafB.id);
+
+    model.focusNode(leafA.id);
+    const boundary = model.switchNodeFocusInDirection(NavigateDirection.Left, false);
+    assert.equal(boundary.success, false);
+    assert(boundary.atLeft === true);
+
+    const waveUp = model.switchNodeFocusInDirection(NavigateDirection.Up, true);
+    assert.equal(waveUp.atTop, true);
+});
+
+test("LayoutModel switchNodeFocusInDirection fails without geometry or container", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    seedLeafOrder(model, leaf);
+    globalStore.set(model.leafs, [leaf]);
+    model.focusNode(leaf.id);
+    globalStore.set(model.additionalProps, {});
+    const missingRect = model.switchNodeFocusInDirection(NavigateDirection.Right, false);
+    assert.equal(missingRect.success, false);
+
+    const noContainer = makeModel(leaf);
+    attachDisplayContainer(noContainer);
+    seedLeafOrder(noContainer, leaf);
+    globalStore.set(noContainer.leafs, [leaf]);
+    noContainer.focusNode(leaf.id);
+    seedNodeRects(noContainer, { [leaf.id]: { top: 0, left: 0, width: 20, height: 20 } });
+    (noContainer.displayContainerRef as { current: HTMLDivElement | null }).current = {
+        getBoundingClientRect: () => null,
+    } as HTMLDivElement;
+    const noBounds = noContainer.switchNodeFocusInDirection(NavigateDirection.Right, false);
+    assert.equal(noBounds.success, false);
+});
+
+test("LayoutModel backend actions handle replace and split errors", async () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+    model.onNodeDelete = vi.fn(async () => {});
+
+    globalStore.set(layoutStateAtom, {
+        rootnode: model.treeState.rootNode,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "replace-missing",
+                actiontype: LayoutTreeActionType.ReplaceNode,
+                blockid: "new",
+                targetblockid: "missing",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-h-bad-pos",
+                actiontype: LayoutTreeActionType.SplitHorizontal,
+                blockid: "split-h",
+                targetblockid: "target",
+                position: "middle" as any,
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-v-bad-pos",
+                actiontype: LayoutTreeActionType.SplitVertical,
+                blockid: "split-v",
+                targetblockid: "target",
+                position: "middle" as any,
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-h-ok",
+                actiontype: LayoutTreeActionType.SplitHorizontal,
+                blockid: "split-ok",
+                targetblockid: "target",
+                position: "after",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "insert-idx-ok",
+                actiontype: LayoutTreeActionType.InsertNodeAtIndex,
+                blockid: "idx-ok",
+                indexarr: [0],
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+    assert(model.getNodeByBlockId("split-ok") != null);
+    assert(model.getNodeByBlockId("idx-ok") != null);
+});
+
+test("LayoutModel closeNode unmagnifies and addEphemeralNodeToLayout clears magnify", async () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "mag-close" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+    model.onNodeDelete = vi.fn(async () => {});
+    model.magnifyNodeToggle(leaf.id);
+    await model.closeNode(leaf.id);
+    assert(model.getNodeByBlockId("mag-close") == null);
+
+    const ephModel = makeModel();
+    attachDisplayContainer(ephModel);
+    ephModel.magnifyNodeToggle(leaf.id);
+    ephModel.newEphemeralNode("eph-add");
+    ephModel.addEphemeralNodeToLayout();
+    assert(ephModel.getNodeByBlockId("eph-add") != null);
+});
+
+test("LayoutModel onResizeMove rejects sizes below minimum", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 400, 200);
+    model.updateTree();
+    const resizeHandle = globalStore.get(model.additionalProps)[root.id].resizeHandles![0];
+    model.onResizeMove(resizeHandle, 0, 0);
+    model.onResizeMove(resizeHandle, 9999, 0);
+    assert(globalStore.get(model.pendingTreeAction.currentValueAtom) == null);
+});
+
+test("LayoutModel backend split actions log missing targets and invalid positions", async () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    globalStore.set(layoutStateAtom, {
+        rootnode: model.treeState.rootNode,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "split-h-missing",
+                actiontype: LayoutTreeActionType.SplitHorizontal,
+                blockid: "new-h",
+                targetblockid: "missing",
+                position: "after",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-v-missing",
+                actiontype: LayoutTreeActionType.SplitVertical,
+                blockid: "new-v",
+                targetblockid: "missing",
+                position: "after",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-h-bad",
+                actiontype: LayoutTreeActionType.SplitHorizontal,
+                blockid: "bad-h",
+                targetblockid: "target",
+                position: "middle" as any,
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "split-v-bad",
+                actiontype: LayoutTreeActionType.SplitVertical,
+                blockid: "bad-v",
+                targetblockid: "target",
+                position: "middle" as any,
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+});
+
+test("LayoutModel backend actions cover ephemeral insert replace and clear", async () => {
+    const root = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "target" });
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    globalStore.set(layoutStateAtom, {
+        rootnode: model.treeState.rootNode,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "eph-insert",
+                actiontype: LayoutTreeActionType.InsertNode,
+                blockid: "eph-backend",
+                focused: false,
+                magnified: false,
+                ephemeral: true,
+            },
+            {
+                actionid: "replace-ok",
+                actiontype: LayoutTreeActionType.ReplaceNode,
+                blockid: "replaced",
+                targetblockid: "target",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+            {
+                actionid: "clear-tree",
+                actiontype: LayoutTreeActionType.ClearTree,
+                blockid: "",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+    assert.equal(globalStore.get(model.ephemeralNode)?.data?.blockId, "eph-backend");
+});
+
+test("LayoutModel placeholder move handles root insert and trailing index", () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 400, 200);
+    model.updateTree();
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 200, height: 200 },
+        [leafB.id]: { top: 0, left: 200, width: 200, height: 200 },
+        [root.id]: { top: 0, left: 0, width: 400, height: 200 },
+    });
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafA,
+        parentId: root.id,
+        index: 0,
+        insertAtRoot: true,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafA,
+        parentId: root.id,
+        index: 3,
+        insertAtRoot: false,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+
+});
+
+test("LayoutModel node model derived atoms cover single-leaf and ephemeral paths", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+    const soloModel = model.getNodeModel(leaf);
+    expect(globalStore.get(soloModel.innerRect)).toBeNull();
+
+    const twoLeafRoot = newLayoutNode(FlexDirection.Row, undefined, [
+        newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "a" }),
+        newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "b" }),
+    ]);
+    const twoModel = makeModel(twoLeafRoot);
+    attachDisplayContainer(twoModel, 400, 200);
+    twoModel.updateTree();
+    const leafA = globalStore.get(twoModel.leafs)[0];
+    const nodeModel = twoModel.getNodeModel(leafA);
+    twoModel.magnifyNodeToggle(leafA.id);
+    expect(globalStore.get(nodeModel.anyMagnified)).toBe(true);
+    twoModel.newEphemeralNode("eph-node");
+    const eph = globalStore.get(twoModel.ephemeralNode);
+    const ephModel = twoModel.getNodeModel(eph);
+    expect(globalStore.get(ephModel.isEphemeral)).toBe(true);
+    attachDisplayContainer(twoModel);
+    ephModel.addEphemeralNodeToLayout();
+    ephModel.onClose();
+});
+
+test("LayoutModel switchNodeFocusInDirection hits waveAI down boundary", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model, 50, 50);
+    model.updateTree();
+    seedLeafOrder(model, leaf);
+    globalStore.set(model.leafs, [leaf]);
+    seedNodeRects(model, {
+        [leaf.id]: { top: 5, left: 2, width: 8, height: 8 },
+    });
+    model.focusNode(leaf.id);
+
+    const waveDown = model.switchNodeFocusInDirection(NavigateDirection.Down, true);
+    assert.equal(waveDown.success, false);
+    assert(waveDown.atBottom === true);
+
+    const waveLeft = model.switchNodeFocusInDirection(NavigateDirection.Left, true);
+    assert.equal(waveLeft.success, false);
+    assert(waveLeft.atLeft === true);
+});
+
+test("LayoutModel closeNode unmagnifies before delete and replaces ephemeral nodes", async () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "mag" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+    model.onNodeDelete = vi.fn(async () => {});
+    model.magnifyNodeToggle(leaf.id);
+    await model.closeNode(leaf.id);
+    assert(model.getNodeByBlockId("mag") == null);
+
+    const ephModel = makeModel(leaf);
+    attachDisplayContainer(ephModel);
+    ephModel.onNodeDelete = vi.fn(async () => {});
+    ephModel.newEphemeralNode("eph-1");
+    ephModel.newEphemeralNode("eph-2");
+    assert.equal(globalStore.get(ephModel.ephemeralNode)?.data?.blockId, "eph-2");
+});
+
+test("LayoutModel cleanupOrphanedBlocks returns early without root", async () => {
+    const model = makeEmptyModel();
+    attachDisplayContainer(model);
+    model.onNodeDelete = vi.fn(async () => {});
+    globalStore.set(layoutStateAtom, {
+        rootnode: undefined,
+        focusednodeid: undefined,
+        magnifiednodeid: undefined,
+        pendingbackendactions: [
+            {
+                actionid: "cleanup-empty",
+                actiontype: "cleanuporphaned",
+                blockid: "",
+                focused: false,
+                magnified: false,
+                ephemeral: false,
+            },
+        ],
+    });
+    model.onBackendUpdate();
+    await flushAsync();
+    expect(model.onNodeDelete).not.toHaveBeenCalled();
+});
+
+test("LayoutModel placeholder move trailing index uses column offset", () => {
+    const leafA = newLayoutNode(FlexDirection.Column, 33, undefined, { blockId: "a" });
+    const leafB = newLayoutNode(FlexDirection.Column, 33, undefined, { blockId: "b" });
+    const root = newLayoutNode(FlexDirection.Column, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model, 200, 400);
+    model.updateTree();
+    seedNodeRects(model, {
+        [leafA.id]: { top: 0, left: 0, width: 200, height: 200 },
+        [leafB.id]: { top: 200, left: 0, width: 200, height: 200 },
+        [root.id]: { top: 0, left: 0, width: 200, height: 400 },
+    });
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leafA,
+        parentId: root.id,
+        index: 5,
+        insertAtRoot: false,
+    });
+    assert(globalStore.get(model.placeholderTransform) != null);
+});
+
+test("LayoutModel placeholderTransform breaks when move target is missing", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.Move,
+        node: leaf,
+        parentId: "missing-parent",
+        index: 0,
+        insertAtRoot: false,
+    });
+    assert(globalStore.get(model.placeholderTransform) == null);
+});
+
+test("LayoutModel placeholderTransform no-ops for unsupported pending actions", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model);
+    model.updateTree();
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.ClearPendingAction,
+    });
+    assert(globalStore.get(model.placeholderTransform) == null);
+
+    globalStore.set(model.pendingTreeAction.throttledValueAtom, {
+        type: LayoutTreeActionType.DeleteNode,
+        nodeId: leaf.id,
+    });
+    assert(globalStore.get(model.placeholderTransform) == null);
+});
+
+test("LayoutModel switchNodeFocusInDirection hits top and bottom scan boundaries", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "edge" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model, 100, 100);
+    model.updateTree();
+    seedLeafOrder(model, leaf);
+    globalStore.set(model.leafs, [leaf]);
+    model.focusNode(leaf.id);
+
+    seedNodeRects(model, {
+        [leaf.id]: { top: 2, left: 50, width: 10, height: 10 },
+    });
+    const upBoundary = model.switchNodeFocusInDirection(NavigateDirection.Up, false);
+    assert.equal(upBoundary.success, false);
+    assert(upBoundary.atTop === true);
+
+    seedNodeRects(model, {
+        [leaf.id]: { top: 88, left: 50, width: 10, height: 10 },
+    });
+    const downBoundary = model.switchNodeFocusInDirection(NavigateDirection.Down, false);
+    assert.equal(downBoundary.success, false);
+    assert(downBoundary.atBottom === true);
+});
+
+test("LayoutModel switchNodeFocusInDirection hits right and top waveAI boundaries", () => {
+    const leaf = newLayoutNode(FlexDirection.Row, undefined, undefined, { blockId: "solo" });
+    const model = makeModel(leaf);
+    attachDisplayContainer(model, 50, 50);
+    model.updateTree();
+    seedLeafOrder(model, leaf);
+    globalStore.set(model.leafs, [leaf]);
+    seedNodeRects(model, {
+        [leaf.id]: { top: 5, left: 42, width: 8, height: 8 },
+    });
+    model.focusNode(leaf.id);
+
+    const waveRight = model.switchNodeFocusInDirection(NavigateDirection.Right, true);
+    assert.equal(waveRight.success, false);
+    assert(waveRight.atRight === true);
+
+    seedNodeRects(model, {
+        [leaf.id]: { top: 2, left: 5, width: 8, height: 8 },
+    });
+    const waveUp = model.switchNodeFocusInDirection(NavigateDirection.Up, true);
+    assert.equal(waveUp.success, false);
+    assert(waveUp.atTop === true);
+});
+
+test("LayoutModel closeNode unmagnifies synced magnified node before delete", async () => {
+    const leafA = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "mag-a" });
+    const leafB = newLayoutNode(FlexDirection.Row, 50, undefined, { blockId: "mag-sync" });
+    const root = newLayoutNode(FlexDirection.Row, undefined, [leafA, leafB]);
+    const model = makeModel(root);
+    attachDisplayContainer(model);
+    model.updateTree();
+    model.onNodeDelete = vi.fn(async () => {});
+    model.magnifyNodeToggle(leafB.id);
+    model.updateTree();
+    assert.equal(model.magnifiedNodeId, leafB.id);
+    await model.closeNode(leafB.id);
+    assert(model.getNodeByBlockId("mag-sync") == null);
+});
