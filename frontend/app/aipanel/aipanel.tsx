@@ -11,7 +11,6 @@ import { useTabModelMaybe } from "@/app/store/tab-model";
 import { isBuilderWindow } from "@/app/store/windowtype";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
-import { isMacOS, isWindows } from "@/util/platformutil";
 import { cn } from "@/util/util";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -27,7 +26,6 @@ import { AIPanelMessages } from "./aipanelmessages";
 import { AIRateLimitStrip } from "./airatelimitstrip";
 import { WaveUIMessage } from "./aitypes";
 import { BYOKAnnouncement } from "./byokannouncement";
-import { TelemetryRequiredMessage } from "./telemetryrequired";
 import { WaveAIModel } from "./waveai-model";
 
 const AIBlockMask = memo(() => {
@@ -71,132 +69,33 @@ const AIDragOverlay = memo(() => {
 
 AIDragOverlay.displayName = "AIDragOverlay";
 
-const KeyCap = memo(({ children, className }: { children: React.ReactNode; className?: string }) => {
+const AIEmptyWelcome = memo(({ message }: { message: string }) => {
+    const model = WaveAIModel.getInstance();
     return (
-        <kbd
-            className={cn(
-                "px-1.5 py-0.5 text-xs bg-hover border border-border rounded-sm shadow-sm font-mono",
-                className
-            )}
-        >
-            {children}
-        </kbd>
-    );
-});
-
-KeyCap.displayName = "KeyCap";
-
-const AIWelcomeMessage = memo(() => {
-    const modKey = isMacOS() ? "⌘" : "Alt";
-    const aiModeConfigs = jotai.useAtomValue(atoms.waveaiModeConfigAtom);
-    const hasCustomModes = Object.keys(aiModeConfigs).some((key) => !key.startsWith("waveai@"));
-    return (
-        <div className="text-secondary py-8">
-            <div className="text-center">
-                <i className="fa fa-sparkles text-4xl text-accent mb-2 block"></i>
-                <p className="text-lg font-bold text-primary">Welcome to Wave AI</p>
-            </div>
-            <div className="mt-4 text-left max-w-md mx-auto">
-                <p className="text-sm mb-6">
-                    Wave AI is your terminal assistant with context. I can read your terminal output, analyze widgets,
-                    access files, and help you solve problems faster.
-                </p>
-                <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
-                    <div className="text-sm font-semibold mb-3 text-accent">Getting Started:</div>
-                    <div className="space-y-3 text-sm">
-                        <div className="flex items-start gap-3">
-                            <div className="w-4 text-center flex-shrink-0">
-                                <i className="fa-solid fa-plug text-accent"></i>
-                            </div>
-                            <div>
-                                <span className="font-bold">Widget Context</span>
-                                <div className="">When ON, I can read your terminal and analyze widgets.</div>
-                                <div className="">When OFF, I'm sandboxed with no system access.</div>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-4 text-center flex-shrink-0">
-                                <i className="fa-solid fa-file-import text-accent"></i>
-                            </div>
-                            <div>Drag & drop files or images for analysis</div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-4 text-center flex-shrink-0">
-                                <i className="fa-solid fa-keyboard text-accent"></i>
-                            </div>
-                            <div className="space-y-1">
-                                <div>
-                                    <KeyCap>{modKey}</KeyCap>
-                                    <KeyCap className="ml-1">K</KeyCap>
-                                    <span className="ml-1.5">to start a new chat</span>
-                                </div>
-                                <div>
-                                    <KeyCap>{modKey}</KeyCap>
-                                    <KeyCap className="ml-1">Shift</KeyCap>
-                                    <KeyCap className="ml-1">A</KeyCap>
-                                    <span className="ml-1.5">to toggle panel</span>
-                                </div>
-                                <div>
-                                    {isWindows() ? (
-                                        <>
-                                            <KeyCap>Alt</KeyCap>
-                                            <KeyCap className="ml-1">0</KeyCap>
-                                            <span className="ml-1.5">to focus</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <KeyCap>Ctrl</KeyCap>
-                                            <KeyCap className="ml-1">Shift</KeyCap>
-                                            <KeyCap className="ml-1">0</KeyCap>
-                                            <span className="ml-1.5">to focus</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-4 text-center flex-shrink-0">
-                                <i className="fa-brands fa-discord text-accent"></i>
-                            </div>
-                            <div>
-                                Questions or feedback?{" "}
-                                <a
-                                    target="_blank"
-                                    href="https://discord.gg/XfvZ334gwU"
-                                    rel="noopener"
-                                    className="text-accent hover:underline cursor-pointer"
-                                >
-                                    Join our Discord
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {!hasCustomModes && <BYOKAnnouncement />}
-                <div className="mt-4 text-center text-[12px] text-muted">
-                    BETA: Free to use. Daily limits keep our costs in check.
-                </div>
+        <div className="flex-1 flex items-center justify-center pt-8">
+            <div className="text-center space-y-3">
+                <p className="text-sm text-secondary">{message}</p>
+                <button
+                    onClick={() => model.clearChat()}
+                    className="px-3 py-1.5 bg-accent/80 text-primary rounded hover:bg-accent transition-colors cursor-pointer text-sm"
+                >
+                    New chat
+                </button>
             </div>
         </div>
     );
+});
+
+AIEmptyWelcome.displayName = "AIEmptyWelcome";
+
+const AIWelcomeMessage = memo(() => {
+    return <AIEmptyWelcome message="Ask a question or drop a file to get started." />;
 });
 
 AIWelcomeMessage.displayName = "AIWelcomeMessage";
 
 const AIBuilderWelcomeMessage = memo(() => {
-    return (
-        <div className="text-secondary py-8">
-            <div className="text-center">
-                <i className="fa fa-sparkles text-4xl text-accent mb-4 block"></i>
-                <p className="text-lg font-bold text-primary">WaveApp Builder</p>
-            </div>
-            <div className="mt-4 text-left max-w-md mx-auto">
-                <p className="text-sm mb-6">
-                    The WaveApp builder helps create wave widgets that integrate seamlessly into Wave Terminal.
-                </p>
-            </div>
-        </div>
-    );
+    return <AIEmptyWelcome message="Describe the widget you want to build." />;
 });
 
 AIBuilderWelcomeMessage.displayName = "AIBuilderWelcomeMessage";
@@ -270,8 +169,8 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const aiModeConfigs = jotai.useAtomValue(model.aiModeConfigs);
 
     const hasCustomModes = Object.keys(aiModeConfigs).some((key) => !key.startsWith("waveai@"));
-    const isUsingCustomMode = !defaultMode.startsWith("waveai@");
-    const allowAccess = telemetryEnabled || (hasCustomModes && isUsingCustomMode);
+    const needsByokSetup = !telemetryEnabled && !hasCustomModes;
+    const allowAccess = true;
 
     const { messages, sendMessage, status, setMessages, error: _error, stop } = useChat<WaveUIMessage>({
         transport: new DefaultChatTransport({
@@ -586,32 +485,33 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
             <AIRateLimitStrip />
 
             <div key="main-content" className="flex-1 flex flex-col min-h-0">
-                {!allowAccess ? (
-                    <TelemetryRequiredMessage />
-                ) : (
-                    <>
-                        {messages.length === 0 && initialLoadDone ? (
-                            <div
-                                className="flex-1 overflow-y-auto p-2 relative"
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
-                            >
-                                <div className="absolute top-2 left-2 z-10">
-                                    <AIModeDropdown />
-                                </div>
-                                {model.inBuilder ? <AIBuilderWelcomeMessage /> : <AIWelcomeMessage />}
+                <>
+                    {messages.length === 0 && initialLoadDone ? (
+                        <div
+                            className="flex-1 overflow-y-auto p-2 relative flex flex-col min-h-0"
+                            onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                        >
+                            <div className="absolute top-2 left-2 z-10">
+                                <AIModeDropdown />
                             </div>
-                        ) : (
-                            <AIPanelMessages
-                                messages={messages}
-                                status={status}
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
-                            />
-                        )}
-                        <AIErrorMessage />
-                        <AIDroppedFiles model={model} />
-                        <AIPanelInput onSubmit={handleSubmit} status={status} model={model} />
-                    </>
-                )}
+                            {needsByokSetup && !model.inBuilder && (
+                                <div className="mt-12 px-2">
+                                    <BYOKAnnouncement />
+                                </div>
+                            )}
+                            {model.inBuilder ? <AIBuilderWelcomeMessage /> : <AIWelcomeMessage />}
+                        </div>
+                    ) : (
+                        <AIPanelMessages
+                            messages={messages}
+                            status={status}
+                            onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                        />
+                    )}
+                    <AIErrorMessage />
+                    <AIDroppedFiles model={model} />
+                    <AIPanelInput onSubmit={handleSubmit} status={status} model={model} />
+                </>
             </div>
         </div>
     );
