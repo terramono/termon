@@ -25,7 +25,6 @@ import CursorIcon from "../asset/cursor-color.svg";
 import CogSolidIcon from "../asset/cog-solid.svg";
 import PerplexityIcon from "../asset/perplexity.svg";
 import PixelIconLibraryIcon from "../asset/pixel-icon-library.svg";
-import TermonCharaImage from "../asset/termon-chara.png";
 
 export type WidgetsEnv = WaveEnvSubset<{
     isDev: WaveEnv["isDev"];
@@ -118,21 +117,6 @@ function getCliLauncherId(widget: WidgetConfigType): CliLauncherId | null {
     return null;
 }
 
-function isTerminalWidget(widget: WidgetConfigType): boolean {
-    const meta = widget?.blockdef?.meta ?? {};
-    const widgetLabel = (widget?.label ?? "").toLowerCase().trim();
-    const widgetIcon = (widget?.icon ?? "").toLowerCase().trim();
-    const controller = (meta.controller ?? "").toLowerCase();
-    return (
-        meta.view === "term" ||
-        controller === "shell" ||
-        controller === "cmd" ||
-        widgetLabel === "terminal" ||
-        widgetLabel === "term" ||
-        widgetIcon.includes("terminal")
-    );
-}
-
 function loadCliLauncherRecents(recentsKey: string): string[] {
     const raw = localStorage.getItem(recentsKey);
     if (raw == null) {
@@ -167,13 +151,12 @@ function updateCliLauncherRecents(recentsKey: string, dir: string): string[] {
 const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     const widgetMeta = widget?.blockdef?.meta ?? {};
     const launcherId = getCliLauncherId(widget);
-    const isClaudeWidget = launcherId === "claude" || (launcherId == null && isTerminalWidget(widget));
-    const launcherConfig = launcherId != null ? CLI_LAUNCHERS[launcherId] : isClaudeWidget ? CLI_LAUNCHERS.claude : null;
+    const launcherConfig = launcherId != null ? CLI_LAUNCHERS[launcherId] : null;
     const isFilesWidget = widgetMeta.view === "preview" && widgetMeta.file === "~";
     const isBrowserWidget = widgetMeta.view === "web";
     const isSysinfoWidget = widgetMeta.view === "sysinfo";
     const fallbackWidgetColor =
-        isFilesWidget || isBrowserWidget || isSysinfoWidget ? "#2eff6a" : undefined;
+        isFilesWidget || isBrowserWidget || isSysinfoWidget ? "var(--accent-color)" : undefined;
     const widgetColor = !isBlank(widget.color) ? widget.color : fallbackWidgetColor;
     const displayDescription = launcherConfig?.description ?? widget.description;
     const LauncherIcon = launcherConfig?.Icon;
@@ -549,6 +532,14 @@ const SettingsFloatingWindow = memo(
 
         const menuItems = [
             {
+                icon: "sliders",
+                label: "Preferences",
+                onClick: () => {
+                    modalsModel.pushModal("PreferencesModal");
+                    onClose();
+                },
+            },
+            {
                 icon: "gear",
                 label: "Settings",
                 hasError: hasConfigErrors,
@@ -738,10 +729,6 @@ const Widgets = memo(() => {
                 setActiveCliLauncher(launcherId);
                 return;
             }
-            if (isTerminalWidget(widget)) {
-                setActiveCliLauncher("claude");
-                return;
-            }
             handleWidgetSelect(widget, env);
         },
         [env]
@@ -837,9 +824,6 @@ const Widgets = memo(() => {
                         </div>
                     </>
                 )}
-                <div className="flex justify-center items-center w-full py-1" title="Termon mascot">
-                    <img src={TermonCharaImage} alt="Termon mascot" className="w-7 h-7 object-contain" />
-                </div>
             </div>
             {(env.isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
                 <AppsFloatingWindow
@@ -884,9 +868,6 @@ const Widgets = memo(() => {
                         </div>
                     </div>
                 ) : null}
-                <div className="flex justify-center items-center w-full py-1">
-                    <img src={TermonCharaImage} alt="" className="w-7 h-7 object-contain" />
-                </div>
             </div>
         </>
     );

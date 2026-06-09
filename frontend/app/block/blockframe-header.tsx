@@ -43,7 +43,7 @@ function handleHeaderContextMenu(
     const magnified = globalStore.get(nodeModel.isMagnified);
     const menu: ContextMenuItem[] = [
         {
-            label: magnified ? "Un-Magnify Block" : "Magnify Block",
+            label: magnified ? "Exit Focus" : "Focus",
             click: () => {
                 nodeModel.toggleMagnify();
             },
@@ -164,13 +164,13 @@ const HeaderEndIcons = React.memo(({ viewModel, nodeModel, blockId }: HeaderEndI
         endIconsElem.push(<IconButton key="split-horizontal" decl={splitHorizontalDecl} />);
         endIconsElem.push(<IconButton key="split-vertical" decl={splitVerticalDecl} />);
     }
-    const settingsDecl: IconButtonDecl = {
+    const menuDecl: IconButtonDecl = {
         elemtype: "iconbutton",
-        icon: "cog",
-        title: "Settings",
+        icon: "ellipsis",
+        title: "Block Menu",
         click: (e) => handleHeaderContextMenu(e, blockId, viewModel, nodeModel, blockEnv),
     };
-    endIconsElem.push(<IconButton key="settings" decl={settingsDecl} className="block-frame-settings" />);
+    endIconsElem.push(<IconButton key="menu" decl={menuDecl} className="block-frame-menu" />);
     if (ephemeral) {
         const addToLayoutDecl: IconButtonDecl = {
             elemtype: "iconbutton",
@@ -248,11 +248,22 @@ const BlockFrame_Header = ({
 
     return (
         <div
-            className={cn("block-frame-default-header", useTermHeader && "!pl-[2px]")}
+            className={cn(
+                "block-frame-default-header cursor-grab active:cursor-grabbing",
+                useTermHeader && "!pl-[2px]"
+            )}
             data-role="block-header"
             ref={dragHandleRef}
             onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, waveEnv)}
         >
+            {!preview && (
+                <div
+                    className="block-frame-drag-grip pointer-events-none flex shrink-0 items-center justify-center opacity-30"
+                    aria-hidden="true"
+                >
+                    <i className={makeIconClass("grip-dots-vertical", true)} />
+                </div>
+            )}
             {!useTermHeader && (
                 <>
                     {preIconButton && <IconButton decl={preIconButton} className="block-frame-preicon-button" />}

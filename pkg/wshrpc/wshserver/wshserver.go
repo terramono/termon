@@ -118,13 +118,17 @@ func (ws *WshServer) StreamWaveAiCommand(ctx context.Context, request wshrpc.Wav
 	return waveai.RunAICommand(ctx, request)
 }
 
+func isSysinfoView(viewName string) bool {
+	return viewName == "sysinfo" || viewName == "cpuplot"
+}
+
 func MakePlotData(ctx context.Context, blockId string) error {
 	block, err := wstore.DBMustGet[*waveobj.Block](ctx, blockId)
 	if err != nil {
 		return err
 	}
 	viewName := block.Meta.GetString(waveobj.MetaKey_View, "")
-	if viewName != "cpuplot" && viewName != "sysinfo" {
+	if !isSysinfoView(viewName) {
 		return fmt.Errorf("invalid view type: %s", viewName)
 	}
 	return filestore.WFS.MakeFile(ctx, blockId, "cpuplotdata", nil, wshrpc.FileOpts{})
@@ -136,7 +140,7 @@ func SavePlotData(ctx context.Context, blockId string, history string) error {
 		return err
 	}
 	viewName := block.Meta.GetString(waveobj.MetaKey_View, "")
-	if viewName != "cpuplot" && viewName != "sysinfo" {
+	if !isSysinfoView(viewName) {
 		return fmt.Errorf("invalid view type: %s", viewName)
 	}
 	// todo: interpret the data being passed

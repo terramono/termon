@@ -85,6 +85,13 @@
                 border-bottom: 1px solid var(--border-color);
                 border-radius: var(--block-border-radius) var(--block-border-radius) 0 0;
 
+                .block-frame-drag-grip {
+                    width: 10px;
+                    margin-left: -2px;
+                    margin-right: -4px;
+                    font-size: 10px;
+                }
+
                 .block-frame-default-header-iconview {
                     display: flex;
                     flex-shrink: 3;

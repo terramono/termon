@@ -13,6 +13,7 @@ interface AIPanelInputProps {
     onSubmit: (e: React.FormEvent) => void;
     status: string;
     model: WaveAIModel;
+    hasValidMode?: boolean;
 }
 
 export interface AIPanelInputRef {
@@ -21,7 +22,7 @@ export interface AIPanelInputRef {
     scrollToBottom: () => void;
 }
 
-export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps) => {
+export const AIPanelInput = memo(({ onSubmit, status, model, hasValidMode = true }: AIPanelInputProps) => {
     const [input, setInput] = useAtom(model.inputAtom);
     const isFocused = useAtomValue(model.isWaveAIFocusedAtom);
     const isChatEmpty = useAtomValue(model.isChatEmptyAtom);
@@ -30,7 +31,9 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     const isPanelOpen = useAtomValue(model.getPanelVisibleAtom());
 
     let placeholder: string;
-    if (!isChatEmpty) {
+    if (!hasValidMode) {
+        placeholder = "Configure an AI mode to get started...";
+    } else if (!isChatEmpty) {
         placeholder = "Continue...";
     } else if (model.inBuilder) {
         placeholder = "What would you like to build...";
@@ -133,7 +136,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     };
 
     return (
-        <div className={cn("border-t", isFocused ? "border-accent/50" : "border-gray-600")}>
+        <div className={cn("border-t", isFocused ? "border-accent/50" : "border-border")}>
             <input
                 ref={fileInputRef}
                 type="file"
@@ -153,7 +156,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                         onBlur={handleBlur}
                         placeholder={placeholder}
                         className={cn(
-                            "w-full  text-white px-2 py-2 pr-5 focus:outline-none resize-none overflow-auto bg-zinc-800/50"
+                            "w-full  text-primary px-2 py-2 pr-5 focus:outline-none resize-none overflow-auto bg-panel"
                         )}
                         style={{ fontSize: "13px" }}
                         rows={2}
@@ -163,7 +166,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                             type="button"
                             onClick={handleUploadClick}
                             className={cn(
-                                "w-5 h-5 transition-colors flex items-center justify-center text-gray-400 hover:text-accent cursor-pointer"
+                                "w-5 h-5 transition-colors flex items-center justify-center text-secondary hover:text-accent cursor-pointer"
                             )}
                         >
                             <i className="fa fa-paperclip text-sm"></i>
@@ -190,7 +193,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                                 className={cn(
                                     "w-5 h-5 transition-colors flex items-center justify-center",
                                     status !== "ready" || !input.trim()
-                                        ? "text-gray-400"
+                                        ? "text-secondary"
                                         : "text-accent/80 hover:text-accent cursor-pointer"
                                 )}
                             >

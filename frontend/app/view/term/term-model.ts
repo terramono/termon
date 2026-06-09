@@ -893,7 +893,7 @@ export class TermViewModel implements ViewModel {
 
         const magnified = globalStore.get(this.nodeModel.isMagnified);
         menu.push({
-            label: magnified ? "Un-Magnify Block" : "Magnify Block",
+            label: magnified ? "Exit Focus" : "Focus",
             click: () => {
                 this.nodeModel.toggleMagnify();
             },

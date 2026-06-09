@@ -33,8 +33,8 @@ export function blockViewToIcon(view: string): string {
     if (view == "web") {
         return "globe";
     }
-    if (view == "waveai") {
-        return "sparkles";
+    if (view == "sysinfo" || view == "cpuplot") {
+        return "chart-line";
     }
     if (view == "help") {
         return "circle-question";
@@ -61,8 +61,8 @@ export function blockViewToName(view: string): string {
     if (view == "web") {
         return "Web";
     }
-    if (view == "waveai") {
-        return "WaveAI";
+    if (view == "sysinfo" || view == "cpuplot") {
+        return "Sysinfo";
     }
     if (view == "help") {
         return "Help";
@@ -215,7 +215,7 @@ export const OptMagnifyButton = React.memo(
         const magnifyDecl: IconButtonDecl = {
             elemtype: "iconbutton",
             icon: <MagnifyIcon enabled={magnified} />,
-            title: magnified ? "Minimize" : "Magnify",
+            title: magnified ? "Exit Focus" : "Focus",
             click: toggleMagnify,
             disabled,
         };

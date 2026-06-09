@@ -123,10 +123,15 @@ export class WaveAIModel {
             const aiModeConfigs = get(this.aiModeConfigs);
             if (!telemetryEnabled) {
                 const mode = get(getSettingsKeyAtom("waveai:defaultmode"));
-                if (mode == null || mode.startsWith("waveai@")) {
-                    return "unknown";
+                if (mode != null && !mode.startsWith("waveai@") && mode in aiModeConfigs) {
+                    return mode;
                 }
-                return mode;
+                for (const key of Object.keys(aiModeConfigs)) {
+                    if (!key.startsWith("waveai@")) {
+                        return key;
+                    }
+                }
+                return "unknown";
             }
             const hasPremium = get(this.hasPremiumAtom);
             const waveFallback = hasPremium ? "waveai@balanced" : "waveai@quick";
@@ -495,6 +500,12 @@ export class WaveAIModel {
             (this.useChatStatus !== "ready" && this.useChatStatus !== "error") ||
             globalStore.get(this.isLoadingChatAtom)
         ) {
+            return;
+        }
+
+        const currentMode = globalStore.get(this.currentAIMode);
+        if (!this.isValidMode(currentMode)) {
+            this.setError("Configure a custom AI mode or enable telemetry for Wave AI Cloud.");
             return;
         }
 

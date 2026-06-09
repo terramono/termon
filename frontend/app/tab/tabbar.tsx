@@ -46,27 +46,65 @@ interface TabBarProps {
     noTabs?: boolean;
 }
 
-const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
+const AIPanelButton = memo(() => {
+    const env = useWaveEnv<TabBarEnv>();
     const layoutModel = WorkspaceLayoutModel.getInstance();
+    const panelOpen = useAtomValue(layoutModel.panelVisibleAtom);
+    const panelMode = useAtomValue(layoutModel.panelModeAtom);
+    const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
+    const isActive = panelOpen && panelMode === "ai";
 
+    if (hideAiButton) {
+        return null;
+    }
+
+    return (
+        <Tooltip content="Toggle AI Panel" placement="bottom" hideOnClick>
+            <button
+                onClick={() => layoutModel.togglePanelMode("ai")}
+                className={`flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${isActive ? "text-accent" : "text-secondary"}`}
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            >
+                <i className="fa fa-sparkles" />
+            </button>
+        </Tooltip>
+    );
+});
+AIPanelButton.displayName = "AIPanelButton";
+
+const SSHPanelButton = memo(() => {
+    const layoutModel = WorkspaceLayoutModel.getInstance();
+    const panelOpen = useAtomValue(layoutModel.panelVisibleAtom);
+    const panelMode = useAtomValue(layoutModel.panelModeAtom);
+    const isActive = panelOpen && panelMode === "ssh";
+
+    return (
+        <Tooltip content="Toggle SSH Panel" placement="bottom" hideOnClick>
+            <button
+                onClick={() => layoutModel.togglePanelMode("ssh")}
+                className={`flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg ${isActive ? "text-[#2eff6a]" : "text-secondary"}`}
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            >
+                <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
+            </button>
+        </Tooltip>
+    );
+});
+SSHPanelButton.displayName = "SSHPanelButton";
+
+const SidePanelButtons = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
     return (
         <div
             ref={divRef}
             className="flex h-[22px] mb-1 items-center rounded-md mr-1 overflow-hidden"
             style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
-            <Tooltip content="Toggle SSH Connections" placement="bottom" hideOnClick>
-                <button
-                    onClick={() => layoutModel.togglePanelMode("ssh")}
-                    className="flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg text-[#2eff6a]"
-                >
-                    <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
-                </button>
-            </Tooltip>
+            <AIPanelButton />
+            <SSHPanelButton />
         </div>
     );
 });
-WaveAIButton.displayName = "WaveAIButton";
+SidePanelButtons.displayName = "SidePanelButtons";
 
 function strArrayIsEqual(a: string[], b: string[]) {
     // null check
@@ -115,7 +153,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const draggerLeftRef = useRef<HTMLDivElement>(null);
     const rightContainerRef = useRef<HTMLDivElement>(null);
     const workspaceSwitcherRef = useRef<HTMLDivElement>(null);
-    const waveAIButtonRef = useRef<HTMLDivElement>(null);
+    const sidePanelButtonsRef = useRef<HTMLDivElement>(null);
     const appMenuButtonRef = useRef<HTMLDivElement>(null);
     const tabWidthRef = useRef<number>(TabDefaultWidth);
     const scrollableRef = useRef<boolean>(false);
@@ -180,14 +218,14 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         const rightContainerWidth = rightContainerRef.current?.getBoundingClientRect().width ?? 0;
         const addBtnWidth = getOuterWidth(addBtnRef.current);
         const appMenuButtonWidth = appMenuButtonRef.current?.getBoundingClientRect().width ?? 0;
-        const waveAIButtonWidth = waveAIButtonRef.current != null ? getOuterWidth(waveAIButtonRef.current) : 0;
+        const sidePanelButtonsWidth = sidePanelButtonsRef.current != null ? getOuterWidth(sidePanelButtonsRef.current) : 0;
 
         const nonTabElementsWidth =
             windowDragLeftWidth +
             rightContainerWidth +
             addBtnWidth +
             appMenuButtonWidth +
-            waveAIButtonWidth;
+            sidePanelButtonsWidth;
         const spaceForTabs = tabbarWrapperWidth - nonTabElementsWidth;
 
         const numberOfTabs = tabIds.length;
@@ -600,7 +638,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                     <i className="fa fa-ellipsis" />
                 </div>
             )}
-            <WaveAIButton divRef={waveAIButtonRef} />
+            <SidePanelButtons divRef={sidePanelButtonsRef} />
             <div className="tab-bar" ref={tabBarRef} data-overlayscrollbars-initialize>
                 <div
                     className="tabs-wrapper"
@@ -663,4 +701,4 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     );
 });
 
-export { TabBar, WaveAIButton };
+export { AIPanelButton, SidePanelButtons, SSHPanelButton, TabBar };
