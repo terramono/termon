@@ -134,9 +134,10 @@ function computeWaveCloudSections(
 
 interface AIModeDropdownProps {
     compatibilityMode?: boolean;
+    highlight?: boolean;
 }
 
-export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdownProps) => {
+export const AIModeDropdown = memo(({ compatibilityMode = false, highlight = false }: AIModeDropdownProps) => {
     const model = WaveAIModel.getInstance();
     const currentMode = useAtomValue(model.currentAIMode);
     const aiModeConfigs = useAtomValue(model.aiModeConfigs);
@@ -215,7 +216,8 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "group flex items-center gap-1.5 px-2 py-1 text-xs text-secondary hover:text-primary rounded transition-colors cursor-pointer border border-border/50",
+                    "group flex items-center gap-1.5 px-2 py-1 text-xs text-secondary hover:text-primary rounded transition-colors cursor-pointer border",
+                    highlight ? "border-accent ring-2 ring-accent/30 animate-pulse" : "border-border/50",
                     isOpen ? "bg-hover" : "bg-panel hover:bg-hover"
                 )}
                 title={`AI Mode: ${displayName}`}

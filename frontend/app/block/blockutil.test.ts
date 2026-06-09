@@ -97,6 +97,13 @@ describe("getBlockHeaderIcon", () => {
 });
 
 describe("block view coverage", () => {
+    it("maps sysinfo and legacy cpuplot views", () => {
+        expect(blockViewToIcon("sysinfo")).toBe("chart-line");
+        expect(blockViewToIcon("cpuplot")).toBe("chart-line");
+        expect(blockViewToName("sysinfo")).toBe("Sysinfo");
+        expect(blockViewToName("cpuplot")).toBe("Sysinfo");
+    });
+
     it("maps processviewer and returns square for unknown views", () => {
         expect(blockViewToIcon("processviewer")).toBe("microchip");
         expect(blockViewToName("processviewer")).toBe("Processes");

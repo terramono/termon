@@ -23,7 +23,6 @@ const BlockRegistry: Map<string, ViewModelClass> = new Map();
 BlockRegistry.set("term", TermViewModel);
 BlockRegistry.set("preview", PreviewModel);
 BlockRegistry.set("web", WebViewModel);
-BlockRegistry.set("cpuplot", SysinfoViewModel);
 BlockRegistry.set("sysinfo", SysinfoViewModel);
 BlockRegistry.set("vdom", VDomModel);
 BlockRegistry.set("tips", QuickTipsViewModel);
@@ -33,6 +32,14 @@ BlockRegistry.set("tsunami", TsunamiViewModel);
 BlockRegistry.set("aifilediff", AiFileDiffViewModel);
 BlockRegistry.set("waveconfig", WaveConfigViewModel);
 BlockRegistry.set("processviewer", ProcessViewerViewModel);
+
+const LegacyViewAliases: Record<string, string> = {
+    cpuplot: "sysinfo",
+};
+
+function canonicalViewType(blockView: string): string {
+    return LegacyViewAliases[blockView] ?? blockView;
+}
 
 function makeDefaultViewModel(viewType: string): ViewModel {
     const viewModel: ViewModel = {
@@ -53,11 +60,12 @@ function makeViewModel(
     tabModel: TabModel,
     waveEnv: WaveEnv
 ): ViewModel {
-    const ctor = BlockRegistry.get(blockView);
+    const viewType = canonicalViewType(blockView);
+    const ctor = BlockRegistry.get(viewType);
     if (ctor != null) {
         return new ctor({ blockId, nodeModel, tabModel, waveEnv });
     }
-    return makeDefaultViewModel(blockView);
+    return makeDefaultViewModel(viewType);
 }
 
 export { makeViewModel };

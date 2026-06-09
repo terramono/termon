@@ -13,6 +13,7 @@ interface AIPanelInputProps {
     onSubmit: (e: React.FormEvent) => void;
     status: string;
     model: WaveAIModel;
+    hasValidMode?: boolean;
 }
 
 export interface AIPanelInputRef {
@@ -21,7 +22,7 @@ export interface AIPanelInputRef {
     scrollToBottom: () => void;
 }
 
-export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps) => {
+export const AIPanelInput = memo(({ onSubmit, status, model, hasValidMode = true }: AIPanelInputProps) => {
     const [input, setInput] = useAtom(model.inputAtom);
     const isFocused = useAtomValue(model.isWaveAIFocusedAtom);
     const isChatEmpty = useAtomValue(model.isChatEmptyAtom);
@@ -30,7 +31,9 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     const isPanelOpen = useAtomValue(model.getPanelVisibleAtom());
 
     let placeholder: string;
-    if (!isChatEmpty) {
+    if (!hasValidMode) {
+        placeholder = "Configure an AI mode to get started...";
+    } else if (!isChatEmpty) {
         placeholder = "Continue...";
     } else if (model.inBuilder) {
         placeholder = "What would you like to build...";
