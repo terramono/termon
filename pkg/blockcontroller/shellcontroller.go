@@ -417,6 +417,10 @@ func (bc *ShellController) setupAndStartShellProcess(logCtx context.Context, rc 
 			return nil, err
 		}
 		cmdOpts = *cmdOptsPtr
+		if blockMeta.GetBool(waveobj.MetaKey_CmdInteractive, false) {
+			cmdOpts.Interactive = true
+			cmdOpts.Login = true
+		}
 	} else {
 		return nil, fmt.Errorf("unknown controller type %q", bc.ControllerType)
 	}

@@ -81,6 +81,10 @@ type CliLauncherConfig = {
 
 const MAX_CLI_LAUNCHER_RECENTS = 8;
 
+const CLI_LAUNCHER_SIDEBAR_HIDDEN: Partial<Record<CliLauncherId, boolean>> = {
+    cursor: true,
+};
+
 const CLI_LAUNCHERS: Record<CliLauncherId, CliLauncherConfig> = {
     claude: {
         recentsKey: "waveterm:claude-launcher-recents",
@@ -116,6 +120,14 @@ function getCliLauncherId(widget: WidgetConfigType): CliLauncherId | null {
         }
     }
     return null;
+}
+
+function isCliLauncherHiddenFromSidebar(widget: WidgetConfigType): boolean {
+    const launcherId = getCliLauncherId(widget);
+    if (launcherId == null) {
+        return false;
+    }
+    return CLI_LAUNCHER_SIDEBAR_HIDDEN[launcherId] === true;
 }
 
 function isTerminalWidget(widget: WidgetConfigType): boolean {
@@ -217,6 +229,7 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
     const LauncherIcon = launcherConfig.Icon;
     const [recents, setRecents] = useState<string[]>([]);
     const [customPath, setCustomPath] = useState("");
+    const [isLaunching, setIsLaunching] = useState(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -240,26 +253,31 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
     }, [isOpen, onClose]);
 
     const launchCliForDir = useCallback(
-        (dir: string) => {
+        async (dir: string) => {
             const targetDir = dir.trim();
-            if (isBlank(targetDir)) {
+            if (isBlank(targetDir) || isLaunching) {
                 return;
             }
-            const blockDef: BlockDef = {
-                meta: {
-                    view: "term",
-                    controller: "cmd",
-                    cmd: launcherConfig.cmd,
-                    "cmd:interactive": true,
-                    "cmd:cwd": targetDir,
-                },
-            };
-            env.createBlock(blockDef, true);
-            setRecents(updateCliLauncherRecents(launcherConfig.recentsKey, targetDir));
-            setCustomPath("");
-            onClose();
+            setIsLaunching(true);
+            try {
+                const blockDef: BlockDef = {
+                    meta: {
+                        view: "term",
+                        controller: "cmd",
+                        cmd: launcherConfig.cmd,
+                        "cmd:interactive": true,
+                        "cmd:cwd": targetDir,
+                    },
+                };
+                await env.createBlock(blockDef, true);
+                setRecents(updateCliLauncherRecents(launcherConfig.recentsKey, targetDir));
+                setCustomPath("");
+                onClose();
+            } finally {
+                setIsLaunching(false);
+            }
         },
-        [env, launcherConfig.cmd, launcherConfig.recentsKey, onClose]
+        [env, isLaunching, launcherConfig.cmd, launcherConfig.recentsKey, onClose]
     );
 
     const handleBrowseFolder = useCallback(() => {
@@ -293,11 +311,11 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
     return (
         <FloatingPortal>
             <div
-                className="fixed inset-0 z-[80] flex items-center justify-center bg-black/35"
+                className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-[1px] transition-opacity duration-150"
                 onClick={onClose}
             >
                 <div
-                    className="bg-modalbg border border-border rounded-xl shadow-xl p-3 w-[380px]"
+                    className="bg-modalbg border border-border rounded-xl shadow-xl p-4 w-[400px] transition-all duration-150"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex items-center justify-between gap-2 text-primary mb-2">
@@ -305,11 +323,18 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
                             <LauncherIcon className="w-4 h-4" />
                             <div className="font-medium text-sm">{launcherConfig.title}</div>
                         </div>
-                        <button type="button" className="text-secondary hover:text-primary text-sm px-1" onClick={onClose}>
+                        <button
+                            type="button"
+                            className="text-secondary hover:text-primary text-sm px-1 cursor-pointer"
+                            onClick={onClose}
+                            disabled={isLaunching}
+                        >
                             <i className="fa fa-solid fa-xmark" />
                         </button>
                     </div>
-                    <div className="text-xs text-secondary mb-3">Choose a recent folder, browse, or paste a path.</div>
+                    <div className="text-xs text-secondary mb-3">
+                        Pick a project folder to launch {launcherConfig.cmd} in a new terminal block.
+                    </div>
 
                     <div className="max-h-48 overflow-auto mb-3 border border-border rounded-lg">
                         {recents.length === 0 ? (
@@ -319,8 +344,9 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
                                 <button
                                     key={dir}
                                     type="button"
-                                    onClick={() => launchCliForDir(dir)}
-                                    className="w-full text-left px-3 py-2.5 hover:bg-hoverbg transition-colors border-b border-border last:border-b-0"
+                                    onClick={() => fireAndForget(() => launchCliForDir(dir))}
+                                    disabled={isLaunching}
+                                    className="w-full text-left px-3 py-2.5 hover:bg-hoverbg transition-colors border-b border-border last:border-b-0 cursor-pointer disabled:opacity-50"
                                 >
                                     <div className="text-[11px] text-secondary">Recent</div>
                                     <div className="text-xs text-primary truncate">{dir}</div>
@@ -333,7 +359,8 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
                         <button
                             type="button"
                             onClick={handleBrowseFolder}
-                            className="px-3 py-2 text-xs rounded-md border border-border bg-transparent hover:bg-hoverbg text-primary"
+                            disabled={isLaunching}
+                            className="px-3 py-2 text-xs rounded-md border border-border bg-transparent hover:bg-hoverbg text-primary cursor-pointer disabled:opacity-50"
                         >
                             Browse Folder
                         </button>
@@ -344,7 +371,7 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
                             onChange={handleFolderPicked}
                             {...({ webkitdirectory: "", directory: "" } as any)}
                         />
-                        <div className="text-[11px] text-secondary">Use manual path for empty folders.</div>
+                        <div className="text-[11px] text-secondary">Paste a path for empty folders.</div>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -355,18 +382,23 @@ const CliLauncherFloatingWindow = memo(({ launcherId, isOpen, onClose }: CliLaun
                             onChange={(e) => setCustomPath(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                    launchCliForDir(customPath);
+                                    fireAndForget(() => launchCliForDir(customPath));
                                 }
                             }}
-                            className="flex-1 h-8 px-2.5 rounded-md bg-[var(--app-bg-color)] border border-border text-xs text-primary placeholder:text-secondary outline-none focus:border-accent"
+                            disabled={isLaunching}
+                            className="flex-1 h-8 px-2.5 rounded-md bg-[var(--app-bg-color)] border border-border text-xs text-primary placeholder:text-secondary outline-none focus:border-accent disabled:opacity-50"
                         />
                         <button
                             type="button"
-                            onClick={() => launchCliForDir(customPath)}
-                            className="px-3 py-2 text-xs rounded-md bg-accent text-black hover:brightness-95 disabled:opacity-50"
-                            disabled={isBlank(customPath.trim())}
+                            onClick={() => fireAndForget(() => launchCliForDir(customPath))}
+                            className="px-3 py-2 text-xs rounded-md bg-accent/80 text-primary hover:bg-accent transition-colors cursor-pointer disabled:opacity-50 min-w-[64px]"
+                            disabled={isBlank(customPath.trim()) || isLaunching}
                         >
-                            Open
+                            {isLaunching ? (
+                                <i className="fa fa-solid fa-spinner fa-spin" />
+                            ) : (
+                                "Open"
+                            )}
                         </button>
                     </div>
                 </div>
@@ -655,7 +687,10 @@ const Widgets = memo(() => {
     const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"] ?? false;
     const widgetsMap = fullConfig?.widgets ?? {};
     const filteredWidgets = Object.fromEntries(
-        Object.entries(widgetsMap).filter(([_key, widget]) => shouldIncludeWidgetForWorkspace(widget, workspaceId))
+        Object.entries(widgetsMap).filter(
+            ([_key, widget]) =>
+                shouldIncludeWidgetForWorkspace(widget, workspaceId) && !isCliLauncherHiddenFromSidebar(widget)
+        )
     );
     const widgets = sortByDisplayOrder(filteredWidgets);
 
