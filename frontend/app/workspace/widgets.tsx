@@ -25,7 +25,6 @@ import CursorIcon from "../asset/cursor-color.svg";
 import CogSolidIcon from "../asset/cog-solid.svg";
 import PerplexityIcon from "../asset/perplexity.svg";
 import PixelIconLibraryIcon from "../asset/pixel-icon-library.svg";
-import TermonCharaImage from "../asset/termon-chara.png";
 
 export type WidgetsEnv = WaveEnvSubset<{
     isDev: WaveEnv["isDev"];
@@ -837,9 +836,6 @@ const Widgets = memo(() => {
                         </div>
                     </>
                 )}
-                <div className="flex justify-center items-center w-full py-1" title="Termon mascot">
-                    <img src={TermonCharaImage} alt="Termon mascot" className="w-7 h-7 object-contain" />
-                </div>
             </div>
             {(env.isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
                 <AppsFloatingWindow
@@ -884,9 +880,6 @@ const Widgets = memo(() => {
                         </div>
                     </div>
                 ) : null}
-                <div className="flex justify-center items-center w-full py-1">
-                    <img src={TermonCharaImage} alt="" className="w-7 h-7 object-contain" />
-                </div>
             </div>
         </>
     );
