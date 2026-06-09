@@ -4,15 +4,41 @@
 import * as jotai from "jotai";
 import { globalStore } from "./jotaiStore";
 
+const TERMON_WELCOME_DISMISSED_KEY = "termon:welcome:dismissed";
+
 class ModalsModel {
     modalsAtom: jotai.PrimitiveAtom<Array<{ displayName: string; props?: any }>>;
     newInstallOnboardingOpen: jotai.PrimitiveAtom<boolean>;
     upgradeOnboardingOpen: jotai.PrimitiveAtom<boolean>;
+    termonWelcomeOpen: jotai.PrimitiveAtom<boolean>;
 
     constructor() {
         this.newInstallOnboardingOpen = jotai.atom(false);
         this.upgradeOnboardingOpen = jotai.atom(false);
+        this.termonWelcomeOpen = jotai.atom(false);
         this.modalsAtom = jotai.atom([]);
+    }
+
+    hasDismissedTermonWelcome(): boolean {
+        try {
+            return localStorage.getItem(TERMON_WELCOME_DISMISSED_KEY) === "1";
+        } catch {
+            return false;
+        }
+    }
+
+    maybeShowTermonWelcome(): void {
+        if (this.hasDismissedTermonWelcome()) {
+            return;
+        }
+        globalStore.set(this.termonWelcomeOpen, true);
+    }
+
+    dismissTermonWelcome(): void {
+        try {
+            localStorage.setItem(TERMON_WELCOME_DISMISSED_KEY, "1");
+        } catch {}
+        globalStore.set(this.termonWelcomeOpen, false);
     }
 
     pushModal = (displayName: string, props?: any) => {
