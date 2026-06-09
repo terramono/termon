@@ -9,9 +9,10 @@ import { WaveAIModel } from "./waveai-model";
 
 interface TelemetryRequiredMessageProps {
     className?: string;
+    variant?: "notice" | "gate";
 }
 
-const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) => {
+const TelemetryRequiredMessage = ({ className, variant = "notice" }: TelemetryRequiredMessageProps) => {
     const [isEnabling, setIsEnabling] = useState(false);
 
     const handleEnableTelemetry = async () => {
@@ -26,6 +27,46 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
             setIsEnabling(false);
         }
     };
+
+    if (variant === "notice") {
+        return (
+            <div
+                className={cn(
+                    "mx-2 mt-2 bg-blue-900/20 border border-blue-500/50 rounded-lg px-3 py-2 text-sm",
+                    className
+                )}
+            >
+                <div className="flex items-start gap-2">
+                    <i className="fa fa-info-circle text-blue-400 mt-0.5 shrink-0"></i>
+                    <div className="flex-1 min-w-0">
+                        <span className="text-secondary">
+                            Wave AI Cloud modes require anonymous telemetry to stay free.{" "}
+                        </span>
+                        <button
+                            onClick={handleEnableTelemetry}
+                            disabled={isEnabling}
+                            className="text-accent hover:text-accent/80 cursor-pointer disabled:opacity-50"
+                        >
+                            {isEnabling ? "Enabling..." : "Enable telemetry"}
+                        </button>
+                        <span className="text-secondary">
+                            {" "}
+                            or{" "}
+                            <a
+                                href="https://docs.waveterm.dev/waveai-modes"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-accent hover:text-accent/80 cursor-pointer"
+                            >
+                                configure BYOK
+                            </a>
+                            .
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cn("flex flex-col h-full", className)}>

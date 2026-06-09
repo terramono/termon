@@ -25,7 +25,7 @@ const HostStatusDot = memo(({ connName }: { connName: string }) => {
         <span
             className={cn(
                 "w-2 h-2 rounded-full shrink-0 mt-0.5",
-                connStatus?.connected ? "bg-green-400" : "bg-gray-500"
+                connStatus?.connected ? "bg-success" : "bg-muted"
             )}
             title={connStatus?.connected ? "Connected" : connStatus?.status ?? "Disconnected"}
         />
@@ -60,8 +60,8 @@ const HostCard = memo(({ host }: HostCardProps) => {
         >
             <HostStatusDot connName={connMeta} />
             <div className="flex flex-col min-w-0">
-                <span className="text-white text-sm font-medium truncate">{host.pattern}</span>
-                <span className="text-gray-400 text-xs truncate">{subtitle}</span>
+                <span className="text-primary text-sm font-medium truncate">{host.pattern}</span>
+                <span className="text-secondary text-xs truncate">{subtitle}</span>
             </div>
         </div>
     );
@@ -81,11 +81,11 @@ const GroupSection = memo(({ group }: GroupSectionProps) => {
         <div className="mb-1">
             <button
                 onClick={() => model.toggleGroupCollapsed(group.name)}
-                className="w-full flex items-center gap-1.5 px-3 py-1 text-xs text-gray-400 hover:text-gray-200 transition-colors cursor-pointer uppercase tracking-wider font-semibold"
+                className="w-full flex items-center gap-1.5 px-3 py-1 text-xs text-secondary hover:text-primary transition-colors cursor-pointer uppercase tracking-wider font-semibold"
             >
                 <i className={cn("fa fa-chevron-right text-[10px] transition-transform", !isCollapsed && "rotate-90")} />
                 <span>{group.name}</span>
-                <span className="ml-auto text-gray-600 font-normal normal-case tracking-normal">
+                <span className="ml-auto text-muted font-normal normal-case tracking-normal">
                     {group.hosts.length}
                 </span>
             </button>
@@ -120,7 +120,7 @@ const SSHPanelInner = memo(({ roundTopLeft }: SSHPanelInnerProps) => {
 
     return (
         <div
-            className="@container bg-zinc-900/70 flex flex-col mt-1 h-[calc(100%-4px)]"
+            className="@container bg-panel flex flex-col mt-1 h-[calc(100%-4px)]"
             style={{
                 borderTopLeftRadius: roundTopLeft ? 10 : 0,
                 borderTopRightRadius: 10,
@@ -132,21 +132,21 @@ const SSHPanelInner = memo(({ roundTopLeft }: SSHPanelInnerProps) => {
 
             <div className="flex-1 overflow-y-auto py-1 min-h-0">
                 {loading && (
-                    <div className="flex items-center justify-center py-8 text-gray-500 text-sm">
+                    <div className="flex items-center justify-center py-8 text-muted text-sm">
                         <i className="fa fa-spinner fa-spin mr-2" />
                         Loading hosts...
                     </div>
                 )}
 
                 {!loading && error && (
-                    <div className="px-3 py-4 text-red-400 text-sm">
+                    <div className="px-3 py-4 text-error text-sm">
                         <i className="fa fa-triangle-exclamation mr-2" />
                         {error}
                     </div>
                 )}
 
                 {!loading && !error && groups.length === 0 && (
-                    <div className="px-3 py-8 text-center text-gray-500 text-sm">
+                    <div className="px-3 py-8 text-center text-muted text-sm">
                         <p>No hosts found in ~/.ssh/config</p>
                     </div>
                 )}

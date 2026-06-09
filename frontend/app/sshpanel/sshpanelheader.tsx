@@ -13,11 +13,11 @@ export const SSHPanelHeader = memo(() => {
     };
 
     return (
-        <div className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-gray-600 flex items-center justify-between min-w-0 shrink-0">
+        <div className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-border flex items-center justify-between min-w-0 shrink-0">
             <PanelModeSwitcher />
             <button
                 onClick={handleRefresh}
-                className="text-gray-400 hover:text-white cursor-pointer transition-colors p-1 rounded flex-shrink-0 ml-2 focus:outline-none"
+                className="text-secondary hover:text-primary cursor-pointer transition-colors p-1 rounded flex-shrink-0 ml-2 focus:outline-none"
                 title="Refresh hosts"
             >
                 <i className="fa fa-rotate-right" />

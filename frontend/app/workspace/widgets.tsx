@@ -172,7 +172,7 @@ const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     const isBrowserWidget = widgetMeta.view === "web";
     const isSysinfoWidget = widgetMeta.view === "sysinfo";
     const fallbackWidgetColor =
-        isFilesWidget || isBrowserWidget || isSysinfoWidget ? "#2eff6a" : undefined;
+        isFilesWidget || isBrowserWidget || isSysinfoWidget ? "var(--accent-color)" : undefined;
     const widgetColor = !isBlank(widget.color) ? widget.color : fallbackWidgetColor;
     const displayDescription = launcherConfig?.description ?? widget.description;
     const LauncherIcon = launcherConfig?.Icon;
