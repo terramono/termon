@@ -189,10 +189,10 @@ export const AIPanelInput = memo(({ onSubmit, status, model, hasValidMode = true
                         <Tooltip content="Send message (Enter)" placement="top" divClassName="absolute bottom-1.5 right-1">
                             <button
                                 type="submit"
-                                disabled={status !== "ready" || !input.trim()}
+                                disabled={!hasValidMode || status !== "ready" || !input.trim()}
                                 className={cn(
                                     "w-5 h-5 transition-colors flex items-center justify-center",
-                                    status !== "ready" || !input.trim()
+                                    !hasValidMode || status !== "ready" || !input.trim()
                                         ? "text-secondary"
                                         : "text-accent/80 hover:text-accent cursor-pointer"
                                 )}

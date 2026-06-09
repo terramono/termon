@@ -88,7 +88,24 @@ const AIEmptyWelcome = memo(({ message }: { message: string }) => {
 
 AIEmptyWelcome.displayName = "AIEmptyWelcome";
 
-const AIWelcomeMessage = memo(() => {
+const AIWelcomeMessage = memo(({ showBYOKSetup }: { showBYOKSetup: boolean }) => {
+    if (showBYOKSetup) {
+        return (
+            <div className="flex-1 flex flex-col justify-center py-6">
+                <div className="text-center mb-4">
+                    <i className="fa fa-sparkles text-4xl text-accent mb-2 block"></i>
+                    <p className="text-lg font-bold text-primary">Welcome to Wave AI</p>
+                    <p className="text-sm text-muted mt-2 max-w-sm mx-auto">
+                        Choose an AI provider below to get started. Cloud modes need telemetry; BYOK and local models
+                        work without it.
+                    </p>
+                </div>
+                <div className="max-w-md mx-auto px-2">
+                    <BYOKAnnouncement prominent />
+                </div>
+            </div>
+        );
+    }
     return <AIEmptyWelcome message="Ask a question or drop a file to get started." />;
 });
 
@@ -165,12 +182,13 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const isPanelVisible = jotai.useAtomValue(model.getPanelVisibleAtom());
     const tabModel = useTabModelMaybe();
     const [tabBorderColor, tabActiveBorderColor] = useTabBackground(waveEnv, tabModel?.tabId);
-    const defaultMode = jotai.useAtomValue(getSettingsKeyAtom("waveai:defaultmode")) ?? "waveai@balanced";
     const aiModeConfigs = jotai.useAtomValue(model.aiModeConfigs);
+    const currentMode = jotai.useAtomValue(model.currentAIMode);
 
     const hasCustomModes = Object.keys(aiModeConfigs).some((key) => !key.startsWith("waveai@"));
-    const needsByokSetup = !telemetryEnabled && !hasCustomModes;
-    const allowAccess = true;
+    const hasValidMode = model.isValidMode(currentMode);
+    const showBYOKSetup = !telemetryEnabled && !hasCustomModes;
+    const showTelemetryNotice = !telemetryEnabled && !model.inBuilder;
 
     const { messages, sendMessage, status, setMessages, error: _error, stop } = useChat<WaveUIMessage>({
         transport: new DefaultChatTransport({
@@ -269,10 +287,6 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     };
 
     const handleDragOver = (e: React.DragEvent) => {
-        if (!allowAccess) {
-            return;
-        }
-
         const hasFiles = hasFilesDragged(e.dataTransfer);
 
         // Only handle native file drags here, let react-dnd handle FILE_ITEM drags
@@ -289,10 +303,6 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     };
 
     const handleDragEnter = (e: React.DragEvent) => {
-        if (!allowAccess) {
-            return;
-        }
-
         const hasFiles = hasFilesDragged(e.dataTransfer);
 
         // Only handle native file drags here, let react-dnd handle FILE_ITEM drags
@@ -307,10 +317,6 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
-        if (!allowAccess) {
-            return;
-        }
-
         const hasFiles = hasFilesDragged(e.dataTransfer);
 
         // Only handle native file drags here, let react-dnd handle FILE_ITEM drags
@@ -332,13 +338,6 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     };
 
     const handleDrop = async (e: React.DragEvent) => {
-        if (!allowAccess) {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsDragOver(false);
-            return;
-        }
-
         // Check if this is a FILE_ITEM drag from react-dnd
         // If so, let react-dnd handle it instead
         if (!e.dataTransfer.files.length) {
@@ -373,12 +372,9 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
 
     const handleFileItemDrop = useCallback(
         (draggedFile: DraggedFile) => {
-            if (!allowAccess) {
-                return;
-            }
             model.addFileFromRemoteUri(draggedFile);
         },
-        [model, allowAccess]
+        [model]
     );
 
     const [{ isOver, canDrop }, drop] = useDrop(
@@ -479,39 +475,42 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
             data-aipanel="true"
         >
             <ConfigChangeModeFixer />
-            {(isDragOver || isReactDndDragOver) && allowAccess && <AIDragOverlay />}
+            {(isDragOver || isReactDndDragOver) && <AIDragOverlay />}
             {showBlockMask && <AIBlockMask />}
             <AIPanelHeader />
             <AIRateLimitStrip />
+            {showTelemetryNotice && <TelemetryRequiredMessage />}
 
             <div key="main-content" className="flex-1 flex flex-col min-h-0">
-                <>
-                    {messages.length === 0 && initialLoadDone ? (
-                        <div
-                            className="flex-1 overflow-y-auto p-2 relative flex flex-col min-h-0"
-                            onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
-                        >
-                            <div className="absolute top-2 left-2 z-10">
-                                <AIModeDropdown />
-                            </div>
-                            {needsByokSetup && !model.inBuilder && (
-                                <div className="mt-12 px-2">
-                                    <BYOKAnnouncement />
-                                </div>
-                            )}
-                            {model.inBuilder ? <AIBuilderWelcomeMessage /> : <AIWelcomeMessage />}
+                {messages.length === 0 && initialLoadDone ? (
+                    <div
+                        className="flex-1 overflow-y-auto p-2 relative flex flex-col min-h-0"
+                        onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                    >
+                        <div className="absolute top-2 left-2 z-10">
+                            <AIModeDropdown highlight={showBYOKSetup} />
                         </div>
-                    ) : (
-                        <AIPanelMessages
-                            messages={messages}
-                            status={status}
-                            onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
-                        />
-                    )}
-                    <AIErrorMessage />
-                    <AIDroppedFiles model={model} />
-                    <AIPanelInput onSubmit={handleSubmit} status={status} model={model} />
-                </>
+                        {model.inBuilder ? (
+                            <AIBuilderWelcomeMessage />
+                        ) : (
+                            <AIWelcomeMessage showBYOKSetup={showBYOKSetup} />
+                        )}
+                    </div>
+                ) : (
+                    <AIPanelMessages
+                        messages={messages}
+                        status={status}
+                        onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                    />
+                )}
+                <AIErrorMessage />
+                <AIDroppedFiles model={model} />
+                <AIPanelInput
+                    onSubmit={handleSubmit}
+                    status={status}
+                    model={model}
+                    hasValidMode={hasValidMode}
+                />
             </div>
         </div>
     );
