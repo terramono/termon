@@ -87,7 +87,6 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
             docsUrl: "https://docs.waveterm.dev/waveai-modes",
             validator: validateWaveAiJson,
             hasJsonView: true,
-            // visualComponent: WaveAIVisualContent,
         },
         {
             name: "Tab Backgrounds",
