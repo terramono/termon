@@ -215,7 +215,7 @@ export const OptMagnifyButton = React.memo(
         const magnifyDecl: IconButtonDecl = {
             elemtype: "iconbutton",
             icon: <MagnifyIcon enabled={magnified} />,
-            title: magnified ? "Minimize" : "Magnify",
+            title: magnified ? "Exit Focus" : "Focus",
             click: toggleMagnify,
             disabled,
         };

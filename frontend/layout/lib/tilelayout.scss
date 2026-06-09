@@ -43,7 +43,8 @@
         z-index: var(--zindex-layout-resize-handle);
 
         .line {
-            visibility: hidden;
+            opacity: 0.2;
+            transition: opacity var(--animation-time-s) linear;
         }
         &.flex-row {
             cursor: ew-resize;
@@ -61,10 +62,10 @@
             }
         }
         &:hover .line {
-            visibility: visible;
+            opacity: 1;
 
             // Ignore the prefers-reduced-motion override, since we are not applying a true animation here, just a delay.
-            transition-property: visibility !important;
+            transition-property: opacity !important;
             transition-delay: var(--animation-time-s) !important;
         }
     }
