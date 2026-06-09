@@ -108,11 +108,11 @@ func MakeBlockShortDesc(block *waveobj.Block) string {
 		return "web browser widget"
 	case "waveai":
 		return "AI chat widget"
-	case "cpuplot":
+	case "sysinfo", "cpuplot":
 		if connection, hasConnection := block.Meta["connection"].(string); hasConnection && connection != "" {
-			return fmt.Sprintf("cpu graph for %q", connection)
+			return fmt.Sprintf("system info graph for %q", connection)
 		}
-		return "cpu graph"
+		return "system info graph"
 	case "tips":
 		return "Wave quick tips widget"
 	case "help":
