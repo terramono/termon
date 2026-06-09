@@ -58,7 +58,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
             <Tooltip content="Toggle SSH Connections" placement="bottom" hideOnClick>
                 <button
                     onClick={() => layoutModel.togglePanelMode("ssh")}
-                    className="flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg text-[#2eff6a]"
+                    className="flex items-center h-full px-2.5 text-[12px] cursor-pointer transition-colors hover:bg-hoverbg text-accent"
                 >
                     <PixelatedTechnologyIcon className="w-3.5 h-3.5" />
                 </button>

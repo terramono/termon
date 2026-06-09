@@ -13,13 +13,13 @@ export const SSHPanelHeader = memo(() => {
     };
 
     return (
-        <div className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-gray-600 flex items-center justify-between min-w-0 shrink-0">
-            <h2 className="text-white text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-                <PixelatedTechnologyIcon className="w-4 h-4 @xs:w-[18px] @xs:h-[18px] text-[#2eff6a]" />
+        <div className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-border flex items-center justify-between min-w-0 shrink-0">
+            <h2 className="text-primary text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+                <PixelatedTechnologyIcon className="w-4 h-4 @xs:w-[18px] @xs:h-[18px] text-accent" />
             </h2>
             <button
                 onClick={handleRefresh}
-                className="text-gray-400 hover:text-white cursor-pointer transition-colors p-1 rounded flex-shrink-0 ml-2 focus:outline-none"
+                className="text-secondary hover:text-primary cursor-pointer transition-colors p-1 rounded flex-shrink-0 ml-2 focus:outline-none"
                 title="Refresh hosts"
             >
                 <i className="fa fa-rotate-right" />
