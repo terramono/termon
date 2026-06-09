@@ -1,49 +1,4 @@
 {
-    "defwidget@terminal": {
-        "display:order": -5,
-        "icon": "brands@anthropic",
-        "label": "claude",
-        "description": "Launch Claude Code",
-        "blockdef": {
-            "meta": {
-                "view": "term",
-                "controller": "cmd",
-                "cmd": "claude",
-                "cmd:interactive": true,
-                "claude:launcher": true
-            }
-        }
-    },
-    "defwidget@cursor": {
-        "display:order": -4.9,
-        "icon": "cursor",
-        "label": "cursor",
-        "description": "Launch Cursor Agent",
-        "blockdef": {
-            "meta": {
-                "view": "term",
-                "controller": "cmd",
-                "cmd": "agent",
-                "cmd:interactive": true,
-                "cursor:launcher": true
-            }
-        }
-    },
-    "defwidget@codex": {
-        "display:order": -4.8,
-        "icon": "codex",
-        "label": "codex",
-        "description": "Launch Codex",
-        "blockdef": {
-            "meta": {
-                "view": "term",
-                "controller": "cmd",
-                "cmd": "codex",
-                "cmd:interactive": true,
-                "codex:launcher": true
-            }
-        }
-    },
     "defwidget@files": {
         "display:order": -4,
         "icon": "folder",

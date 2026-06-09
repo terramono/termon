@@ -118,21 +118,6 @@ function getCliLauncherId(widget: WidgetConfigType): CliLauncherId | null {
     return null;
 }
 
-function isTerminalWidget(widget: WidgetConfigType): boolean {
-    const meta = widget?.blockdef?.meta ?? {};
-    const widgetLabel = (widget?.label ?? "").toLowerCase().trim();
-    const widgetIcon = (widget?.icon ?? "").toLowerCase().trim();
-    const controller = (meta.controller ?? "").toLowerCase();
-    return (
-        meta.view === "term" ||
-        controller === "shell" ||
-        controller === "cmd" ||
-        widgetLabel === "terminal" ||
-        widgetLabel === "term" ||
-        widgetIcon.includes("terminal")
-    );
-}
-
 function loadCliLauncherRecents(recentsKey: string): string[] {
     const raw = localStorage.getItem(recentsKey);
     if (raw == null) {
@@ -167,8 +152,7 @@ function updateCliLauncherRecents(recentsKey: string, dir: string): string[] {
 const Widget = memo(({ widget, mode, env, onSelect }: WidgetPropsType) => {
     const widgetMeta = widget?.blockdef?.meta ?? {};
     const launcherId = getCliLauncherId(widget);
-    const isClaudeWidget = launcherId === "claude" || (launcherId == null && isTerminalWidget(widget));
-    const launcherConfig = launcherId != null ? CLI_LAUNCHERS[launcherId] : isClaudeWidget ? CLI_LAUNCHERS.claude : null;
+    const launcherConfig = launcherId != null ? CLI_LAUNCHERS[launcherId] : null;
     const isFilesWidget = widgetMeta.view === "preview" && widgetMeta.file === "~";
     const isBrowserWidget = widgetMeta.view === "web";
     const isSysinfoWidget = widgetMeta.view === "sysinfo";
@@ -736,10 +720,6 @@ const Widgets = memo(() => {
             const launcherId = getCliLauncherId(widget);
             if (launcherId != null) {
                 setActiveCliLauncher(launcherId);
-                return;
-            }
-            if (isTerminalWidget(widget)) {
-                setActiveCliLauncher("claude");
                 return;
             }
             handleWidgetSelect(widget, env);
