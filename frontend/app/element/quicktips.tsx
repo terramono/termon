@@ -157,8 +157,12 @@ const QuickTips = () => {
                             <KeyBinding keyDecl="Cmd:n" />
                         </div>
                         <div className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-white/5 transition-colors">
-                            <span className="text-[15px]">Open Wave AI Panel</span>
-                            <KeyBinding keyDecl="Cmd:Shift:a" />
+                            <span className="text-[15px]">Toggle SSH Hosts Panel</span>
+                            <KeyBinding keyDecl="Cmd:b" />
+                        </div>
+                        <div className="flex flex-col gap-0.5 p-2 rounded-md hover:bg-white/5 transition-colors">
+                            <span className="text-[15px]">Preferences</span>
+                            <KeyBinding keyDecl="Cmd:," />
                         </div>
                     </div>
 

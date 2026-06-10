@@ -3,7 +3,14 @@
 
 import { describe, expect, it } from "vitest";
 
-import { connectionMetaFromSshHost, groupHosts, hostCardSubtitleFromSshHost } from "./sshpanel-model";
+import {
+    connectionMetaFromSshHost,
+    filterGroups,
+    filterHosts,
+    groupHosts,
+    hostCardSubtitleFromSshHost,
+    hostTagsFromSshHost,
+} from "./sshpanel-model";
 
 const userHostRe = /^([a-zA-Z0-9][a-zA-Z0-9._@\\-]*@)?([a-zA-Z0-9][a-zA-Z0-9.-]*)(?::([0-9]+))?$/;
 
@@ -66,6 +73,57 @@ describe("hostCardSubtitleFromSshHost", () => {
 
     it("omits user and port when unset", () => {
         expect(hostCardSubtitleFromSshHost(host({ pattern: "plain" }))).toBe("plain");
+    });
+});
+
+describe("hostTagsFromSshHost", () => {
+    it("includes ssh tag and group name", () => {
+        expect(hostTagsFromSshHost(host({ pattern: "acme-web", user: "deploy" }), "acme")).toEqual([
+            "ssh",
+            "acme",
+            "deploy",
+        ]);
+    });
+
+    it("omits other group name from tags", () => {
+        expect(hostTagsFromSshHost(host({ pattern: "solo" }), "other")).toEqual(["ssh"]);
+    });
+});
+
+describe("filterHosts", () => {
+    const hosts = [
+        host({ pattern: "acme-web", hostname: "10.0.0.1", user: "deploy" }),
+        host({ pattern: "beta-api", hostname: "10.0.0.2", user: "root" }),
+    ];
+
+    it("returns all hosts for empty query", () => {
+        expect(filterHosts(hosts, "")).toHaveLength(2);
+        expect(filterHosts(hosts, "   ")).toHaveLength(2);
+    });
+
+    it("filters by pattern, hostname, and user", () => {
+        expect(filterHosts(hosts, "acme").map((h) => h.pattern)).toEqual(["acme-web"]);
+        expect(filterHosts(hosts, "10.0.0.2").map((h) => h.pattern)).toEqual(["beta-api"]);
+        expect(filterHosts(hosts, "root").map((h) => h.pattern)).toEqual(["beta-api"]);
+    });
+});
+
+describe("filterGroups", () => {
+    const groups = groupHosts([
+        host({ pattern: "acme-web" }),
+        host({ pattern: "acme-db" }),
+        host({ pattern: "beta-api" }),
+    ]);
+
+    it("returns all groups for empty query", () => {
+        expect(filterGroups(groups, "")).toHaveLength(2);
+    });
+
+    it("filters hosts inside groups and drops empty groups", () => {
+        const filtered = filterGroups(groups, "acme-db");
+        expect(filtered).toHaveLength(1);
+        expect(filtered[0].name).toBe("acme");
+        expect(filtered[0].hosts.map((h) => h.pattern)).toEqual(["acme-db"]);
     });
 });
 

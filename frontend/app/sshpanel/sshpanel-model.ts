@@ -23,6 +23,50 @@ export function hostCardSubtitleFromSshHost(host: SshConfigHost): string {
     return `${host.user ? `${host.user}@` : ""}${displayHost}${host.port ? `:${host.port}` : ""}`;
 }
 
+export function hostTagsFromSshHost(host: SshConfigHost, groupName: string): string[] {
+    const tags: string[] = ["ssh"];
+    if (groupName !== "other") {
+        tags.push(groupName);
+    }
+    if (host.user) {
+        tags.push(host.user);
+    }
+    return tags;
+}
+
+export function filterHosts(hosts: SshConfigHost[], query: string): SshConfigHost[] {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+        return hosts;
+    }
+    return hosts.filter((host) => {
+        const haystack = [
+            host.pattern,
+            host.hostname,
+            host.user,
+            host.port,
+            connectionMetaFromSshHost(host),
+            hostCardSubtitleFromSshHost(host),
+        ]
+            .join(" ")
+            .toLowerCase();
+        return haystack.includes(q);
+    });
+}
+
+export function filterGroups(groups: SshHostGroup[], query: string): SshHostGroup[] {
+    const q = query.trim();
+    if (!q) {
+        return groups;
+    }
+    return groups
+        .map((group) => ({
+            name: group.name,
+            hosts: filterHosts(group.hosts, q),
+        }))
+        .filter((group) => group.hosts.length > 0);
+}
+
 export function groupHosts(hosts: SshConfigHost[]): SshHostGroup[] {
     const groupMap = new Map<string, SshConfigHost[]>();
 
@@ -75,11 +119,23 @@ export class SSHPanelModel {
     loadingAtom: PrimitiveAtom<boolean> = atom(false);
     errorAtom = atom(null) as PrimitiveAtom<string>;
     collapsedGroupsAtom: PrimitiveAtom<Set<string>> = atom(new Set<string>());
+    searchQueryAtom: PrimitiveAtom<string> = atom("");
 
     groupsAtom: Atom<SshHostGroup[]>;
+    filteredGroupsAtom: Atom<SshHostGroup[]>;
+    hostCountAtom: Atom<number>;
 
     private constructor() {
         this.groupsAtom = atom((get) => groupHosts(get(this.hostsAtom)));
+        this.filteredGroupsAtom = atom((get) => {
+            const groups = get(this.groupsAtom);
+            const query = get(this.searchQueryAtom);
+            return filterGroups(groups, query);
+        });
+        this.hostCountAtom = atom((get) => {
+            const groups = get(this.filteredGroupsAtom);
+            return groups.reduce((sum, group) => sum + group.hosts.length, 0);
+        });
     }
 
     static getInstance(): SSHPanelModel {
@@ -116,5 +172,9 @@ export class SSHPanelModel {
 
     isGroupCollapsed(groupName: string): boolean {
         return globalStore.get(this.collapsedGroupsAtom).has(groupName);
+    }
+
+    setSearchQuery(query: string): void {
+        globalStore.set(this.searchQueryAtom, query);
     }
 }

@@ -5,7 +5,6 @@ import { Tooltip } from "@/app/element/tooltip";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
-import { modalsModel } from "@/store/modalmodel";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
 import {
     autoUpdate,
@@ -22,7 +21,6 @@ import { memo, useCallback, useEffect, useRef, useState, type ComponentType } fr
 import AnthropicIcon from "../asset/claude-color.svg";
 import CodexIcon from "../asset/codex-color.svg";
 import CursorIcon from "../asset/cursor-color.svg";
-import CogSolidIcon from "../asset/cog-solid.svg";
 import PerplexityIcon from "../asset/perplexity.svg";
 import PixelIconLibraryIcon from "../asset/pixel-icon-library.svg";
 
@@ -366,21 +364,6 @@ function calculateGridSize(appCount: number): number {
     return 6;
 }
 
-function SettingsTooltipContent({ hasConfigErrors }: { hasConfigErrors: boolean }) {
-    if (!hasConfigErrors) {
-        return "Settings & Help";
-    }
-    return (
-        <div className="flex flex-col p-1">
-            <div className="mb-1">Settings &amp; Help</div>
-            <div className="flex items-center gap-1 mt-0.5 text-error">
-                <i className="fa fa-solid fa-circle-exclamation"></i>
-                <span>Config Errors</span>
-            </div>
-        </div>
-    );
-}
-
 type FloatingWindowPropsType = {
     isOpen: boolean;
     onClose: () => void;
@@ -511,133 +494,9 @@ const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: Floating
     );
 });
 
-const SettingsFloatingWindow = memo(
-    ({ isOpen, onClose, referenceElement, hasConfigErrors }: FloatingWindowPropsType) => {
-        const env = useWaveEnv<WidgetsEnv>();
-        const { refs, floatingStyles, context } = useFloating({
-            open: isOpen,
-            onOpenChange: onClose,
-            placement: "left-start",
-            middleware: [offset(-2), shift({ padding: 12 })],
-            whileElementsMounted: autoUpdate,
-            elements: {
-                reference: referenceElement,
-            },
-        });
-
-        const dismiss = useDismiss(context);
-        const { getFloatingProps } = useInteractions([dismiss]);
-
-        if (!isOpen) return null;
-
-        const menuItems = [
-            {
-                icon: "sliders",
-                label: "Preferences",
-                onClick: () => {
-                    modalsModel.pushModal("PreferencesModal");
-                    onClose();
-                },
-            },
-            {
-                icon: "gear",
-                label: "Settings",
-                hasError: hasConfigErrors,
-                onClick: () => {
-                    const blockDef: BlockDef = {
-                        meta: {
-                            view: "waveconfig",
-                        },
-                    };
-                    env.createBlock(blockDef, false, true);
-                    onClose();
-                },
-            },
-            {
-                icon: "lightbulb",
-                label: "Tips",
-                onClick: () => {
-                    const blockDef: BlockDef = {
-                        meta: {
-                            view: "tips",
-                        },
-                    };
-                    env.createBlock(blockDef, true, true);
-                    onClose();
-                },
-            },
-            {
-                icon: "lock",
-                label: "Secrets",
-                onClick: () => {
-                    const blockDef: BlockDef = {
-                        meta: {
-                            view: "waveconfig",
-                            file: "secrets",
-                        },
-                    };
-                    env.createBlock(blockDef, false, true);
-                    onClose();
-                },
-            },
-            {
-                icon: "book-open",
-                label: "Release Notes",
-                onClick: () => {
-                    modalsModel.pushModal("UpgradeOnboardingPatch", { isReleaseNotes: true });
-                    onClose();
-                },
-            },
-            {
-                icon: "circle-question",
-                label: "Help",
-                onClick: () => {
-                    const blockDef: BlockDef = {
-                        meta: {
-                            view: "help",
-                        },
-                    };
-                    env.createBlock(blockDef);
-                    onClose();
-                },
-            },
-        ];
-
-        return (
-            <FloatingPortal>
-                <div
-                    ref={refs.setFloating}
-                    style={floatingStyles}
-                    {...getFloatingProps()}
-                    className="bg-modalbg border border-border rounded-lg shadow-xl p-2 z-50"
-                >
-                    {menuItems.map((item, idx) => (
-                        <div
-                            key={idx}
-                            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-hoverbg cursor-pointer transition-colors text-secondary hover:text-white"
-                            onClick={item.onClick}
-                        >
-                            <div className="text-lg w-5 flex justify-center">
-                                <i className={makeIconClass(item.icon, false)}></i>
-                            </div>
-                            <div className="text-sm whitespace-nowrap">{item.label}</div>
-                            {item.hasError && (
-                                <i className="fa fa-solid fa-circle-exclamation text-error text-[14px] ml-auto"></i>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </FloatingPortal>
-        );
-    }
-);
-
-SettingsFloatingWindow.displayName = "SettingsFloatingWindow";
-
 const Widgets = memo(() => {
     const env = useWaveEnv<WidgetsEnv>();
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
-    const hasConfigErrors = useAtomValue(env.atoms.hasConfigErrors);
     const workspaceId = useAtomValue(env.atoms.workspaceId);
     const [mode, setMode] = useState<"normal" | "compact" | "supercompact">("normal");
     const containerRef = useRef<HTMLDivElement>(null);
@@ -652,8 +511,6 @@ const Widgets = memo(() => {
 
     const [isAppsOpen, setIsAppsOpen] = useState(false);
     const appsButtonRef = useRef<HTMLDivElement>(null);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const settingsButtonRef = useRef<HTMLDivElement>(null);
     const [activeCliLauncher, setActiveCliLauncher] = useState<CliLauncherId | null>(null);
 
     const checkModeNeeded = useCallback(() => {
@@ -669,7 +526,7 @@ const Widgets = memo(() => {
             newMode = "compact";
 
             // Calculate total widget count for supercompact check
-            const totalWidgets = (widgets?.length || 0) + 1;
+            const totalWidgets = widgets?.length || 0;
             const minHeightPerWidget = 32;
             const requiredHeight = totalWidgets * minHeightPerWidget;
 
@@ -749,39 +606,19 @@ const Widgets = memo(() => {
                             ))}
                         </div>
                         <div className="flex-grow" />
-                        <div className="grid grid-cols-2 gap-0 w-full">
-                            {env.isDev() || featureWaveAppBuilder ? (
-                                <div
-                                    ref={appsButtonRef}
-                                    className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
-                                    onClick={() => setIsAppsOpen(!isAppsOpen)}
-                                >
-                                    <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
-                                        <div>
-                                            <i className={makeIconClass("cube", true)}></i>
-                                        </div>
-                                    </Tooltip>
-                                </div>
-                            ) : null}
+                        {env.isDev() || featureWaveAppBuilder ? (
                             <div
-                                ref={settingsButtonRef}
+                                ref={appsButtonRef}
                                 className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
-                                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                                onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
-                                <Tooltip
-                                    content={<SettingsTooltipContent hasConfigErrors={hasConfigErrors} />}
-                                    placement="left"
-                                    disable={isSettingsOpen}
-                                >
-                                    <div className="relative">
-                                        <CogSolidIcon className="w-[1em] h-[1em]" />
-                                        {hasConfigErrors && (
-                                            <i className="fa fa-solid fa-circle-exclamation text-error absolute top-0 right-0 text-[10px] pointer-events-none"></i>
-                                        )}
+                                <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                    <div>
+                                        <i className={makeIconClass("cube", true)}></i>
                                     </div>
                                 </Tooltip>
                             </div>
-                        </div>
+                        ) : null}
                     </>
                 ) : (
                     <>
@@ -802,26 +639,6 @@ const Widgets = memo(() => {
                                 </Tooltip>
                             </div>
                         ) : null}
-                        <div
-                            ref={settingsButtonRef}
-                            className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
-                            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                        >
-                            <Tooltip
-                                content={<SettingsTooltipContent hasConfigErrors={hasConfigErrors} />}
-                                placement="left"
-                                disable={isSettingsOpen}
-                            >
-                                    <div className="relative">
-                                        <CogSolidIcon className="w-[1em] h-[1em]" />
-                                        {hasConfigErrors && (
-                                            <i
-                                                className={`fa fa-solid fa-circle-exclamation text-error absolute top-0 right-[-4px] pointer-events-none ${mode === "normal" ? "text-[14px]" : "text-[12px]"}`}
-                                            ></i>
-                                        )}
-                                </div>
-                            </Tooltip>
-                        </div>
                     </>
                 )}
             </div>
@@ -830,14 +647,6 @@ const Widgets = memo(() => {
                     isOpen={isAppsOpen}
                     onClose={() => setIsAppsOpen(false)}
                     referenceElement={appsButtonRef.current}
-                />
-            )}
-            {settingsButtonRef.current && (
-                <SettingsFloatingWindow
-                    isOpen={isSettingsOpen}
-                    onClose={() => setIsSettingsOpen(false)}
-                    referenceElement={settingsButtonRef.current}
-                    hasConfigErrors={hasConfigErrors}
                 />
             )}
             {activeCliLauncher != null && (
@@ -856,11 +665,6 @@ const Widgets = memo(() => {
                     <Widget key={`measurement-widget-${idx}`} widget={data} mode="normal" env={env} />
                 ))}
                 <div className="flex-grow" />
-                <div className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-lg">
-                    <div>
-                        <CogSolidIcon className="w-[1em] h-[1em]" />
-                    </div>
-                </div>
                 {env.isDev() ? (
                     <div className="flex flex-col justify-center items-center w-full py-2 pr-0.5 text-lg">
                         <div>
