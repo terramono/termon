@@ -185,6 +185,13 @@ function makeAppMenuItems(webContents: electron.WebContents): Electron.MenuItemC
                 fireAndForget(() => updater?.checkForUpdates(true));
             },
         },
+        {
+            label: "Preferences...",
+            accelerator: "CommandOrControl+,",
+            click: (_, window) => {
+                (getWindowWebContents(window) ?? webContents)?.send("menu-item-preferences");
+            },
+        },
         { type: "separator" },
     ];
     if (unamePlatform === "darwin") {

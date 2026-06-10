@@ -47,8 +47,11 @@ function initGlobal(initOpts: GlobalInitOptions) {
         getApi().onMenuItemAbout(() => {
             modalsModel.pushModal("AboutModal");
         });
+        getApi().onMenuItemPreferences(() => {
+            modalsModel.pushModal("PreferencesModal");
+        });
     } catch (e) {
-        console.error("failed to initialize onMenuItemAbout handler", e);
+        console.error("failed to initialize menu item handlers", e);
     }
 }
 

@@ -732,15 +732,16 @@ function registerGlobalKeys() {
         }
         return false;
     });
-    globalKeyMap.set("Cmd:Shift:a", () => {
-        const currentVisible = WorkspaceLayoutModel.getInstance().getAIPanelVisible();
-        WorkspaceLayoutModel.getInstance().setAIPanelVisible(!currentVisible);
-        return true;
-    });
     globalKeyMap.set("Cmd:b", () => {
-        WorkspaceLayoutModel.getInstance().togglePanelMode("ssh");
+        WorkspaceLayoutModel.getInstance().toggleSidePanel();
         return true;
     });
+    const openPreferences = () => {
+        modalsModel.pushModal("PreferencesModal");
+        return true;
+    };
+    globalKeyMap.set("Cmd:,", openPreferences);
+    globalKeyMap.set("Ctrl:,", openPreferences);
     const allKeys = Array.from(globalKeyMap.keys());
     // special case keys, handled by web view
     allKeys.push("Cmd:l", "Cmd:r", "Cmd:ArrowRight", "Cmd:ArrowLeft", "Cmd:o");

@@ -1,7 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { isBuilderWindow } from "@/app/store/windowtype";
 import * as WOS from "@/app/store/wos";
@@ -39,7 +38,6 @@ class WorkspaceLayoutModel {
     aiPanelWrapperRef: HTMLDivElement | null;
     vtabPanelWrapperRef: HTMLDivElement | null;
     panelVisibleAtom: jotai.PrimitiveAtom<boolean>;
-    panelModeAtom: jotai.PrimitiveAtom<"ai" | "ssh">;
 
     private inResize: boolean;
     private aiPanelVisible: boolean;
@@ -66,7 +64,6 @@ class WorkspaceLayoutModel {
         this.vtabWidth = VTabBar_DefaultWidth;
         this.vtabVisible = false;
         this.panelVisibleAtom = jotai.atom(false);
-        this.panelModeAtom = jotai.atom<"ai" | "ssh">("ai");
         this.widgetsSidebarVisibleAtom = jotai.atom(
             (get) =>
                 get(getOrefMetaKeyAtom(WOS.makeORef("workspace", this.getWorkspaceId()), "layout:widgetsvisible")) ??
@@ -396,14 +393,7 @@ class WorkspaceLayoutModel {
         this.syncPanelCollapse();
         this.commitLayouts(window.innerWidth);
 
-        if (visible) {
-            if (!opts?.nofocus && globalStore.get(this.panelModeAtom) === "ai") {
-                this.focusTimeoutRef = setTimeout(() => {
-                    WaveAIModel.getInstance().focusInput();
-                    this.focusTimeoutRef = null;
-                }, 350);
-            }
-        } else {
+        if (!visible) {
             const layoutModel = getLayoutModelForStaticTab();
             const focusedNode = globalStore.get(layoutModel.focusedNode);
             if (focusedNode == null) {
@@ -417,21 +407,8 @@ class WorkspaceLayoutModel {
         }
     }
 
-    setPanelMode(mode: "ai" | "ssh"): void {
-        globalStore.set(this.panelModeAtom, mode);
-        if (!this.aiPanelVisible) {
-            this.setAIPanelVisible(true, { nofocus: true });
-        }
-    }
-
-    togglePanelMode(mode: "ai" | "ssh"): void {
-        const panelOpen = globalStore.get(this.panelVisibleAtom);
-        const currentMode = globalStore.get(this.panelModeAtom);
-        if (panelOpen && currentMode === mode) {
-            this.setAIPanelVisible(false);
-            return;
-        }
-        this.setPanelMode(mode);
+    toggleSidePanel(): void {
+        this.setAIPanelVisible(!this.aiPanelVisible);
     }
 
     setShowLeftTabBar(showLeftTabBar: boolean): void {

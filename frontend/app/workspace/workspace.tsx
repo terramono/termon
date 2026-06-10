@@ -1,7 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AIPanel } from "@/app/aipanel/aipanel";
 import { ErrorBoundary } from "@/app/element/errorboundary";
 import { SSHPanel } from "@/app/sshpanel/sshpanel";
 import { CenteredDiv } from "@/app/element/quickelems";
@@ -47,7 +46,6 @@ const WorkspaceElem = memo(() => {
     const tabBarPosition = useAtomValue(getSettingsKeyAtom("app:tabbar")) ?? "top";
     const showLeftTabBar = tabBarPosition === "left";
     const aiPanelVisible = useAtomValue(workspaceLayoutModel.panelVisibleAtom);
-    const panelMode = useAtomValue(workspaceLayoutModel.panelModeAtom);
     const widgetsSidebarVisible = useAtomValue(workspaceLayoutModel.widgetsSidebarVisibleAtom);
     const windowWidth = window.innerWidth;
     const leftGroupInitialPct = workspaceLayoutModel.getLeftGroupInitialPercentage(windowWidth, showLeftTabBar);
@@ -149,12 +147,7 @@ const WorkspaceElem = memo(() => {
                                         ref={aiPanelWrapperRef}
                                         className={`w-full h-full pr-0.5 ${aiPanelVisible ? "" : "opacity-0"}`}
                                     >
-                                        {tabId !== "" && panelMode === "ai" && (
-                                            <AIPanel roundTopLeft={showLeftTabBar} />
-                                        )}
-                                        {tabId !== "" && panelMode === "ssh" && (
-                                            <SSHPanel roundTopLeft={showLeftTabBar} />
-                                        )}
+                                        {tabId !== "" && <SSHPanel roundTopLeft={showLeftTabBar} />}
                                     </div>
                                 </Panel>
                             </PanelGroup>

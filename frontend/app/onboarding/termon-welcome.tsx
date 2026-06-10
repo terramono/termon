@@ -12,8 +12,10 @@ import { useEffect } from "react";
 
 const TermonWelcomeModal = () => {
     const isMac = isMacOS();
-    const aiShortcut = isMac ? "Cmd:Shift:a" : "Alt:Shift:a";
-    const aiShortcutLabel = isMac ? "Cmd+Shift+A" : "Alt+Shift+A";
+    const sshShortcut = isMac ? "Cmd:b" : "Ctrl:b";
+    const sshShortcutLabel = isMac ? "Cmd+B" : "Ctrl+B";
+    const prefsShortcut = isMac ? "Cmd:," : "Ctrl:,";
+    const prefsShortcutLabel = isMac ? "Cmd+," : "Ctrl+,";
 
     useEffect(() => {
         disableGlobalKeybindings();
@@ -45,13 +47,23 @@ const TermonWelcomeModal = () => {
                         </span>
                     </li>
                     <li className="flex items-start gap-3">
-                        <i className="fa-solid fa-sparkles text-accent text-lg mt-0.5 flex-shrink-0" />
+                        <i className="fa-solid fa-server text-[#2eff6a] text-lg mt-0.5 flex-shrink-0" />
                         <span className="flex flex-col gap-1.5">
                             <span>
-                                Press <span className="text-foreground font-medium">{aiShortcutLabel}</span> to toggle
-                                the AI panel
+                                Press <span className="text-foreground font-medium">{sshShortcutLabel}</span> to toggle
+                                the SSH hosts panel
                             </span>
-                            <KeyBinding keyDecl={aiShortcut} />
+                            <KeyBinding keyDecl={sshShortcut} />
+                        </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <i className="fa-solid fa-sliders text-accent text-lg mt-0.5 flex-shrink-0" />
+                        <span className="flex flex-col gap-1.5">
+                            <span>
+                                Press <span className="text-foreground font-medium">{prefsShortcutLabel}</span> for
+                                preferences
+                            </span>
+                            <KeyBinding keyDecl={prefsShortcut} />
                         </span>
                     </li>
                     <li className="flex items-start gap-3">
